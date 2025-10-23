@@ -8,8 +8,9 @@ import { MenuCard } from '@/components/MenuCard';
 import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
+import { FloorPlan } from '@/components/FloorPlan';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, Table } from '@/types';
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -19,6 +20,26 @@ export default function Home() {
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
+  const [currentTableId, setCurrentTableId] = useState(5);
+  const [showFloorPlan, setShowFloorPlan] = useState(false);
+  const [tables, setTables] = useState<Table[]>([
+    // ด้านหน้าร้าน
+    { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
+    { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small' },
+    { id: 3, number: 'A3', capacity: 4, status: 'available', position: { x: 50, y: 10 }, size: 'medium' },
+    { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium' },
+
+    // กลางร้าน
+    { id: 5, number: 'B1', capacity: 4, status: 'occupied', position: { x: 10, y: 40 }, size: 'medium' },
+    { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium' },
+    { id: 7, number: 'B3', capacity: 6, status: 'occupied', position: { x: 60, y: 40 }, size: 'large' },
+
+    // ด้านหลัง
+    { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small' },
+    { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small' },
+    { id: 10, number: 'C3', capacity: 4, status: 'occupied', position: { x: 50, y: 70 }, size: 'medium' },
+    { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large' },
+  ]);
 
   // คำนวณหมวดหมู่
   const categories = useMemo(() => {
@@ -136,6 +157,38 @@ export default function Home() {
     console.log('Service Request:', newRequest);
   };
 
+  // เปลี่ยนโต๊ะ
+  const handleChangeTable = (newTableId: number) => {
+    // อัปเดตสถานะโต๊ะเก่า
+    setTables(prev =>
+      prev.map(table => {
+        if (table.id === currentTableId) {
+          return { ...table, status: 'available' as const };
+        }
+        if (table.id === newTableId) {
+          return { ...table, status: 'occupied' as const };
+        }
+        return table;
+      })
+    );
+    setCurrentTableId(newTableId);
+  };
+
+  // รวมโต๊ะ
+  const handleMergeTables = (tableIds: number[]) => {
+    setTables(prev =>
+      prev.map(table => {
+        if (tableIds.includes(table.id)) {
+          return { ...table, mergedWith: tableIds.filter(id => id !== table.id) };
+        }
+        return table;
+      })
+    );
+    console.log('Merged tables:', tableIds);
+  };
+
+  const currentTable = tables.find(t => t.id === currentTableId);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       <Header
@@ -181,8 +234,22 @@ export default function Home() {
         onClose={() => setShowOrderHistory(false)}
       />
 
+      {/* Floor Plan */}
+      <FloorPlan
+        isOpen={showFloorPlan}
+        currentTableId={currentTableId}
+        tables={tables}
+        onClose={() => setShowFloorPlan(false)}
+        onChangeTable={handleChangeTable}
+        onMergeTables={handleMergeTables}
+      />
+
       {/* Floating Action Menu */}
-      <FloatingActionMenu onServiceRequest={handleServiceRequest} />
+      <FloatingActionMenu
+        currentTableNumber={currentTable?.number || 'N/A'}
+        onServiceRequest={handleServiceRequest}
+        onOpenFloorPlan={() => setShowFloorPlan(true)}
+      />
 
       {/* Order Confirmation Toast */}
       {orderConfirmed && (

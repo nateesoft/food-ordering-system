@@ -33,4 +33,15 @@ export interface ServiceRequest {
   status: 'pending' | 'completed';
 }
 
+export interface Table {
+  id: number;
+  number: string;
+  capacity: number;
+  status: 'available' | 'occupied' | 'reserved';
+  position: { x: number; y: number };
+  size: 'small' | 'medium' | 'large';
+  currentGuests?: number;
+  mergedWith?: number[];
+}
+
 export type Category = string;
