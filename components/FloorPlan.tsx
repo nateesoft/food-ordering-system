@@ -93,13 +93,13 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
   const getTableSize = (size: Table['size']) => {
     switch (size) {
       case 'small':
-        return 'w-16 h-16';
+        return 'w-14 h-14 sm:w-16 sm:h-16';
       case 'medium':
-        return 'w-20 h-20';
+        return 'w-16 h-16 sm:w-20 sm:h-20';
       case 'large':
-        return 'w-24 h-24';
+        return 'w-20 h-20 sm:w-24 sm:h-24';
       default:
-        return 'w-20 h-20';
+        return 'w-16 h-16 sm:w-20 sm:h-20';
     }
   };
 
@@ -117,11 +117,11 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
       <div className="absolute right-0 top-0 h-full w-full sm:w-[600px] bg-white shadow-2xl transform transition-transform overflow-y-auto">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 sticky top-0 z-10">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 sm:p-6 sticky top-0 z-10">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold">ผังโต๊ะ</h2>
-                <p className="text-orange-100 mt-1">
+                <h2 className="text-xl sm:text-2xl font-bold">ผังโต๊ะ</h2>
+                <p className="text-orange-100 mt-1 text-sm sm:text-base">
                   โต๊ะปัจจุบัน: {currentTable?.number}
                 </p>
               </div>
@@ -129,17 +129,17 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                 onClick={onClose}
                 className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
           </div>
 
           {/* Mode Selector */}
-          <div className="p-4 bg-gray-50 border-b">
+          <div className="p-3 sm:p-4 bg-gray-50 border-b">
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('view')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   mode === 'view'
                     ? 'bg-orange-500 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -149,7 +149,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
               </button>
               <button
                 onClick={() => setMode('change')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   mode === 'change'
                     ? 'bg-green-500 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -159,7 +159,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
               </button>
               <button
                 onClick={() => setMode('merge')}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
                   mode === 'merge'
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'bg-white text-gray-700 hover:bg-gray-100'
@@ -170,7 +170,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
             </div>
 
             {/* Instructions */}
-            <div className="mt-3 text-sm text-gray-600">
+            <div className="mt-3 text-xs sm:text-sm text-gray-600">
               {mode === 'view' && <p>💡 ดูตำแหน่งโต๊ะปัจจุบันของคุณ (สีส้ม)</p>}
               {mode === 'change' && <p>💡 เลือกโต๊ะว่าง (สีเขียว) เพื่อเปลี่ยนที่นั่ง</p>}
               {mode === 'merge' && (
@@ -180,52 +180,126 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
           </div>
 
           {/* Floor Plan */}
-          <div className="flex-1 p-6 overflow-auto">
-            <div className="relative bg-gray-100 rounded-xl p-8 min-h-[500px] border-2 border-gray-300">
+          <div className="flex-1 p-4 sm:p-6 overflow-auto">
+            <div className="relative bg-gray-100 rounded-xl p-4 sm:p-8 border-2 border-gray-300">
               {/* Restaurant Layout */}
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-bold text-gray-700">ร้านอาหารไทย</h3>
-                <p className="text-sm text-gray-500">ชั้น 1</p>
+              <div className="text-center mb-4">
+                <h3 className="text-base sm:text-lg font-bold text-gray-700">ร้านอาหารไทย</h3>
+                <p className="text-xs sm:text-sm text-gray-500">ชั้น 1</p>
               </div>
 
-              {/* Tables */}
-              <div className="relative" style={{ minHeight: '400px' }}>
-                {tables.map((table) => (
-                  <div
-                    key={table.id}
-                    onClick={() => handleTableClick(table)}
-                    className={`absolute flex flex-col items-center justify-center ${getTableSize(
-                      table.size
-                    )} border-2 rounded-lg shadow-md transition-all ${getTableColor(table)} ${
-                      ((mode === 'change' && table.status === 'available' && table.id !== currentTableId) ||
-                        (mode === 'merge' && table.status === 'occupied'))
-                        ? 'hover:scale-110'
-                        : ''
-                    }`}
-                    style={{
-                      left: `${table.position.x}%`,
-                      top: `${table.position.y}%`,
-                    }}
-                  >
-                    <span className="font-bold text-lg">{table.number}</span>
-                    <div className="flex items-center gap-1 text-xs">
-                      <Users className="w-3 h-3" />
-                      <span>{table.capacity}</span>
-                    </div>
-                    {table.id === currentTableId && (
-                      <div className="absolute -top-2 -right-2">
-                        <div className="bg-white rounded-full p-1 shadow-lg">
-                          <Check className="w-4 h-4 text-orange-500" />
-                        </div>
+              {/* Tables Grid Layout - Responsive */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                {/* แถวที่ 1: โซนหน้า */}
+                {tables.slice(0, 4).map((table) => (
+                  <div key={table.id} className="flex justify-center">
+                    <button
+                      onClick={() => handleTableClick(table)}
+                      className={`relative flex flex-col items-center justify-center ${getTableSize(
+                        table.size
+                      )} border-2 rounded-lg shadow-md transition-all ${getTableColor(table)} ${
+                        ((mode === 'change' && table.status === 'available' && table.id !== currentTableId) ||
+                          (mode === 'merge' && table.status === 'occupied'))
+                          ? 'hover:scale-110 active:scale-105'
+                          : ''
+                      }`}
+                    >
+                      <span className="font-bold text-sm sm:text-lg">{table.number}</span>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Users className="w-3 h-3" />
+                        <span>{table.capacity}</span>
                       </div>
-                    )}
-                    {mode === 'merge' && selectedTablesForMerge.includes(table.id) && (
-                      <div className="absolute -top-2 -right-2">
-                        <div className="bg-white rounded-full p-1 shadow-lg">
-                          <Check className="w-4 h-4 text-blue-500" />
+                      {table.id === currentTableId && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
+                          </div>
                         </div>
+                      )}
+                      {mode === 'merge' && selectedTablesForMerge.includes(table.id) && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                ))}
+
+                {/* แถวที่ 2: โซนกลาง */}
+                {tables.slice(4, 7).map((table) => (
+                  <div key={table.id} className="flex justify-center">
+                    <button
+                      onClick={() => handleTableClick(table)}
+                      className={`relative flex flex-col items-center justify-center ${getTableSize(
+                        table.size
+                      )} border-2 rounded-lg shadow-md transition-all ${getTableColor(table)} ${
+                        ((mode === 'change' && table.status === 'available' && table.id !== currentTableId) ||
+                          (mode === 'merge' && table.status === 'occupied'))
+                          ? 'hover:scale-110 active:scale-105'
+                          : ''
+                      }`}
+                    >
+                      <span className="font-bold text-sm sm:text-lg">{table.number}</span>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Users className="w-3 h-3" />
+                        <span>{table.capacity}</span>
                       </div>
-                    )}
+                      {table.id === currentTableId && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
+                          </div>
+                        </div>
+                      )}
+                      {mode === 'merge' && selectedTablesForMerge.includes(table.id) && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
+                  </div>
+                ))}
+                {/* Placeholder สำหรับ desktop */}
+                <div className="hidden sm:block"></div>
+
+                {/* แถวที่ 3: โซนหลัง */}
+                {tables.slice(7, 11).map((table) => (
+                  <div key={table.id} className="flex justify-center">
+                    <button
+                      onClick={() => handleTableClick(table)}
+                      className={`relative flex flex-col items-center justify-center ${getTableSize(
+                        table.size
+                      )} border-2 rounded-lg shadow-md transition-all ${getTableColor(table)} ${
+                        ((mode === 'change' && table.status === 'available' && table.id !== currentTableId) ||
+                          (mode === 'merge' && table.status === 'occupied'))
+                          ? 'hover:scale-110 active:scale-105'
+                          : ''
+                      }`}
+                    >
+                      <span className="font-bold text-sm sm:text-lg">{table.number}</span>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Users className="w-3 h-3" />
+                        <span>{table.capacity}</span>
+                      </div>
+                      {table.id === currentTableId && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
+                          </div>
+                        </div>
+                      )}
+                      {mode === 'merge' && selectedTablesForMerge.includes(table.id) && (
+                        <div className="absolute -top-2 -right-2">
+                          <div className="bg-white rounded-full p-1 shadow-lg">
+                            <Check className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                          </div>
+                        </div>
+                      )}
+                    </button>
                   </div>
                 ))}
               </div>
