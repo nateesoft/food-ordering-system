@@ -13,6 +13,7 @@ export interface CartItem extends MenuItem {
   quantity: number;
   specialInstructions?: string;
   cartItemId: string;
+  diningOption: 'dine-in' | 'takeaway';
 }
 
 export interface Order {

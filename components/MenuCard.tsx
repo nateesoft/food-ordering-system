@@ -7,13 +7,14 @@ import StarRating from './StarRating';
 
 interface MenuCardProps {
   item: MenuItem;
-  onAddToCart: (item: MenuItem, specialInstructions?: string) => void;
+  onAddToCart: (item: MenuItem, specialInstructions?: string, diningOption?: 'dine-in' | 'takeaway') => void;
 }
 
 export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([]);
   const [customInstruction, setCustomInstruction] = useState('');
+  const [diningOption, setDiningOption] = useState<'dine-in' | 'takeaway'>('dine-in');
 
   const handleAddToCart = () => {
     setShowInstructionsModal(true);
@@ -25,9 +26,10 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       allInstructions.push(customInstruction.trim());
     }
     const finalInstructions = allInstructions.join(', ');
-    onAddToCart(item, finalInstructions);
+    onAddToCart(item, finalInstructions, diningOption);
     setSelectedInstructions([]);
     setCustomInstruction('');
+    setDiningOption('dine-in');
     setShowInstructionsModal(false);
   };
 
@@ -141,6 +143,35 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm"
               rows={2}
             />
+
+            {/* ตัวเลือกทานในร้านหรือรับกลับบ้าน */}
+            <div className="mt-4 mb-4">
+              <p className="text-sm font-medium text-gray-700 mb-3">ต้องการ:</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDiningOption('dine-in')}
+                  className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                    diningOption === 'dine-in'
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  🍽️ ทานในร้าน
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDiningOption('takeaway')}
+                  className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                    diningOption === 'takeaway'
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  🥡 รับกลับบ้าน
+                </button>
+              </div>
+            </div>
 
             {/* ปุ่มยืนยัน */}
             <div className="flex gap-3 mt-6">

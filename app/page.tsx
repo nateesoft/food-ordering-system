@@ -63,11 +63,13 @@ export default function Home() {
   }, [cart]);
 
   // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in') => {
     setCart(prevCart => {
-      // หารายการที่ตรงกันทั้ง id และ specialInstructions
+      // หารายการที่ตรงกันทั้ง id, specialInstructions และ diningOption
       const existingItem = prevCart.find(
-        item => item.id === menuItem.id && item.specialInstructions === specialInstructions
+        item => item.id === menuItem.id &&
+                item.specialInstructions === specialInstructions &&
+                item.diningOption === diningOption
       );
 
       if (existingItem) {
@@ -79,9 +81,9 @@ export default function Home() {
         );
       }
 
-      // ถ้าไม่เจอ หรือ specialInstructions ต่างกัน ให้สร้างรายการใหม่
+      // ถ้าไม่เจอ หรือมีอะไรต่างกัน ให้สร้างรายการใหม่
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
-      return [...prevCart, { ...menuItem, quantity: 1, specialInstructions, cartItemId }];
+      return [...prevCart, { ...menuItem, quantity: 1, specialInstructions, cartItemId, diningOption }];
     });
   };
 
@@ -115,6 +117,15 @@ export default function Home() {
     setCart(prevCart =>
       prevCart.map(item =>
         item.cartItemId === cartItemId ? { ...item, specialInstructions: instructions } : item
+      )
+    );
+  };
+
+  // อัปเดตประเภทการรับประทาน
+  const updateDiningOption = (cartItemId: string, option: 'dine-in' | 'takeaway') => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.cartItemId === cartItemId ? { ...item, diningOption: option } : item
       )
     );
   };
@@ -224,6 +235,7 @@ export default function Home() {
         onDecreaseQuantity={decreaseQuantity}
         onRemoveFromCart={removeFromCart}
         onUpdateSpecialInstructions={updateSpecialInstructions}
+        onUpdateDiningOption={updateDiningOption}
         onConfirmOrder={confirmOrder}
       />
 

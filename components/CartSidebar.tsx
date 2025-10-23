@@ -15,6 +15,7 @@ interface CartSidebarProps {
   onDecreaseQuantity: (cartItemId: string) => void;
   onRemoveFromCart: (cartItemId: string) => void;
   onUpdateSpecialInstructions: (cartItemId: string, instructions: string) => void;
+  onUpdateDiningOption: (cartItemId: string, option: 'dine-in' | 'takeaway') => void;
   onConfirmOrder: () => void;
 }
 
@@ -29,6 +30,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
   onDecreaseQuantity,
   onRemoveFromCart,
   onUpdateSpecialInstructions,
+  onUpdateDiningOption,
   onConfirmOrder,
 }) => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -128,6 +130,18 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-800">{item.name}</h3>
                         <p className="text-sm text-orange-600 font-semibold">฿{item.price}</p>
+                        {/* แสดงประเภทการรับประทาน */}
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
+                            {item.diningOption === 'dine-in' ? '🍽️ ทานในร้าน' : '🥡 รับกลับบ้าน'}
+                          </span>
+                          <button
+                            onClick={() => onUpdateDiningOption(item.cartItemId, item.diningOption === 'dine-in' ? 'takeaway' : 'dine-in')}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                          >
+                            เปลี่ยน
+                          </button>
+                        </div>
                       </div>
                       <button
                         onClick={() => onRemoveFromCart(item.cartItemId)}
