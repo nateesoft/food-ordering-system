@@ -8,6 +8,8 @@ export const menuItems: MenuItem[] = [
     price: 60,
     image: 'https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&h=300&fit=crop',
     description: 'ผัดไทยกุ้งสด ใส่ถั่วงอก หอมหัวไชโป๊ว',
+    rating: 4.5,
+    reviewCount: 128,
   },
   {
     id: 2,
@@ -16,6 +18,8 @@ export const menuItems: MenuItem[] = [
     price: 70,
     image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop',
     description: 'ข้าวผัดหอมๆ ใส่กุ้งสดเต็มคำ',
+    rating: 4.2,
+    reviewCount: 95,
   },
   {
     id: 3,
@@ -24,6 +28,8 @@ export const menuItems: MenuItem[] = [
     price: 120,
     image: 'https://images.unsplash.com/photo-1548943487-a2e4e43b4853?w=400&h=300&fit=crop',
     description: 'ต้มยำกุ้งแม่น้ำ รสจัดจ้าน',
+    rating: 4.8,
+    reviewCount: 215,
   },
   {
     id: 4,
@@ -32,6 +38,8 @@ export const menuItems: MenuItem[] = [
     price: 50,
     image: 'https://images.unsplash.com/photo-1594717527389-d2faa4fa5c5c?w=400&h=300&fit=crop',
     description: 'ส้มตำแบบไทยๆ รสชาติดั้งเดิม',
+    rating: 4.6,
+    reviewCount: 187,
   },
   {
     id: 5,
@@ -40,6 +48,8 @@ export const menuItems: MenuItem[] = [
     price: 80,
     image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&h=300&fit=crop',
     description: 'แกงเขียวหวานไก่ กลิ่นหอมใบมะกรูด',
+    rating: 4.3,
+    reviewCount: 142,
   },
   {
     id: 6,
@@ -48,6 +58,8 @@ export const menuItems: MenuItem[] = [
     price: 150,
     image: 'https://images.unsplash.com/photo-1580959375944-1ab5aef2f85d?w=400&h=300&fit=crop',
     description: 'ปลากะพงทอดกรอบราดน้ำปลา',
+    rating: 4.7,
+    reviewCount: 163,
   },
   {
     id: 7,
@@ -56,6 +68,8 @@ export const menuItems: MenuItem[] = [
     price: 40,
     image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop',
     description: 'ไอศกรีมกะทิหอมมัน รสชาติไทยๆ',
+    rating: 4.4,
+    reviewCount: 98,
   },
   {
     id: 8,
@@ -64,6 +78,8 @@ export const menuItems: MenuItem[] = [
     price: 30,
     image: 'https://images.unsplash.com/photo-1523677011781-c91d1bbe2f80?w=400&h=300&fit=crop',
     description: 'น้ำมะนาวสดชื่นหวานอมเปรี้ยว',
+    rating: 4.1,
+    reviewCount: 76,
   },
   {
     id: 9,
@@ -72,6 +88,8 @@ export const menuItems: MenuItem[] = [
     price: 65,
     image: 'https://images.unsplash.com/photo-1625937286074-9ca519d5d9df?w=400&h=300&fit=crop',
     description: 'กะเพราหมูกรอบ รสจัดจ้าน เด็ดมาก',
+    rating: 4.9,
+    reviewCount: 234,
   },
   {
     id: 10,
@@ -80,6 +98,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop',
     description: 'ข้าวมันไก่ต้มนุ่ม เสิร์ฟพร้อมน้ำจิ้ม',
+    rating: 4.3,
+    reviewCount: 112,
   },
   {
     id: 11,
@@ -88,6 +108,8 @@ export const menuItems: MenuItem[] = [
     price: 25,
     image: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400&h=300&fit=crop',
     description: 'ชาไทยเย็น หวานมัน',
+    rating: 4.0,
+    reviewCount: 89,
   },
   {
     id: 12,
@@ -96,5 +118,7 @@ export const menuItems: MenuItem[] = [
     price: 50,
     image: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&h=300&fit=crop',
     description: 'ข้าวเหนียวมะม่วงสุก หอมกะทิ',
+    rating: 4.8,
+    reviewCount: 201,
   },
 ];

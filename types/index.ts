@@ -5,6 +5,8 @@ export interface MenuItem {
   price: number;
   image: string;
   description: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export interface CartItem extends MenuItem {

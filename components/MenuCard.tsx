@@ -3,6 +3,7 @@
 import React from 'react';
 import { Plus } from 'lucide-react';
 import { MenuItem } from '@/types';
+import StarRating from './StarRating';
 
 interface MenuCardProps {
   item: MenuItem;
@@ -25,7 +26,12 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       <div className="p-4">
         <h3 className="text-lg font-bold text-gray-800 mb-1">{item.name}</h3>
         <p className="text-sm text-gray-500 mb-1">{item.category}</p>
-        <p className="text-sm text-gray-600 mb-4">{item.description}</p>
+        <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+        {item.rating && (
+          <div className="mb-4">
+            <StarRating rating={item.rating} reviewCount={item.reviewCount} />
+          </div>
+        )}
         <button
           onClick={() => onAddToCart(item)}
           className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
