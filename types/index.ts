@@ -11,6 +11,8 @@ export interface MenuItem {
 
 export interface CartItem extends MenuItem {
   quantity: number;
+  specialInstructions?: string;
+  cartItemId: string;
 }
 
 export type Category = string;

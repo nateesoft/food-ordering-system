@@ -37,34 +37,42 @@ export default function Home() {
   }, [cart]);
 
   // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === menuItem.id);
+      // หารายการที่ตรงกันทั้ง id และ specialInstructions
+      const existingItem = prevCart.find(
+        item => item.id === menuItem.id && item.specialInstructions === specialInstructions
+      );
+
       if (existingItem) {
+        // ถ้าเจอรายการที่ตรงกันทุกอย่าง ให้เพิ่มจำนวน
         return prevCart.map(item =>
-          item.id === menuItem.id
+          item.cartItemId === existingItem.cartItemId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevCart, { ...menuItem, quantity: 1 }];
+
+      // ถ้าไม่เจอ หรือ specialInstructions ต่างกัน ให้สร้างรายการใหม่
+      const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
+      return [...prevCart, { ...menuItem, quantity: 1, specialInstructions, cartItemId }];
     });
   };
 
   // เพิ่มจำนวนสินค้า
-  const increaseQuantity = (id: number) => {
+  const increaseQuantity = (cartItemId: string) => {
     setCart(prevCart =>
       prevCart.map(item =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
   };
 
   // ลดจำนวนสินค้า
-  const decreaseQuantity = (id: number) => {
+  const decreaseQuantity = (cartItemId: string) => {
     setCart(prevCart =>
       prevCart.map(item =>
-        item.id === id && item.quantity > 1
+        item.cartItemId === cartItemId && item.quantity > 1
           ? { ...item, quantity: item.quantity - 1 }
           : item
       ).filter(item => item.quantity > 0)
@@ -72,8 +80,17 @@ export default function Home() {
   };
 
   // ลบสินค้าออกจากตะกร้า
-  const removeFromCart = (id: number) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== id));
+  const removeFromCart = (cartItemId: string) => {
+    setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
+  };
+
+  // อัปเดตคำขอพิเศษ
+  const updateSpecialInstructions = (cartItemId: string, instructions: string) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.cartItemId === cartItemId ? { ...item, specialInstructions: instructions } : item
+      )
+    );
   };
 
   // ยืนยันการสั่งซื้อ
@@ -115,6 +132,7 @@ export default function Home() {
         onIncreaseQuantity={increaseQuantity}
         onDecreaseQuantity={decreaseQuantity}
         onRemoveFromCart={removeFromCart}
+        onUpdateSpecialInstructions={updateSpecialInstructions}
         onConfirmOrder={confirmOrder}
       />
 
