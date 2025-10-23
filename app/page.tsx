@@ -7,8 +7,9 @@ import { CategoryFilter } from '@/components/CategoryFilter';
 import { MenuCard } from '@/components/MenuCard';
 import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
+import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest } from '@/types';
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -17,6 +18,7 @@ export default function Home() {
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
   const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
 
   // คำนวณหมวดหมู่
   const categories = useMemo(() => {
@@ -119,6 +121,21 @@ export default function Home() {
     }, 3000);
   };
 
+  // จัดการ Service Request
+  const handleServiceRequest = (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
+    const newRequest: ServiceRequest = {
+      id: `REQ-${Date.now()}`,
+      type,
+      timestamp: new Date(),
+      details,
+      items,
+      status: 'pending',
+    };
+
+    setServiceRequests(prev => [newRequest, ...prev]);
+    console.log('Service Request:', newRequest);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       <Header
@@ -135,7 +152,7 @@ export default function Home() {
       />
 
       {/* Menu Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredMenu.map(item => (
             <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
@@ -163,6 +180,9 @@ export default function Home() {
         orders={orderHistory}
         onClose={() => setShowOrderHistory(false)}
       />
+
+      {/* Floating Action Menu */}
+      <FloatingActionMenu onServiceRequest={handleServiceRequest} />
 
       {/* Order Confirmation Toast */}
       {orderConfirmed && (

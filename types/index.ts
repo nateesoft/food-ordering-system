@@ -24,4 +24,13 @@ export interface Order {
   status: 'completed' | 'preparing' | 'delivered';
 }
 
+export interface ServiceRequest {
+  id: string;
+  type: 'staff' | 'utensils' | 'payment';
+  timestamp: Date;
+  details?: string;
+  items?: string[];
+  status: 'pending' | 'completed';
+}
+
 export type Category = string;
