@@ -58,11 +58,21 @@ export interface Translations {
     legend: string;
   };
 
+  // Search
+  search: {
+    placeholder: string;
+    noResults: string;
+    searching: string;
+    tryDifferentKeyword: string;
+  };
+
   // Floor Plan
   floorPlan: {
     title: string;
     currentTable: string;
     viewMode: string;
+    changeMode: string;
+    mergeMode: string;
     changeTable: string;
     mergeTables: string;
     viewInstruction: string;
@@ -70,6 +80,7 @@ export interface Translations {
     mergeInstruction: string;
     restaurantName: string;
     floor: string;
+    floor1: string;
     yourTable: string;
     available: string;
     occupied: string;
@@ -77,8 +88,12 @@ export interface Translations {
     mergingTables: string;
     selectedTables: string;
     confirmMerge: string;
-    confirmChange: string;
-    confirmChangeTo: string;
+    confirmAction: string;
+    changeConfirmMsg: string;
+    to: string;
+    mergeConfirmMsg: string;
+    tables: string;
+    legend: string;
     mergeNote: string;
   };
 

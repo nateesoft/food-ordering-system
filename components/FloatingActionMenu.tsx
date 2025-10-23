@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Utensils, CreditCard, X, Check, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -71,6 +71,22 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       }
     });
   };
+
+  // Prevent body scroll when any modal is open
+  useEffect(() => {
+    const isAnyModalOpen = showStaffModal || showUtensilsModal || showPaymentModal;
+
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showStaffModal, showUtensilsModal, showPaymentModal]);
 
   return (
     <>

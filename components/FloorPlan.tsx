@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Check, Users, ArrowLeftRight } from 'lucide-react';
 import { Table } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -27,6 +27,20 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
   const [selectedTableForChange, setSelectedTableForChange] = useState<number | null>(null);
   const [selectedTablesForMerge, setSelectedTablesForMerge] = useState<number[]>([currentTableId]);
   const [showConfirmation, setShowConfirmation] = useState(false);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -141,30 +155,30 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => setMode('view')}
-                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-3 rounded-lg text-xs sm:text-sm font-bold transition-all border-2 ${
                   mode === 'view'
-                    ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-orange-500 text-white border-orange-600 shadow-md'
+                    : 'bg-white text-black border-gray-400 hover:bg-gray-50 hover:border-gray-500'
                 }`}
               >
                 {t.floorPlan.viewMode}
               </button>
               <button
                 onClick={() => setMode('change')}
-                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-3 rounded-lg text-xs sm:text-sm font-bold transition-all border-2 ${
                   mode === 'change'
-                    ? 'bg-green-500 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-green-500 text-white border-green-600 shadow-md'
+                    : 'bg-white text-black border-gray-400 hover:bg-gray-50 hover:border-gray-500'
                 }`}
               >
                 {t.floorPlan.changeMode}
               </button>
               <button
                 onClick={() => setMode('merge')}
-                className={`flex-1 px-2 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                className={`flex-1 px-2 sm:px-4 py-3 rounded-lg text-xs sm:text-sm font-bold transition-all border-2 ${
                   mode === 'merge'
-                    ? 'bg-blue-500 text-white shadow-md'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-500 text-white border-blue-600 shadow-md'
+                    : 'bg-white text-black border-gray-400 hover:bg-gray-50 hover:border-gray-500'
                 }`}
               >
                 {t.floorPlan.mergeMode}

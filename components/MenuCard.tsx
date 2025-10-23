@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, X } from 'lucide-react';
 import { MenuItem } from '@/types';
 import StarRating from './StarRating';
@@ -61,6 +61,20 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       }
     });
   };
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showInstructionsModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showInstructionsModal]);
 
   return (
     <>

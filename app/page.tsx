@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Search } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
+import { SearchBar } from '@/components/SearchBar';
 import { MenuCard } from '@/components/MenuCard';
 import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
@@ -17,6 +18,7 @@ export default function Home() {
   const { t, language } = useLanguage();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(t.categories.all);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showCart, setShowCart] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
@@ -49,20 +51,36 @@ export default function Home() {
     return cats;
   }, []);
 
-  // Filter menu by category - using Thai category names for filtering
+  // Filter menu by category and search - using Thai category names for filtering
   const filteredMenu = useMemo(() => {
     const allCategoryInThai = 'ทั้งหมด';
-    if (selectedCategory === t.categories.all || selectedCategory === allCategoryInThai) return menuItems;
-    // Map translated category back to Thai for filtering
-    const categoryMap: Record<string, string> = {
-      [t.foodCategories.singleDish]: 'อาหารจานเดียว',
-      [t.foodCategories.appetizers]: 'อาหารว่าง',
-      [t.foodCategories.desserts]: 'ของหวาน',
-      [t.foodCategories.beverages]: 'เครื่องดื่ม',
-    };
-    const thaiCategory = categoryMap[selectedCategory] || selectedCategory;
-    return menuItems.filter(item => item.category === thaiCategory);
-  }, [selectedCategory, t]);
+    let filtered = menuItems;
+
+    // Filter by category
+    if (selectedCategory !== t.categories.all && selectedCategory !== allCategoryInThai) {
+      // Map translated category back to Thai for filtering
+      const categoryMap: Record<string, string> = {
+        [t.foodCategories.singleDish]: 'อาหารจานเดียว',
+        [t.foodCategories.appetizers]: 'อาหารว่าง',
+        [t.foodCategories.desserts]: 'ของหวาน',
+        [t.foodCategories.beverages]: 'เครื่องดื่ม',
+      };
+      const thaiCategory = categoryMap[selectedCategory] || selectedCategory;
+      filtered = filtered.filter(item => item.category === thaiCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(item =>
+        item.name.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [selectedCategory, searchQuery, t]);
 
   // คำนวณยอดรวม
   const totalAmount = useMemo(() => {
@@ -219,20 +237,35 @@ export default function Home() {
         onHistoryClick={() => setShowOrderHistory(true)}
         orderCount={orderHistory.length}
       />
-      
+
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
       />
 
+      <SearchBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+
       {/* Menu Grid */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredMenu.map(item => (
-            <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
-          ))}
-        </div>
+        {filteredMenu.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="text-gray-400 mb-4">
+              <Search className="w-20 h-20 mx-auto mb-4" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">{t.search.noResults}</h3>
+            <p className="text-gray-500">{t.search.tryDifferentKeyword}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredMenu.map(item => (
+              <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
+            ))}
+          </div>
+        )}
       </main>
 
       <CartSidebar

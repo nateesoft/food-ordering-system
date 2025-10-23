@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Clock, CheckCircle, Package } from 'lucide-react';
 import { Order } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,6 +13,20 @@ interface OrderHistoryProps {
 
 export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onClose }) => {
   const { t, language } = useLanguage();
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

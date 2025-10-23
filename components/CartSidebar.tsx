@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, Trash2, Check, ChevronRight, Edit2, X } from 'lucide-react';
 import { CartItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -92,6 +92,20 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
       }
     });
   };
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
