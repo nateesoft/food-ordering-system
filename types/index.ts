@@ -15,4 +15,13 @@ export interface CartItem extends MenuItem {
   cartItemId: string;
 }
 
+export interface Order {
+  orderId: string;
+  items: CartItem[];
+  totalAmount: number;
+  totalItems: number;
+  orderDate: Date;
+  status: 'completed' | 'preparing' | 'delivered';
+}
+
 export type Category = string;

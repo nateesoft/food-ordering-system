@@ -6,14 +6,17 @@ import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { MenuCard } from '@/components/MenuCard';
 import { CartSidebar } from '@/components/CartSidebar';
+import { OrderHistory } from '@/components/OrderHistory';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem } from '@/types';
+import { MenuItem, CartItem, Order } from '@/types';
 
 export default function Home() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
   const [showCart, setShowCart] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [orderHistory, setOrderHistory] = useState<Order[]>([]);
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
 
   // คำนวณหมวดหมู่
   const categories = useMemo(() => {
@@ -95,6 +98,19 @@ export default function Home() {
 
   // ยืนยันการสั่งซื้อ
   const confirmOrder = () => {
+    // สร้าง order ใหม่
+    const newOrder: Order = {
+      orderId: `ORD-${Date.now()}`,
+      items: [...cart],
+      totalAmount,
+      totalItems,
+      orderDate: new Date(),
+      status: 'preparing',
+    };
+
+    // เพิ่มลงประวัติการสั่งซื้อ
+    setOrderHistory(prev => [newOrder, ...prev]);
+
     setOrderConfirmed(true);
     setTimeout(() => {
       setCart([]);
@@ -105,7 +121,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      <Header totalItems={totalItems} onCartClick={() => setShowCart(true)} />
+      <Header
+        totalItems={totalItems}
+        onCartClick={() => setShowCart(true)}
+        onHistoryClick={() => setShowOrderHistory(true)}
+        orderCount={orderHistory.length}
+      />
       
       <CategoryFilter
         categories={categories}
@@ -134,6 +155,13 @@ export default function Home() {
         onRemoveFromCart={removeFromCart}
         onUpdateSpecialInstructions={updateSpecialInstructions}
         onConfirmOrder={confirmOrder}
+      />
+
+      {/* Order History Sidebar */}
+      <OrderHistory
+        isOpen={showOrderHistory}
+        orders={orderHistory}
+        onClose={() => setShowOrderHistory(false)}
       />
 
       {/* Order Confirmation Toast */}
