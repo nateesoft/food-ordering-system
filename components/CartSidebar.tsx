@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Plus, Minus, Trash2, Check, ChevronRight, Edit2, X } from 'lucide-react';
 import { CartItem } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CartSidebarProps {
   isOpen: boolean;
@@ -33,17 +34,18 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
   onUpdateDiningOption,
   onConfirmOrder,
 }) => {
+  const { t } = useLanguage();
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([]);
   const [customInstruction, setCustomInstruction] = useState('');
 
   const commonInstructions = [
-    'เผ็ดมาก',
-    'เผ็ดน้อย',
-    'ไม่เผ็ด',
-    'ไม่ใส่ผัก',
-    'ไม่ใส่ผักชี',
-    'แยกน้ำจิ้ม',
+    t.commonInstructions.verySpicy,
+    t.commonInstructions.lessSpicy,
+    t.commonInstructions.noSpicy,
+    t.commonInstructions.noVegetables,
+    t.commonInstructions.noCoriander,
+    t.commonInstructions.sauceSeparate,
   ];
 
   const handleEditClick = (item: CartItem) => {
@@ -101,7 +103,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           {/* Cart Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">ตะกร้าสินค้า</h2>
+              <h2 className="text-2xl font-bold">{t.cart.title}</h2>
               <button
                 onClick={onClose}
                 className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
@@ -110,7 +112,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
               </button>
             </div>
             <p className="text-orange-100 mt-1">
-              {totalItems} รายการ
+              {totalItems} {t.cart.items}
             </p>
           </div>
 
@@ -119,8 +121,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <ShoppingCart className="w-20 h-20 mb-4" />
-                <p className="text-lg">ตะกร้าว่างเปล่า</p>
-                <p className="text-sm">เพิ่มสินค้าเพื่อเริ่มสั่งอาหาร</p>
+                <p className="text-lg">{t.cart.emptyCart}</p>
+                <p className="text-sm">{t.cart.emptyCartDesc}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -129,17 +131,17 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-800">{item.name}</h3>
-                        <p className="text-sm text-orange-600 font-semibold">฿{item.price}</p>
-                        {/* แสดงประเภทการรับประทาน */}
+                        <p className="text-sm text-orange-600 font-semibold">{t.common.baht}{item.price}</p>
+                        {/* Dining option display */}
                         <div className="mt-1 flex items-center gap-2">
                           <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
-                            {item.diningOption === 'dine-in' ? '🍽️ ทานในร้าน' : '🥡 รับกลับบ้าน'}
+                            {item.diningOption === 'dine-in' ? t.menuCard.dineIn : t.menuCard.takeaway}
                           </span>
                           <button
                             onClick={() => onUpdateDiningOption(item.cartItemId, item.diningOption === 'dine-in' ? 'takeaway' : 'dine-in')}
                             className="text-xs text-blue-600 hover:text-blue-800 underline"
                           >
-                            เปลี่ยน
+                            {t.common.change}
                           </button>
                         </div>
                       </div>
@@ -151,29 +153,29 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                       </button>
                     </div>
 
-                    {/* แสดงคำขอพิเศษ */}
+                    {/* Show special instructions */}
                     {item.specialInstructions && editingItemId !== item.cartItemId && (
                       <div className="mb-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
-                        <p className="text-xs text-orange-800 font-medium">คำขอพิเศษ:</p>
+                        <p className="text-xs text-orange-800 font-medium">{t.cart.specialRequest}</p>
                         <p className="text-sm text-orange-900">{item.specialInstructions}</p>
                       </div>
                     )}
 
-                    {/* ปุ่มแก้ไขคำขอพิเศษ */}
+                    {/* Edit special instructions button */}
                     {editingItemId !== item.cartItemId && (
                       <button
                         onClick={() => handleEditClick(item)}
                         className="mb-3 text-xs text-orange-600 hover:text-orange-700 flex items-center gap-1 font-medium"
                       >
                         <Edit2 className="w-3 h-3" />
-                        {item.specialInstructions ? 'แก้ไขคำขอพิเศษ' : 'เพิ่มคำขอพิเศษ'}
+                        {item.specialInstructions ? t.cart.editRequest : t.cart.addRequest}
                       </button>
                     )}
 
-                    {/* ฟอร์มแก้ไขคำขอพิเศษ */}
+                    {/* Edit special instructions form */}
                     {editingItemId === item.cartItemId && (
                       <div className="mb-3 p-3 bg-white rounded-lg border border-orange-300">
-                        <p className="text-xs text-gray-600 mb-2">คำขอพิเศษ (เลือกได้หลายรายการ):</p>
+                        <p className="text-xs text-gray-600 mb-2">{t.cart.selectMultiple}</p>
 
                         {/* ปุ่มคำแนะนำที่ใช้บ่อย */}
                         <div className="mb-2">
@@ -194,17 +196,17 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                           </div>
                         </div>
 
-                        {/* แสดงรายการที่เลือก */}
+                        {/* Show selected items */}
                         {selectedInstructions.length > 0 && (
                           <div className="mb-2 p-2 bg-orange-50 rounded border border-orange-200">
-                            <p className="text-xs text-orange-800 font-medium">คำขอที่เลือก: {selectedInstructions.join(', ')}</p>
+                            <p className="text-xs text-orange-800 font-medium">{t.cart.selected} {selectedInstructions.join(', ')}</p>
                           </div>
                         )}
 
                         <textarea
                           value={customInstruction}
                           onChange={(e) => setCustomInstruction(e.target.value)}
-                          placeholder="พิมพ์คำขอพิเศษเพิ่มเติม..."
+                          placeholder={t.menuCard.customInstructions}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                           rows={2}
                         />
@@ -213,13 +215,13 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                             onClick={handleCancelEdit}
                             className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all font-medium"
                           >
-                            ยกเลิก
+                            {t.cart.cancel}
                           </button>
                           <button
                             onClick={() => handleSaveInstructions(item.cartItemId)}
                             className="flex-1 px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm hover:bg-orange-600 transition-all font-medium"
                           >
-                            บันทึก
+                            {t.cart.save}
                           </button>
                         </div>
                       </div>
@@ -242,7 +244,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                         </button>
                       </div>
                       <span className="font-bold text-gray-800">
-                        ฿{item.price * item.quantity}
+                        {t.common.baht}{item.price * item.quantity}
                       </span>
                     </div>
                   </div>
@@ -255,8 +257,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           {cart.length > 0 && (
             <div className="border-t bg-white p-6 space-y-4">
               <div className="flex justify-between items-center text-lg">
-                <span className="font-semibold text-gray-700">ยอดรวมทั้งหมด</span>
-                <span className="font-bold text-2xl text-orange-500">฿{totalAmount}</span>
+                <span className="font-semibold text-gray-700">{t.cart.total}</span>
+                <span className="font-bold text-2xl text-orange-500">{t.common.baht}{totalAmount}</span>
               </div>
               <button
                 onClick={onConfirmOrder}
@@ -270,12 +272,12 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                 {orderConfirmed ? (
                   <>
                     <Check className="w-6 h-6" />
-                    <span>สั่งอาหารสำเร็จ!</span>
+                    <span>{t.cart.orderSuccess}</span>
                   </>
                 ) : (
                   <>
                     <Check className="w-6 h-6" />
-                    <span>ยืนยันการสั่งซื้อ</span>
+                    <span>{t.cart.confirmOrder}</span>
                   </>
                 )}
               </button>

@@ -11,10 +11,12 @@ import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { FloorPlan } from '@/components/FloorPlan';
 import { menuItems } from '@/data/menuItems';
 import { MenuItem, CartItem, Order, ServiceRequest, Table } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
+  const { t, language } = useLanguage();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
+  const [selectedCategory, setSelectedCategory] = useState(t.categories.all);
   const [showCart, setShowCart] = useState(false);
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
@@ -41,17 +43,26 @@ export default function Home() {
     { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large' },
   ]);
 
-  // คำนวณหมวดหมู่
+  // Calculate categories - use Thai category names internally
   const categories = useMemo(() => {
     const cats = ['ทั้งหมด', ...new Set(menuItems.map(item => item.category))];
     return cats;
   }, []);
 
-  // กรองเมนูตามหมวดหมู่
+  // Filter menu by category - using Thai category names for filtering
   const filteredMenu = useMemo(() => {
-    if (selectedCategory === 'ทั้งหมด') return menuItems;
-    return menuItems.filter(item => item.category === selectedCategory);
-  }, [selectedCategory]);
+    const allCategoryInThai = 'ทั้งหมด';
+    if (selectedCategory === t.categories.all || selectedCategory === allCategoryInThai) return menuItems;
+    // Map translated category back to Thai for filtering
+    const categoryMap: Record<string, string> = {
+      [t.foodCategories.singleDish]: 'อาหารจานเดียว',
+      [t.foodCategories.appetizers]: 'อาหารว่าง',
+      [t.foodCategories.desserts]: 'ของหวาน',
+      [t.foodCategories.beverages]: 'เครื่องดื่ม',
+    };
+    const thaiCategory = categoryMap[selectedCategory] || selectedCategory;
+    return menuItems.filter(item => item.category === thaiCategory);
+  }, [selectedCategory, t]);
 
   // คำนวณยอดรวม
   const totalAmount = useMemo(() => {

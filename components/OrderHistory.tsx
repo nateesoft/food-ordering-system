@@ -3,6 +3,7 @@
 import React from 'react';
 import { X, Clock, CheckCircle, Package } from 'lucide-react';
 import { Order } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OrderHistoryProps {
   isOpen: boolean;
@@ -11,11 +12,13 @@ interface OrderHistoryProps {
 }
 
 export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onClose }) => {
+  const { t, language } = useLanguage();
+
   if (!isOpen) return null;
 
   const formatDate = (date: Date) => {
     const d = new Date(date);
-    return d.toLocaleDateString('th-TH', {
+    return d.toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -40,11 +43,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
   const getStatusText = (status: Order['status']) => {
     switch (status) {
       case 'preparing':
-        return 'กำลังเตรียม';
+        return t.orderHistory.statusPreparing;
       case 'completed':
-        return 'เสร็จสิ้น';
+        return t.orderHistory.statusCompleted;
       case 'delivered':
-        return 'จัดส่งแล้ว';
+        return t.orderHistory.statusDelivered;
       default:
         return '';
     }
@@ -71,7 +74,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 sticky top-0 z-10">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">ประวัติการสั่งซื้อ</h2>
+              <h2 className="text-2xl font-bold">{t.orderHistory.title}</h2>
               <button
                 onClick={onClose}
                 className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
@@ -80,7 +83,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
               </button>
             </div>
             <p className="text-orange-100 mt-1">
-              ทั้งหมด {orders.length} ออเดอร์
+              {t.orderHistory.totalOrders} {orders.length} {t.orderHistory.orders}
             </p>
           </div>
 
@@ -89,8 +92,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
             {orders.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <Package className="w-20 h-20 mb-4" />
-                <p className="text-lg">ยังไม่มีประวัติการสั่งซื้อ</p>
-                <p className="text-sm">เริ่มสั่งอาหารเลย!</p>
+                <p className="text-lg">{t.orderHistory.noOrders}</p>
+                <p className="text-sm">{t.orderHistory.startOrdering}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -130,7 +133,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
                             )}
                           </div>
                           <p className="text-gray-600 font-medium">
-                            ฿{item.price * item.quantity}
+                            {t.common.baht}{item.price * item.quantity}
                           </p>
                         </div>
                       ))}
@@ -139,10 +142,10 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
                     {/* Order Total */}
                     <div className="border-t pt-3 flex justify-between items-center">
                       <div className="text-sm text-gray-600">
-                        รวม {order.totalItems} รายการ
+                        {t.orderHistory.total} {order.totalItems} {t.orderHistory.items}
                       </div>
                       <div className="text-lg font-bold text-orange-500">
-                        ฿{order.totalAmount}
+                        {t.common.baht}{order.totalAmount}
                       </div>
                     </div>
                   </div>

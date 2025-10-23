@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export const metadata: Metadata = {
   title: "ระบบสั่งอาหารออนไลน์ - ร้านอาหารไทย",
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className="antialiased">
-        {children}
+        <LanguageProvider>
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );

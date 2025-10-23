@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Check, Users, ArrowLeftRight } from 'lucide-react';
 import { Table } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface FloorPlanProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
   onChangeTable,
   onMergeTables,
 }) => {
+  const { t } = useLanguage();
   const [mode, setMode] = useState<'view' | 'change' | 'merge'>('view');
   const [selectedTableForChange, setSelectedTableForChange] = useState<number | null>(null);
   const [selectedTablesForMerge, setSelectedTablesForMerge] = useState<number[]>([currentTableId]);
@@ -120,9 +122,9 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
           <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 sm:p-6 sticky top-0 z-10">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold">ผังโต๊ะ</h2>
+                <h2 className="text-xl sm:text-2xl font-bold">{t.floorPlan.title}</h2>
                 <p className="text-orange-100 mt-1 text-sm sm:text-base">
-                  โต๊ะปัจจุบัน: {currentTable?.number}
+                  {t.floorPlan.currentTable} {currentTable?.number}
                 </p>
               </div>
               <button
@@ -145,7 +147,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                ดูผัง
+                {t.floorPlan.viewMode}
               </button>
               <button
                 onClick={() => setMode('change')}
@@ -155,7 +157,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                เปลี่ยนโต๊ะ
+                {t.floorPlan.changeMode}
               </button>
               <button
                 onClick={() => setMode('merge')}
@@ -165,16 +167,16 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                     : 'bg-white text-gray-700 hover:bg-gray-100'
                 }`}
               >
-                รวมโต๊ะ
+                {t.floorPlan.mergeMode}
               </button>
             </div>
 
             {/* Instructions */}
             <div className="mt-3 text-xs sm:text-sm text-gray-600">
-              {mode === 'view' && <p>💡 ดูตำแหน่งโต๊ะปัจจุบันของคุณ (สีส้ม)</p>}
-              {mode === 'change' && <p>💡 เลือกโต๊ะว่าง (สีเขียว) เพื่อเปลี่ยนที่นั่ง</p>}
+              {mode === 'view' && <p>{t.floorPlan.viewInstruction}</p>}
+              {mode === 'change' && <p>{t.floorPlan.changeInstruction}</p>}
               {mode === 'merge' && (
-                <p>💡 เลือกโต๊ะที่มีคนนั่ง (สีน้ำเงิน) เพื่อรวมบิลกับเพื่อน</p>
+                <p>{t.floorPlan.mergeInstruction}</p>
               )}
             </div>
           </div>
@@ -184,8 +186,8 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
             <div className="relative bg-gray-100 rounded-xl p-4 sm:p-8 border-2 border-gray-300">
               {/* Restaurant Layout */}
               <div className="text-center mb-4">
-                <h3 className="text-base sm:text-lg font-bold text-gray-700">ร้านอาหารไทย</h3>
-                <p className="text-xs sm:text-sm text-gray-500">ชั้น 1</p>
+                <h3 className="text-base sm:text-lg font-bold text-gray-700">{t.header.restaurantName}</h3>
+                <p className="text-xs sm:text-sm text-gray-500">{t.floorPlan.floor1}</p>
               </div>
 
               {/* Tables Grid Layout - Responsive */}
@@ -306,23 +308,23 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
 
               {/* Legend */}
               <div className="mt-8 pt-4 border-t border-gray-300">
-                <p className="text-xs font-semibold text-gray-700 mb-2">สัญลักษณ์:</p>
+                <p className="text-xs font-semibold text-gray-700 mb-2">{t.floorPlan.legend}</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-orange-500 rounded border-2 border-orange-600"></div>
-                    <span>โต๊ะของคุณ</span>
+                    <span>{t.floorPlan.yourTable}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-100 rounded border-2 border-green-300"></div>
-                    <span>โต๊ะว่าง</span>
+                    <span>{t.floorPlan.available}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-red-100 rounded border-2 border-red-300"></div>
-                    <span>มีคนนั่ง</span>
+                    <span>{t.floorPlan.occupied}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-yellow-100 rounded border-2 border-yellow-300"></div>
-                    <span>จองไว้</span>
+                    <span>{t.floorPlan.reserved}</span>
                   </div>
                 </div>
               </div>
@@ -335,11 +337,11 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
               <div className="flex items-center gap-2 mb-3">
                 <ArrowLeftRight className="w-5 h-5 text-blue-600" />
                 <span className="font-semibold text-blue-900">
-                  รวมโต๊ะ {selectedTablesForMerge.length} โต๊ะ
+                  {t.floorPlan.mergeTables} {selectedTablesForMerge.length} {t.floorPlan.tables}
                 </span>
               </div>
               <div className="text-sm text-blue-800 mb-3">
-                โต๊ะที่เลือก:{' '}
+                {t.floorPlan.selectedTables}{' '}
                 {selectedTablesForMerge
                   .map(id => tables.find(t => t.id === id)?.number)
                   .join(', ')}
@@ -350,7 +352,7 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                 }}
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold shadow-md"
               >
-                ยืนยันรวมโต๊ะ
+                {t.floorPlan.confirmMerge}
               </button>
             </div>
           )}
@@ -365,27 +367,26 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
             onClick={() => setShowConfirmation(false)}
           ></div>
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">ยืนยันการดำเนินการ</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4">{t.floorPlan.confirmAction}</h3>
 
             {mode === 'change' && selectedTableForChange !== null && (
               <>
                 <p className="text-gray-600 mb-4">
-                  คุณต้องการเปลี่ยนจากโต๊ะ <strong>{currentTable?.number}</strong> ไปโต๊ะ{' '}
-                  <strong>{tables.find(t => t.id === selectedTableForChange)?.number}</strong>{' '}
-                  ใช่หรือไม่?
+                  {t.floorPlan.changeConfirmMsg} <strong>{currentTable?.number}</strong> {t.floorPlan.to}{' '}
+                  <strong>{tables.find(t => t.id === selectedTableForChange)?.number}</strong>?
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirmation(false)}
                     className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                   >
-                    ยกเลิก
+                    {t.common.cancel}
                   </button>
                   <button
                     onClick={confirmChangeTable}
                     className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all font-semibold"
                   >
-                    ยืนยัน
+                    {t.common.confirm}
                   </button>
                 </div>
               </>
@@ -394,17 +395,16 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
             {mode === 'merge' && selectedTablesForMerge.length > 1 && (
               <>
                 <p className="text-gray-600 mb-4">
-                  คุณต้องการรวมบิลของโต๊ะ{' '}
+                  {t.floorPlan.mergeConfirmMsg}{' '}
                   <strong>
                     {selectedTablesForMerge
                       .map(id => tables.find(t => t.id === id)?.number)
                       .join(', ')}
-                  </strong>{' '}
-                  เข้าด้วยกันใช่หรือไม่?
+                  </strong>?
                 </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                   <p className="text-sm text-blue-900">
-                    💡 บิลจะถูกรวมเป็นบิลเดียว และคำสั่งซื้อทั้งหมดจะอยู่ในบิลเดียวกัน
+                    {t.floorPlan.mergeNote}
                   </p>
                 </div>
                 <div className="flex gap-3">
@@ -412,13 +412,13 @@ export const FloorPlan: React.FC<FloorPlanProps> = ({
                     onClick={() => setShowConfirmation(false)}
                     className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
                   >
-                    ยกเลิก
+                    {t.common.cancel}
                   </button>
                   <button
                     onClick={confirmMergeTables}
                     className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold"
                   >
-                    ยืนยัน
+                    {t.common.confirm}
                   </button>
                 </div>
               </>

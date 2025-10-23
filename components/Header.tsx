@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShoppingCart, UtensilsCrossed, ClipboardList } from 'lucide-react';
+import { ShoppingCart, UtensilsCrossed, ClipboardList, Languages } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeaderProps {
   totalItems: number;
@@ -11,6 +12,12 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ totalItems, onCartClick, onHistoryClick, orderCount = 0 }) => {
+  const { language, setLanguage, t } = useLanguage();
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'th' ? 'en' : 'th');
+  };
+
   return (
     <header className="bg-white shadow-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -18,18 +25,28 @@ export const Header: React.FC<HeaderProps> = ({ totalItems, onCartClick, onHisto
           <div className="flex items-center space-x-3">
             <UtensilsCrossed className="w-8 h-8 text-orange-500" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">ร้านอาหารไทย</h1>
-              <p className="text-sm text-gray-500">สั่งอาหารออนไลน์</p>
+              <h1 className="text-2xl font-bold text-gray-800">{t.header.restaurantName}</h1>
+              <p className="text-sm text-gray-500">{t.header.orderOnline}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {/* ปุ่มประวัติการสั่งซื้อ */}
+            {/* Language switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="bg-gray-100 text-gray-700 px-3 py-2 rounded-full hover:bg-gray-200 transition-all shadow hover:shadow-md flex items-center space-x-1"
+              title={language === 'th' ? 'Switch to English' : 'เปลี่ยนเป็นภาษาไทย'}
+            >
+              <Languages className="w-4 h-4" />
+              <span className="text-xs font-semibold uppercase">{language === 'th' ? 'EN' : 'TH'}</span>
+            </button>
+
+            {/* Order history button */}
             <button
               onClick={onHistoryClick}
               className="relative bg-gray-100 text-gray-700 px-4 py-3 rounded-full hover:bg-gray-200 transition-all shadow hover:shadow-md flex items-center space-x-2"
             >
               <ClipboardList className="w-5 h-5" />
-              <span className="font-semibold hidden sm:inline">ประวัติ</span>
+              <span className="font-semibold hidden sm:inline">{t.header.history}</span>
               {orderCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                   {orderCount}
@@ -37,13 +54,13 @@ export const Header: React.FC<HeaderProps> = ({ totalItems, onCartClick, onHisto
               )}
             </button>
 
-            {/* ปุ่มตะกร้า */}
+            {/* Cart button */}
             <button
               onClick={onCartClick}
               className="relative bg-orange-500 text-white px-6 py-3 rounded-full hover:bg-orange-600 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2"
             >
               <ShoppingCart className="w-5 h-5" />
-              <span className="font-semibold">ตะกร้า</span>
+              <span className="font-semibold">{t.header.cart}</span>
               {totalItems > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
                   {totalItems}

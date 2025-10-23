@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { MenuItem } from '@/types';
 import StarRating from './StarRating';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MenuCardProps {
   item: MenuItem;
@@ -11,6 +12,7 @@ interface MenuCardProps {
 }
 
 export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
+  const { t } = useLanguage();
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [selectedInstructions, setSelectedInstructions] = useState<string[]>([]);
   const [customInstruction, setCustomInstruction] = useState('');
@@ -39,14 +41,14 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     setShowInstructionsModal(false);
   };
 
-  // คำแนะนำที่ใช้บ่อย
+  // Common instructions - using translations
   const commonInstructions = [
-    'เผ็ดมาก',
-    'เผ็ดน้อย',
-    'ไม่เผ็ด',
-    'ไม่ใส่ผัก',
-    'ไม่ใส่ผักชี',
-    'แยกน้ำจิ้ม',
+    t.commonInstructions.verySpicy,
+    t.commonInstructions.lessSpicy,
+    t.commonInstructions.noSpicy,
+    t.commonInstructions.noVegetables,
+    t.commonInstructions.noCoriander,
+    t.commonInstructions.sauceSeparate,
   ];
 
   // Toggle การเลือกคำขอพิเศษ
@@ -87,7 +89,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
             className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-2.5 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
           >
             <Plus className="w-5 h-5" />
-            <span>เพิ่มลงตะกร้า</span>
+            <span>{t.menuCard.addToCart}</span>
           </button>
         </div>
       </div>
@@ -105,11 +107,11 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
             </button>
 
             <h3 className="text-xl font-bold text-gray-800 mb-2">{item.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">คำขอพิเศษ (ถ้าต้องการ)</p>
+            <p className="text-sm text-gray-500 mb-4">{t.menuCard.specialInstructions}</p>
 
-            {/* ปุ่มคำแนะนำที่ใช้บ่อย */}
+            {/* Common instruction buttons */}
             <div className="mb-4">
-              <p className="text-xs text-gray-500 mb-2">เลือกคำขอที่ใช้บ่อย (เลือกได้หลายรายการ):</p>
+              <p className="text-xs text-gray-500 mb-2">{t.menuCard.selectCommonRequests}</p>
               <div className="flex flex-wrap gap-2">
                 {commonInstructions.map((instruction) => (
                   <button
@@ -127,26 +129,26 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               </div>
             </div>
 
-            {/* แสดงรายการที่เลือก */}
+            {/* Show selected items */}
             {selectedInstructions.length > 0 && (
               <div className="mb-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-xs text-orange-800 font-medium mb-1">คำขอที่เลือก:</p>
+                <p className="text-xs text-orange-800 font-medium mb-1">{t.menuCard.selectedRequests}</p>
                 <p className="text-sm text-orange-900">{selectedInstructions.join(', ')}</p>
               </div>
             )}
 
-            {/* ช่องกรอกข้อความเพิ่มเติม */}
+            {/* Custom instructions textarea */}
             <textarea
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="หรือพิมพ์คำขอพิเศษเพิ่มเติม..."
+              placeholder={t.menuCard.customInstructions}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm"
               rows={2}
             />
 
-            {/* ตัวเลือกทานในร้านหรือรับกลับบ้าน */}
+            {/* Dining preference selection */}
             <div className="mt-4 mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-3">ต้องการ:</p>
+              <p className="text-sm font-medium text-gray-700 mb-3">{t.menuCard.diningPreference}</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -157,7 +159,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  🍽️ ทานในร้าน
+                  {t.menuCard.dineIn}
                 </button>
                 <button
                   type="button"
@@ -168,24 +170,24 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  🥡 รับกลับบ้าน
+                  {t.menuCard.takeaway}
                 </button>
               </div>
             </div>
 
-            {/* ปุ่มยืนยัน */}
+            {/* Confirm buttons */}
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleCancelAdd}
                 className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
               >
-                ยกเลิก
+                {t.menuCard.cancel}
               </button>
               <button
                 onClick={handleConfirmAdd}
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg"
               >
-                เพิ่มลงตะกร้า
+                {t.menuCard.confirm}
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Bell, Utensils, CreditCard, X, Check, MapPin } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface FloatingActionMenuProps {
   currentTableNumber: string;
@@ -14,6 +15,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   onServiceRequest,
   onOpenFloorPlan,
 }) => {
+  const { t } = useLanguage();
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showUtensilsModal, setShowUtensilsModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -22,22 +24,22 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   const [requestSent, setRequestSent] = useState<string | null>(null);
 
   const utensilOptions = [
-    'ตะเกียบ',
-    'ช้อน',
-    'ส้อม',
-    'มีด',
-    'ช้อนกาแฟ',
-    'หลอด',
-    'ทิชชู่',
-    'น้ำเปล่า',
-    'น้ำแข็ง',
+    t.utensils.chopsticks,
+    t.utensils.spoon,
+    t.utensils.fork,
+    t.utensils.knife,
+    t.utensils.coffeeSpoon,
+    t.utensils.straw,
+    t.utensils.tissue,
+    t.utensils.water,
+    t.utensils.ice,
   ];
 
   const handleStaffRequest = () => {
     onServiceRequest('staff', staffMessage);
     setStaffMessage('');
     setShowStaffModal(false);
-    showSuccessMessage('เรียกพนักงาน');
+    showSuccessMessage(t.floatingMenu.callStaff);
   };
 
   const handleUtensilsRequest = () => {
@@ -45,14 +47,14 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       onServiceRequest('utensils', undefined, selectedUtensils);
       setSelectedUtensils([]);
       setShowUtensilsModal(false);
-      showSuccessMessage('ขออุปกรณ์');
+      showSuccessMessage(t.floatingMenu.requestUtensils);
     }
   };
 
   const handlePaymentRequest = () => {
     onServiceRequest('payment');
     setShowPaymentModal(false);
-    showSuccessMessage('เรียกเก็บเงิน');
+    showSuccessMessage(t.floatingMenu.requestPayment);
   };
 
   const showSuccessMessage = (type: string) => {
@@ -76,40 +78,40 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl z-40">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="grid grid-cols-4 gap-2">
-            {/* ปุ่มโต๊ะ / ผังโต๊ะ */}
+            {/* Table / Floor Plan Button */}
             <button
               onClick={onOpenFloorPlan}
               className="flex flex-col items-center justify-center p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all shadow-sm hover:shadow-md"
             >
               <MapPin className="w-6 h-6 text-orange-600 mb-1" />
-              <span className="text-xs font-semibold text-orange-700">โต๊ะ {currentTableNumber}</span>
+              <span className="text-xs font-semibold text-orange-700">{t.floatingMenu.table} {currentTableNumber}</span>
             </button>
 
-            {/* ปุ่มเรียกพนักงาน */}
+            {/* Call Staff Button */}
             <button
               onClick={() => setShowStaffModal(true)}
               className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all shadow-sm hover:shadow-md"
             >
               <Bell className="w-6 h-6 text-blue-600 mb-1" />
-              <span className="text-xs font-semibold text-blue-700">พนักงาน</span>
+              <span className="text-xs font-semibold text-blue-700">{t.floatingMenu.staff}</span>
             </button>
 
-            {/* ปุ่มขออุปกรณ์ */}
+            {/* Request Utensils Button */}
             <button
               onClick={() => setShowUtensilsModal(true)}
               className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all shadow-sm hover:shadow-md"
             >
               <Utensils className="w-6 h-6 text-green-600 mb-1" />
-              <span className="text-xs font-semibold text-green-700">อุปกรณ์</span>
+              <span className="text-xs font-semibold text-green-700">{t.floatingMenu.utensils}</span>
             </button>
 
-            {/* ปุ่มชำระเงิน */}
+            {/* Payment Button */}
             <button
               onClick={() => setShowPaymentModal(true)}
               className="flex flex-col items-center justify-center p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all shadow-sm hover:shadow-md"
             >
               <CreditCard className="w-6 h-6 text-purple-600 mb-1" />
-              <span className="text-xs font-semibold text-purple-700">ชำระ</span>
+              <span className="text-xs font-semibold text-purple-700">{t.floatingMenu.payment}</span>
             </button>
           </div>
         </div>
@@ -131,15 +133,15 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
               <div className="p-3 bg-blue-100 rounded-full">
                 <Bell className="w-6 h-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">เรียกพนักงาน</h3>
+              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.callStaff}</h3>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">ระบุเหตุผลที่ต้องการเรียกพนักงาน (ถ้าต้องการ)</p>
+            <p className="text-sm text-gray-600 mb-4">{t.floatingMenu.staffReason}</p>
 
             <textarea
               value={staffMessage}
               onChange={(e) => setStaffMessage(e.target.value)}
-              placeholder="เช่น ขอน้ำเปล่าเพิ่ม, สอบถามเมนู, ฯลฯ"
+              placeholder={t.floatingMenu.staffPlaceholder}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
               rows={4}
             />
@@ -149,13 +151,13 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 onClick={() => setShowStaffModal(false)}
                 className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
               >
-                ยกเลิก
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleStaffRequest}
                 className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all font-semibold shadow-md hover:shadow-lg"
               >
-                เรียกพนักงาน
+                {t.floatingMenu.callStaff}
               </button>
             </div>
           </div>
@@ -178,10 +180,10 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
               <div className="p-3 bg-green-100 rounded-full">
                 <Utensils className="w-6 h-6 text-green-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">ขออุปกรณ์</h3>
+              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.requestUtensils}</h3>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">เลือกอุปกรณ์ที่ต้องการ (เลือกได้หลายรายการ)</p>
+            <p className="text-sm text-gray-600 mb-4">{t.floatingMenu.selectUtensils}</p>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               {utensilOptions.map((item) => (
@@ -201,7 +203,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
             {selectedUtensils.length > 0 && (
               <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs text-green-800 font-medium mb-1">รายการที่เลือก:</p>
+                <p className="text-xs text-green-800 font-medium mb-1">{t.floatingMenu.selectedItems}</p>
                 <p className="text-sm text-green-900">{selectedUtensils.join(', ')}</p>
               </div>
             )}
@@ -214,7 +216,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 }}
                 className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
               >
-                ยกเลิก
+                {t.common.cancel}
               </button>
               <button
                 onClick={handleUtensilsRequest}
@@ -225,7 +227,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                     : 'bg-green-600 text-white hover:bg-green-700'
                 }`}
               >
-                ยืนยัน
+                {t.common.confirm}
               </button>
             </div>
           </div>
@@ -248,16 +250,16 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
               <div className="p-3 bg-purple-100 rounded-full">
                 <CreditCard className="w-6 h-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">เรียกเก็บเงิน</h3>
+              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.requestPayment}</h3>
             </div>
 
             <p className="text-gray-600 mb-6">
-              คุณต้องการเรียกพนักงานมาเก็บเงินใช่หรือไม่?
+              {t.floatingMenu.paymentConfirm}
             </p>
 
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-purple-900">
-                💡 <strong>หมายเหตุ:</strong> พนักงานจะนำบิลมาให้ตรวจสอบและชำระเงินค่ะ
+                {t.floatingMenu.paymentNote}
               </p>
             </div>
 
@@ -266,13 +268,13 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                 onClick={() => setShowPaymentModal(false)}
                 className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
               >
-                ยกเลิก
+                {t.common.cancel}
               </button>
               <button
                 onClick={handlePaymentRequest}
                 className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all font-semibold shadow-md hover:shadow-lg"
               >
-                เรียกเก็บเงิน
+                {t.floatingMenu.requestPayment}
               </button>
             </div>
           </div>
@@ -284,7 +286,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
         <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-2xl z-50 animate-bounce">
           <div className="flex items-center space-x-2">
             <Check className="w-5 h-5" />
-            <span className="font-semibold">{requestSent}สำเร็จ!</span>
+            <span className="font-semibold">{requestSent} {t.floatingMenu.success}</span>
           </div>
         </div>
       )}
