@@ -171,10 +171,15 @@ export default function Home() {
       totalItems,
       orderDate: new Date(),
       status: 'preparing',
+      tableNumber: currentTable?.number,
     };
 
     // เพิ่มลงประวัติการสั่งซื้อ
-    setOrderHistory(prev => [newOrder, ...prev]);
+    const updatedHistory = [newOrder, ...orderHistory];
+    setOrderHistory(updatedHistory);
+
+    // บันทึกลง localStorage สำหรับหน้า /orders
+    localStorage.setItem('orderHistory', JSON.stringify(updatedHistory));
 
     setOrderConfirmed(true);
     setTimeout(() => {
@@ -201,9 +206,18 @@ export default function Home() {
       details,
       items,
       status: 'pending',
+      tableNumber: currentTable?.number,
     };
 
+    // Save to state
     setServiceRequests(prev => [newRequest, ...prev]);
+
+    // Save to localStorage for staff/kitchen to see
+    const existingRequests = localStorage.getItem('serviceRequests');
+    const requests = existingRequests ? JSON.parse(existingRequests) : [];
+    const updatedRequests = [newRequest, ...requests];
+    localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
+
     console.log('Service Request:', newRequest);
   };
 

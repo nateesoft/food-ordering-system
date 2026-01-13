@@ -14,6 +14,7 @@ export interface CartItem extends MenuItem {
   specialInstructions?: string;
   cartItemId: string;
   diningOption: 'dine-in' | 'takeaway';
+  itemStatus?: 'preparing' | 'completed' | 'delivered';
 }
 
 export interface Order {
@@ -23,6 +24,7 @@ export interface Order {
   totalItems: number;
   orderDate: Date;
   status: 'completed' | 'preparing' | 'delivered';
+  tableNumber?: string;
 }
 
 export interface ServiceRequest {
@@ -32,6 +34,7 @@ export interface ServiceRequest {
   details?: string;
   items?: string[];
   status: 'pending' | 'completed';
+  tableNumber?: string;
 }
 
 export interface Table {

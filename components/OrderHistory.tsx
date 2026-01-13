@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
-import { X, Clock, CheckCircle, Package } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, Clock, CheckCircle, Package, Truck } from 'lucide-react';
 import { Order } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -11,8 +11,35 @@ interface OrderHistoryProps {
   onClose: () => void;
 }
 
-export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onClose }) => {
+export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: initialOrders, onClose }) => {
   const { t, language } = useLanguage();
+  const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  // Update orders when initialOrders changes
+  useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+
+  // Poll for order updates from localStorage every 3 seconds
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const loadOrders = () => {
+      const savedOrders = localStorage.getItem('orderHistory');
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        setOrders(parsedOrders);
+      }
+    };
+
+    // Initial load
+    loadOrders();
+
+    // Poll every 3 seconds
+    const interval = setInterval(loadOrders, 3000);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -80,6 +107,45 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
     }
   };
 
+  const getItemStatusIcon = (status?: 'preparing' | 'completed' | 'delivered') => {
+    switch (status) {
+      case 'preparing':
+        return <Clock className="w-3 h-3" />;
+      case 'completed':
+        return <CheckCircle className="w-3 h-3" />;
+      case 'delivered':
+        return <Truck className="w-3 h-3" />;
+      default:
+        return <Clock className="w-3 h-3" />;
+    }
+  };
+
+  const getItemStatusColor = (status?: 'preparing' | 'completed' | 'delivered') => {
+    switch (status) {
+      case 'preparing':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'delivered':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
+      default:
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+    }
+  };
+
+  const getItemStatusText = (status?: 'preparing' | 'completed' | 'delivered') => {
+    switch (status) {
+      case 'preparing':
+        return 'กำลังทำ';
+      case 'completed':
+        return 'เสร็จแล้ว';
+      case 'delivered':
+        return 'ส่งแล้ว';
+      default:
+        return 'กำลังทำ';
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
@@ -135,18 +201,27 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
                     {/* Order Items */}
                     <div className="space-y-2 mb-3">
                       {order.items.map((item) => (
-                        <div key={item.cartItemId} className="flex justify-between items-start text-sm">
+                        <div key={item.cartItemId} className="flex justify-between items-start text-sm gap-2">
                           <div className="flex-1">
-                            <p className="font-medium text-gray-700">
-                              {item.name} x{item.quantity}
-                            </p>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium text-gray-700">
+                                {item.name} x{item.quantity}
+                              </p>
+                              <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getItemStatusColor(item.itemStatus)}`}>
+                                {getItemStatusIcon(item.itemStatus)}
+                                <span>{getItemStatusText(item.itemStatus)}</span>
+                              </div>
+                            </div>
                             {item.specialInstructions && (
                               <p className="text-xs text-orange-600 mt-0.5">
                                 • {item.specialInstructions}
                               </p>
                             )}
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {item.diningOption === 'dine-in' ? '🍽️ ทานในร้าน' : '🥡 รับกลับบ้าน'}
+                            </p>
                           </div>
-                          <p className="text-gray-600 font-medium">
+                          <p className="text-gray-600 font-medium whitespace-nowrap">
                             {t.common.baht}{item.price * item.quantity}
                           </p>
                         </div>
