@@ -51,6 +51,8 @@ export const en: Translations = {
     completed: 'Completed',
     delivered: 'Delivered',
     legend: 'Legend:',
+    total: 'Total',
+    items: 'items',
   },
 
   search: {
@@ -101,9 +103,11 @@ export const en: Translations = {
     staffReason: 'Reason for calling staff (Optional)',
     staffPlaceholder: 'e.g., Need more water, Ask about menu, etc.',
     selectUtensils: 'Select utensils needed (Multiple selection)',
+    selectedItems: 'Selected items:',
     paymentConfirm: 'Would you like to request the bill?',
     paymentNote: '💡 Note: Staff will bring the bill for your review and payment',
     requestSent: 'Success!',
+    success: 'Request sent successfully',
   },
 
   utensils: {

@@ -57,11 +57,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
   const getStatusText = (status: Order['status']) => {
     switch (status) {
       case 'preparing':
-        return t.orderHistory.statusPreparing;
+        return t.orderHistory.preparing;
       case 'completed':
-        return t.orderHistory.statusCompleted;
+        return t.orderHistory.completed;
       case 'delivered':
-        return t.orderHistory.statusDelivered;
+        return t.orderHistory.delivered;
       default:
         return '';
     }
@@ -97,7 +97,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders, onCl
               </button>
             </div>
             <p className="text-orange-100 mt-1">
-              {t.orderHistory.totalOrders} {orders.length} {t.orderHistory.orders}
+              {orders.length} {t.orderHistory.totalOrders}
             </p>
           </div>
 

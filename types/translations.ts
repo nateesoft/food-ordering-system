@@ -56,6 +56,8 @@ export interface Translations {
     completed: string;
     delivered: string;
     legend: string;
+    total: string;
+    items: string;
   };
 
   // Search
@@ -109,9 +111,11 @@ export interface Translations {
     staffReason: string;
     staffPlaceholder: string;
     selectUtensils: string;
+    selectedItems: string;
     paymentConfirm: string;
     paymentNote: string;
     requestSent: string;
+    success: string;
   };
 
   // Utensils

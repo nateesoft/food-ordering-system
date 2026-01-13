@@ -28,7 +28,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
     t.utensils.spoon,
     t.utensils.fork,
     t.utensils.knife,
-    t.utensils.coffeeSpoon,
+    t.utensils.teaspoon,
     t.utensils.straw,
     t.utensils.tissue,
     t.utensils.water,

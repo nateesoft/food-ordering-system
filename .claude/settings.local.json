@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Read(//Users/nateelive/Documents/Projects/GithubProject/crm-system/lib/**)",
+      "Read(//Users/nateelive/Documents/Projects/GithubProject/crm-system/components/**)",
+      "Bash(tree:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
