@@ -10,6 +10,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { FloorPlan } from '@/components/FloorPlan';
+import { WelcomeModal } from '@/components/WelcomeModal';
 import { menuItems } from '@/data/menuItems';
 import { MenuItem, CartItem, Order, ServiceRequest, Table } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -26,6 +27,7 @@ export default function Home() {
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [currentTableId, setCurrentTableId] = useState(5);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [tables, setTables] = useState<Table[]>([
     // ด้านหน้าร้าน
     { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
@@ -179,7 +181,15 @@ export default function Home() {
       setCart([]);
       setOrderConfirmed(false);
       setShowCart(false);
+      // แสดง Welcome Modal อีกครั้งหลังสั่งอาหารเสร็จ
+      setShowWelcome(true);
     }, 3000);
+  };
+
+  // เลือกหมวดหมู่จาก Welcome Modal
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setSearchQuery('');
   };
 
   // จัดการ Service Request
@@ -300,11 +310,20 @@ export default function Home() {
         onMergeTables={handleMergeTables}
       />
 
+      {/* Welcome Modal */}
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={() => setShowWelcome(false)}
+        onSelectCategory={handleCategorySelect}
+        tableNumber={currentTable?.number}
+      />
+
       {/* Floating Action Menu */}
       <FloatingActionMenu
         currentTableNumber={currentTable?.number || 'N/A'}
         onServiceRequest={handleServiceRequest}
         onOpenFloorPlan={() => setShowFloorPlan(true)}
+        onOpenWelcome={() => setShowWelcome(true)}
       />
 
       {/* Order Confirmation Toast */}

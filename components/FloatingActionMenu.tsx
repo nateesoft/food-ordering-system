@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Utensils, CreditCard, X, Check, MapPin } from 'lucide-react';
+import { Bell, Utensils, CreditCard, X, Check, MapPin, Home } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface FloatingActionMenuProps {
   currentTableNumber: string;
   onServiceRequest: (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => void;
   onOpenFloorPlan: () => void;
+  onOpenWelcome?: () => void;
 }
 
 export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   currentTableNumber,
   onServiceRequest,
   onOpenFloorPlan,
+  onOpenWelcome,
 }) => {
   const { t } = useLanguage();
   const [showStaffModal, setShowStaffModal] = useState(false);
@@ -93,7 +95,18 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {/* Fixed Footer Menu */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl z-40">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
+            {/* Home / Welcome Button */}
+            {onOpenWelcome && (
+              <button
+                onClick={onOpenWelcome}
+                className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+              >
+                <Home className="w-6 h-6 text-gray-600 mb-1" />
+                <span className="text-xs font-semibold text-gray-700">หน้าหลัก</span>
+              </button>
+            )}
+
             {/* Table / Floor Plan Button */}
             <button
               onClick={onOpenFloorPlan}
