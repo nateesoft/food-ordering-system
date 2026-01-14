@@ -11,7 +11,12 @@ interface HeaderProps {
   orderCount?: number;
 }
 
-export const Header: React.FC<HeaderProps> = ({ totalItems, onCartClick, onHistoryClick, orderCount = 0 }) => {
+export const Header: React.FC<HeaderProps> = ({
+  totalItems,
+  onCartClick,
+  onHistoryClick,
+  orderCount = 0
+}) => {
   const { language, setLanguage, t } = useLanguage();
 
   const toggleLanguage = () => {

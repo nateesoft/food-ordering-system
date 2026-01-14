@@ -291,11 +291,31 @@ export default function OrdersPage() {
   };
 
   const markRequestAsCompleted = (requestId: string) => {
+    // Find the request to check its type
+    const request = serviceRequests.find(req => req.id === requestId);
+
     const updatedRequests = serviceRequests.map(req =>
       req.id === requestId ? { ...req, status: 'completed' as const } : req
     );
     setServiceRequests(updatedRequests);
     localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
+
+    // If this is a payment request, clear all orders for that table
+    if (request && request.type === 'payment' && request.tableNumber) {
+      const tableNumber = request.tableNumber;
+
+      // Filter out orders from this table
+      const updatedOrders = orders.filter(order => order.tableNumber !== tableNumber);
+      setOrders(updatedOrders);
+      localStorage.setItem('orderHistory', JSON.stringify(updatedOrders));
+
+      // Also clear completed service requests for this table
+      const cleanedRequests = updatedRequests.filter(req =>
+        !(req.tableNumber === tableNumber && req.status === 'completed')
+      );
+      setServiceRequests(cleanedRequests);
+      localStorage.setItem('serviceRequests', JSON.stringify(cleanedRequests));
+    }
   };
 
   const getRequestIcon = (type: string) => {
@@ -321,6 +341,32 @@ export default function OrdersPage() {
         return 'ขอชำระเงิน';
       default:
         return 'อื่นๆ';
+    }
+  };
+
+  const getWaitingMinutesForOrder = (orderDate: Date) => {
+    const now = new Date();
+    const orderTime = new Date(orderDate);
+    return Math.floor((now.getTime() - orderTime.getTime()) / (1000 * 60));
+  };
+
+  const getEmotionForItem = (orderDate: Date, itemStatus?: 'preparing' | 'completed' | 'delivered') => {
+    if (itemStatus === 'delivered') {
+      return null; // Don't show emotion for delivered items
+    }
+
+    const waitingMinutes = getWaitingMinutesForOrder(orderDate);
+
+    if (waitingMinutes <= 5) {
+      return { emoji: '😊', color: 'text-green-600' };
+    } else if (waitingMinutes <= 10) {
+      return { emoji: '😐', color: 'text-yellow-600' };
+    } else if (waitingMinutes <= 20) {
+      return { emoji: '😕', color: 'text-orange-600' };
+    } else if (waitingMinutes <= 30) {
+      return { emoji: '😤', color: 'text-red-600' };
+    } else {
+      return { emoji: '😡', color: 'text-red-700' };
     }
   };
 
@@ -608,16 +654,28 @@ export default function OrdersPage() {
                       </h4>
 
                       <div className="space-y-3 mb-6">
-                        {order.items.map((item) => (
+                        {order.items.map((item) => {
+                          const emotion = getEmotionForItem(order.orderDate, item.itemStatus);
+                          const waitingMinutes = getWaitingMinutesForOrder(order.orderDate);
+
+                          return (
                           <div key={item.cartItemId} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                             <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-1">
+                              <div className="flex items-center gap-3 mb-1 flex-wrap">
                                 <h5 className="font-semibold text-gray-800">{item.name}</h5>
                                 <span className="text-sm text-gray-600">x{item.quantity}</span>
                                 <div className={`px-2 py-1 rounded-full border ${getStatusColor(item.itemStatus || 'preparing')} flex items-center gap-1 text-xs font-semibold`}>
                                   {getStatusIcon(item.itemStatus || 'preparing')}
                                   {getStatusText(item.itemStatus || 'preparing')}
                                 </div>
+                                {emotion && (
+                                  <div className="flex items-center gap-1 px-2 py-1 bg-white border-2 border-gray-300 rounded-full">
+                                    <span className="text-lg">{emotion.emoji}</span>
+                                    <span className={`text-xs font-bold ${emotion.color}`}>
+                                      {waitingMinutes} นาที
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                               {item.specialInstructions && (
                                 <p className="text-sm text-gray-600">📝 {item.specialInstructions}</p>
@@ -652,7 +710,8 @@ export default function OrdersPage() {
                               )}
                             </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       {/* Bulk Actions */}

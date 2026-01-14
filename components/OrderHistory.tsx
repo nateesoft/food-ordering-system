@@ -146,6 +146,32 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
     }
   };
 
+  const getWaitingMinutesForOrder = (orderDate: Date) => {
+    const now = new Date();
+    const orderTime = new Date(orderDate);
+    return Math.floor((now.getTime() - orderTime.getTime()) / (1000 * 60));
+  };
+
+  const getEmotionForItem = (orderDate: Date, itemStatus?: 'preparing' | 'completed' | 'delivered') => {
+    if (itemStatus === 'delivered') {
+      return null; // Don't show emotion for delivered items
+    }
+
+    const waitingMinutes = getWaitingMinutesForOrder(orderDate);
+
+    if (waitingMinutes <= 5) {
+      return { emoji: '😊', color: 'text-green-600' };
+    } else if (waitingMinutes <= 10) {
+      return { emoji: '😐', color: 'text-yellow-600' };
+    } else if (waitingMinutes <= 20) {
+      return { emoji: '😕', color: 'text-orange-600' };
+    } else if (waitingMinutes <= 30) {
+      return { emoji: '😤', color: 'text-red-600' };
+    } else {
+      return { emoji: '😡', color: 'text-red-700' };
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
@@ -200,10 +226,14 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
 
                     {/* Order Items */}
                     <div className="space-y-2 mb-3">
-                      {order.items.map((item) => (
+                      {order.items.map((item) => {
+                        const emotion = getEmotionForItem(order.orderDate, item.itemStatus);
+                        const waitingMinutes = getWaitingMinutesForOrder(order.orderDate);
+
+                        return (
                         <div key={item.cartItemId} className="flex justify-between items-start text-sm gap-2">
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <p className="font-medium text-gray-700">
                                 {item.name} x{item.quantity}
                               </p>
@@ -211,6 +241,14 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                                 {getItemStatusIcon(item.itemStatus)}
                                 <span>{getItemStatusText(item.itemStatus)}</span>
                               </div>
+                              {emotion && (
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-white border-2 border-gray-200 rounded-full">
+                                  <span className="text-sm">{emotion.emoji}</span>
+                                  <span className={`text-xs font-bold ${emotion.color}`}>
+                                    {waitingMinutes} นาที
+                                  </span>
+                                </div>
+                              )}
                             </div>
                             {item.specialInstructions && (
                               <p className="text-xs text-orange-600 mt-0.5">
@@ -225,7 +263,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                             {t.common.baht}{item.price * item.quantity}
                           </p>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     {/* Order Total */}
