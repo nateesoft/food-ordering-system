@@ -28,6 +28,8 @@ export default function Home() {
   const [currentTableId, setCurrentTableId] = useState(5);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showOrderAnimation, setShowOrderAnimation] = useState(false);
+  const [animatingItems, setAnimatingItems] = useState<CartItem[]>([]);
   const [tables, setTables] = useState<Table[]>([
     // ด้านหน้าร้าน
     { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
@@ -163,6 +165,10 @@ export default function Home() {
 
   // ยืนยันการสั่งซื้อ
   const confirmOrder = () => {
+    // Store items for animation
+    setAnimatingItems([...cart]);
+    setShowOrderAnimation(true);
+
     // สร้าง order ใหม่
     const newOrder: Order = {
       orderId: `ORD-${Date.now()}`,
@@ -181,14 +187,20 @@ export default function Home() {
     // บันทึกลง localStorage สำหรับหน้า /orders
     localStorage.setItem('orderHistory', JSON.stringify(updatedHistory));
 
-    setOrderConfirmed(true);
+    // Hide animation after items fly away
+    setTimeout(() => {
+      setShowOrderAnimation(false);
+      setOrderConfirmed(true);
+    }, 2000);
+
+    // Clear cart and close
     setTimeout(() => {
       setCart([]);
       setOrderConfirmed(false);
       setShowCart(false);
       // แสดง Welcome Modal อีกครั้งหลังสั่งอาหารเสร็จ
       setShowWelcome(true);
-    }, 3000);
+    }, 4500);
   };
 
   // เลือกหมวดหมู่จาก Welcome Modal
@@ -340,15 +352,107 @@ export default function Home() {
         onOpenWelcome={() => setShowWelcome(true)}
       />
 
-      {/* Order Confirmation Toast */}
-      {orderConfirmed && (
-        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-xl shadow-2xl z-50 animate-bounce">
-          <div className="flex items-center space-x-3">
-            <Check className="w-6 h-6" />
-            <span className="font-bold text-lg">สั่งอาหารสำเร็จแล้ว! ขอบคุณครับ</span>
+      {/* Order Flying Animation */}
+      {showOrderAnimation && (
+        <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+          {/* Kitchen Icon at top */}
+          <div className="absolute top-10 left-1/2 transform -translate-x-1/2">
+            <div className="bg-orange-500 text-white p-6 rounded-full shadow-2xl animate-pulse">
+              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </div>
+            <p className="text-center text-orange-600 font-bold mt-2 text-xl">ห้องครัว</p>
+          </div>
+
+          {/* Flying Food Items */}
+          {animatingItems.map((item, index) => (
+            <div
+              key={item.cartItemId}
+              className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2"
+              style={{
+                animation: `flyToKitchen 2s ease-in-out ${index * 0.15}s forwards`,
+                animationDelay: `${index * 0.15}s`,
+              }}
+            >
+              <div className="bg-white rounded-2xl shadow-2xl p-4 border-2 border-orange-500 min-w-[200px]">
+                <div className="flex items-center gap-3">
+                  <div className="bg-orange-100 rounded-full p-2">
+                    <span className="text-2xl">🍽️</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-800 text-sm">{item.name}</p>
+                    <p className="text-xs text-gray-600">จำนวน: {item.quantity}</p>
+                    {item.specialInstructions && (
+                      <p className="text-xs text-orange-600 mt-1">📝 {item.specialInstructions}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Trail particles */}
+          <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
+            {[...Array(20)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-2 h-2 bg-orange-400 rounded-full"
+                style={{
+                  animation: `sparkle 1.5s ease-out ${i * 0.05}s forwards`,
+                  left: `${Math.random() * 40 - 20}px`,
+                  bottom: `${Math.random() * 40 - 20}px`,
+                }}
+              />
+            ))}
           </div>
         </div>
       )}
+
+      {/* Success Message */}
+      {orderConfirmed && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-xl shadow-2xl z-50 animate-bounce">
+          <div className="flex items-center space-x-3">
+            <Check className="w-6 h-6" />
+            <div>
+              <p className="font-bold text-lg">สั่งอาหารสำเร็จแล้ว!</p>
+              <p className="text-sm text-green-100">ห้องครัวได้รับออเดอร์แล้วครับ ขอบคุณครับ</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes flyToKitchen {
+          0% {
+            transform: translate(-50%, 0) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(-50%, -200px) scale(1.1) rotate(5deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(-50%, -500px) scale(0.3) rotate(15deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes sparkle {
+          0% {
+            transform: translate(0, 0) scale(1);
+            opacity: 1;
+          }
+          100% {
+            transform: translate(
+              ${Math.random() * 200 - 100}px,
+              ${Math.random() * -300 - 100}px
+            ) scale(0);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
