@@ -11,7 +11,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, AddOn } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TableOrderClientProps {
@@ -66,13 +66,18 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in') => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[]) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(
-        item => item.id === menuItem.id &&
-                item.specialInstructions === specialInstructions &&
-                item.diningOption === diningOption
-      );
+      // Serialize add-ons for comparison
+      const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
+
+      const existingItem = prevCart.find(item => {
+        const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
+        return item.id === menuItem.id &&
+               item.specialInstructions === specialInstructions &&
+               item.diningOption === diningOption &&
+               itemAddOnsKey === addOnsKey;
+      });
 
       if (existingItem) {
         return prevCart.map(item =>
@@ -82,8 +87,20 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         );
       }
 
+      // คำนวณราคารวมกับ add-ons
+      const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
+      const finalPrice = menuItem.price + addOnsTotal;
+
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
-      return [...prevCart, { ...menuItem, quantity: 1, specialInstructions, cartItemId, diningOption }];
+      return [...prevCart, {
+        ...menuItem,
+        price: finalPrice,
+        quantity: 1,
+        specialInstructions,
+        cartItemId,
+        diningOption,
+        selectedAddOns
+      }];
     });
   };
 

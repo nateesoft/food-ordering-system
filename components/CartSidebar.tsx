@@ -144,8 +144,32 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                   <div key={item.cartItemId} className="bg-gray-50 rounded-xl p-4 shadow-sm">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-800">{item.name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-gray-800">{item.name}</h3>
+                          {item.type && item.type !== 'single' && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium uppercase">
+                              {item.type}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-orange-600 font-semibold">{t.common.baht}{item.price}</p>
+
+                        {/* Show selected add-ons */}
+                        {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                          <div className="mt-1 text-xs text-gray-600">
+                            <span className="font-medium">Add-ons: </span>
+                            {item.selectedAddOns.map(addOn => addOn.name).join(', ')}
+                          </div>
+                        )}
+
+                        {/* Show set components */}
+                        {(item.type === 'set' || item.type === 'group') && item.setComponents && item.setComponents.length > 0 && (
+                          <div className="mt-1 text-xs text-gray-600">
+                            <span className="font-medium">ประกอบด้วย: </span>
+                            {item.setComponents.map(comp => `${comp.name} x${comp.quantity}`).join(', ')}
+                          </div>
+                        )}
+
                         {/* Dining option display */}
                         <div className="mt-1 flex items-center gap-2">
                           <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">

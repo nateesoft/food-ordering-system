@@ -12,7 +12,7 @@ import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { FloorPlan } from '@/components/FloorPlan';
 import { WelcomeModal } from '@/components/WelcomeModal';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, Table } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
@@ -96,14 +96,19 @@ export default function Home() {
   }, [cart]);
 
   // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in') => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[]) => {
     setCart(prevCart => {
-      // หารายการที่ตรงกันทั้ง id, specialInstructions และ diningOption
-      const existingItem = prevCart.find(
-        item => item.id === menuItem.id &&
-                item.specialInstructions === specialInstructions &&
-                item.diningOption === diningOption
-      );
+      // Serialize add-ons for comparison
+      const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
+
+      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption และ selectedAddOns
+      const existingItem = prevCart.find(item => {
+        const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
+        return item.id === menuItem.id &&
+               item.specialInstructions === specialInstructions &&
+               item.diningOption === diningOption &&
+               itemAddOnsKey === addOnsKey;
+      });
 
       if (existingItem) {
         // ถ้าเจอรายการที่ตรงกันทุกอย่าง ให้เพิ่มจำนวน
@@ -114,9 +119,21 @@ export default function Home() {
         );
       }
 
+      // คำนวณราคารวมกับ add-ons
+      const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
+      const finalPrice = menuItem.price + addOnsTotal;
+
       // ถ้าไม่เจอ หรือมีอะไรต่างกัน ให้สร้างรายการใหม่
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
-      return [...prevCart, { ...menuItem, quantity: 1, specialInstructions, cartItemId, diningOption }];
+      return [...prevCart, {
+        ...menuItem,
+        price: finalPrice, // Update price to include add-ons
+        quantity: 1,
+        specialInstructions,
+        cartItemId,
+        diningOption,
+        selectedAddOns
+      }];
     });
   };
 
