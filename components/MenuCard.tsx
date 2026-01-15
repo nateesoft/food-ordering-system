@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
-import { MenuItem, AddOn } from '@/types';
+import { Plus, X, ChevronDown } from 'lucide-react';
+import { MenuItem, AddOn, AddOnGroup } from '@/types';
 import StarRating from './StarRating';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { addOns as availableAddOns } from '@/data/addOns';
+import { addOnGroups as availableAddOnGroups } from '@/data/addOnGroups';
 
 interface MenuCardProps {
   item: MenuItem;
-  onAddToCart: (item: MenuItem, specialInstructions?: string, diningOption?: 'dine-in' | 'takeaway', selectedAddOns?: AddOn[]) => void;
+  onAddToCart: (item: MenuItem, specialInstructions?: string, diningOption?: 'dine-in' | 'takeaway', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => void;
 }
 
 export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
@@ -19,6 +20,9 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
   const [customInstruction, setCustomInstruction] = useState('');
   const [diningOption, setDiningOption] = useState<'dine-in' | 'takeaway'>('dine-in');
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
+  const [selectedAddOnGroups, setSelectedAddOnGroups] = useState<AddOnGroup[]>([]);
+  const [isAddOnsExpanded, setIsAddOnsExpanded] = useState(true);
+  const [isAddOnGroupsExpanded, setIsAddOnGroupsExpanded] = useState(true);
 
   const handleAddToCart = () => {
     setShowInstructionsModal(true);
@@ -30,11 +34,12 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       allInstructions.push(customInstruction.trim());
     }
     const finalInstructions = allInstructions.join(', ');
-    onAddToCart(item, finalInstructions, diningOption, selectedAddOns);
+    onAddToCart(item, finalInstructions, diningOption, selectedAddOns, selectedAddOnGroups);
     setSelectedInstructions([]);
     setCustomInstruction('');
     setDiningOption('dine-in');
     setSelectedAddOns([]);
+    setSelectedAddOnGroups([]);
     setShowInstructionsModal(false);
   };
 
@@ -42,6 +47,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     setSelectedInstructions([]);
     setCustomInstruction('');
     setSelectedAddOns([]);
+    setSelectedAddOnGroups([]);
     setShowInstructionsModal(false);
   };
 
@@ -56,14 +62,31 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     });
   };
 
+  const toggleAddOnGroup = (group: AddOnGroup) => {
+    setSelectedAddOnGroups(prev => {
+      const exists = prev.find(g => g.id === group.id);
+      if (exists) {
+        return prev.filter(g => g.id !== group.id);
+      } else {
+        return [...prev, group];
+      }
+    });
+  };
+
   // Get available add-ons for this item
   const itemAddOns = item.availableAddOns
     ? availableAddOns.filter(addOn => item.availableAddOns?.includes(addOn.id))
     : [];
 
-  // Calculate total price with add-ons
+  // Get available add-on groups for this item
+  const itemAddOnGroups = item.availableAddOnGroups
+    ? availableAddOnGroups.filter(group => item.availableAddOnGroups?.includes(group.id))
+    : [];
+
+  // Calculate total price with add-ons and groups
   const addOnsTotalPrice = selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0);
-  const totalPrice = item.price + addOnsTotalPrice;
+  const addOnGroupsTotalPrice = selectedAddOnGroups.reduce((sum, group) => sum + group.price, 0);
+  const totalPrice = item.price + addOnsTotalPrice + addOnGroupsTotalPrice;
 
   // Common instructions - using translations
   const commonInstructions = [
@@ -209,47 +232,137 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
             {/* Add-ons Selection */}
             {itemAddOns.length > 0 && (
               <div className="mb-4">
-                <p className="text-sm font-medium text-gray-700 mb-3">🍔 เพิ่มเติม (Add-ons)</p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {itemAddOns.map((addOn) => {
-                    const isSelected = selectedAddOns.some(a => a.id === addOn.id);
-                    return (
-                      <button
-                        key={addOn.id}
-                        onClick={() => toggleAddOn(addOn)}
-                        className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                          isSelected
-                            ? 'border-orange-500 bg-orange-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                            isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'
-                          }`}>
-                            {isSelected && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
+                <button
+                  onClick={() => setIsAddOnsExpanded(!isAddOnsExpanded)}
+                  className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
+                >
+                  <p className="text-sm font-medium text-gray-700">🍔 เพิ่มเติม (Add-ons)</p>
+                  <ChevronDown
+                    className={`w-5 h-5 text-gray-600 transition-transform ${isAddOnsExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isAddOnsExpanded && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {itemAddOns.map((addOn) => {
+                      const isSelected = selectedAddOns.some(a => a.id === addOn.id);
+                      return (
+                        <button
+                          key={addOn.id}
+                          onClick={() => toggleAddOn(addOn)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                            isSelected
+                              ? 'border-orange-500 bg-orange-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                              isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'
+                            }`}>
+                              {isSelected && (
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            <span className="text-sm font-medium text-gray-800">{addOn.name}</span>
                           </div>
-                          <span className="text-sm font-medium text-gray-800">{addOn.name}</span>
-                        </div>
-                        <span className={`text-sm font-bold ${isSelected ? 'text-orange-600' : 'text-gray-600'}`}>
-                          +฿{addOn.price}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                          <span className={`text-sm font-bold ${isSelected ? 'text-orange-600' : 'text-gray-600'}`}>
+                            +฿{addOn.price}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Show selected add-ons and total */}
-            {selectedAddOns.length > 0 && (
+            {/* Add-on Groups Selection */}
+            {itemAddOnGroups.length > 0 && (
+              <div className="mb-4">
+                <button
+                  onClick={() => setIsAddOnGroupsExpanded(!isAddOnGroupsExpanded)}
+                  className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
+                >
+                  <p className="text-sm font-medium text-gray-700">🎁 เซ็ตพิเศษ (Add-on Groups)</p>
+                  <ChevronDown
+                    className={`w-5 h-5 text-gray-600 transition-transform ${isAddOnGroupsExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isAddOnGroupsExpanded && (
+                  <div className="space-y-3 max-h-64 overflow-y-auto">
+                    {itemAddOnGroups.map((group) => {
+                      const isSelected = selectedAddOnGroups.some(g => g.id === group.id);
+                      // Get add-on names in this group
+                      const groupAddOns = availableAddOns.filter(addon => group.addOnIds.includes(addon.id));
+
+                      return (
+                        <button
+                          key={group.id}
+                          onClick={() => toggleAddOnGroup(group)}
+                          className={`w-full p-4 rounded-xl border-2 transition-all ${
+                            isSelected
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-200 bg-white hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                isSelected ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                              }`}>
+                                {isSelected && (
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="text-left">
+                                <p className="text-base font-bold text-gray-800">{group.name}</p>
+                                {group.description && (
+                                  <p className="text-xs text-gray-600 mt-1">{group.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            <span className={`text-lg font-bold flex-shrink-0 ${isSelected ? 'text-green-600' : 'text-gray-700'}`}>
+                              ฿{group.price}
+                            </span>
+                          </div>
+                          {/* Show items in group */}
+                          <div className="mt-2 pl-8">
+                            <p className="text-xs text-gray-500 mb-1">ประกอบด้วย:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {groupAddOns.map((addon, idx) => (
+                                <span key={idx} className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                                  • {addon.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Show selected add-ons and groups and total */}
+            {(selectedAddOns.length > 0 || selectedAddOnGroups.length > 0) && (
               <div className="mb-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-xs text-orange-800 font-medium mb-1">Add-ons ที่เลือก:</p>
-                <p className="text-sm text-orange-900 mb-2">{selectedAddOns.map(a => a.name).join(', ')}</p>
+                {selectedAddOns.length > 0 && (
+                  <>
+                    <p className="text-xs text-orange-800 font-medium mb-1">Add-ons ที่เลือก:</p>
+                    <p className="text-sm text-orange-900 mb-2">{selectedAddOns.map(a => a.name).join(', ')}</p>
+                  </>
+                )}
+                {selectedAddOnGroups.length > 0 && (
+                  <>
+                    <p className="text-xs text-green-800 font-medium mb-1 mt-2">เซ็ตที่เลือก:</p>
+                    <p className="text-sm text-green-900 mb-2">{selectedAddOnGroups.map(g => g.name).join(', ')}</p>
+                  </>
+                )}
                 <div className="flex justify-between items-center pt-2 border-t border-orange-200">
                   <span className="text-sm font-medium text-orange-800">ราคารวม:</span>
                   <span className="text-lg font-bold text-orange-600">฿{totalPrice}</span>

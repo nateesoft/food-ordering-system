@@ -12,7 +12,7 @@ import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { FloorPlan } from '@/components/FloorPlan';
 import { WelcomeModal } from '@/components/WelcomeModal';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn, AddOnGroup } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
@@ -96,18 +96,21 @@ export default function Home() {
   }, [cart]);
 
   // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[]) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => {
     setCart(prevCart => {
-      // Serialize add-ons for comparison
+      // Serialize add-ons and groups for comparison
       const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
+      const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
 
-      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption และ selectedAddOns
+      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption, selectedAddOns และ selectedAddOnGroups
       const existingItem = prevCart.find(item => {
         const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
+        const itemAddOnGroupsKey = item.selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
         return item.id === menuItem.id &&
                item.specialInstructions === specialInstructions &&
                item.diningOption === diningOption &&
-               itemAddOnsKey === addOnsKey;
+               itemAddOnsKey === addOnsKey &&
+               itemAddOnGroupsKey === addOnGroupsKey;
       });
 
       if (existingItem) {
@@ -119,20 +122,22 @@ export default function Home() {
         );
       }
 
-      // คำนวณราคารวมกับ add-ons
+      // คำนวณราคารวมกับ add-ons และ groups
       const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
-      const finalPrice = menuItem.price + addOnsTotal;
+      const addOnGroupsTotal = selectedAddOnGroups?.reduce((sum, group) => sum + group.price, 0) || 0;
+      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal;
 
       // ถ้าไม่เจอ หรือมีอะไรต่างกัน ให้สร้างรายการใหม่
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
       return [...prevCart, {
         ...menuItem,
-        price: finalPrice, // Update price to include add-ons
+        price: finalPrice, // Update price to include add-ons and groups
         quantity: 1,
         specialInstructions,
         cartItemId,
         diningOption,
-        selectedAddOns
+        selectedAddOns,
+        selectedAddOnGroups
       }];
     });
   };

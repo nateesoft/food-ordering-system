@@ -162,6 +162,14 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                           </div>
                         )}
 
+                        {/* Show selected add-on groups */}
+                        {item.selectedAddOnGroups && item.selectedAddOnGroups.length > 0 && (
+                          <div className="mt-1 text-xs text-green-700">
+                            <span className="font-medium">🎁 เซ็ต: </span>
+                            {item.selectedAddOnGroups.map(group => group.name).join(', ')}
+                          </div>
+                        )}
+
                         {/* Show set components */}
                         {(item.type === 'set' || item.type === 'group') && item.setComponents && item.setComponents.length > 0 && (
                           <div className="mt-1 text-xs text-gray-600">

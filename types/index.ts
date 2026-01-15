@@ -6,6 +6,17 @@ export interface AddOn {
   category: string; // e.g., 'topping', 'side', 'sauce', 'extra'
 }
 
+// Add-on Group (กลุ่มของ Add-on)
+export interface AddOnGroup {
+  id: number;
+  name: string;
+  description?: string;
+  price: number; // ราคาของกลุ่ม (อาจถูกกว่าซื้อทีละตัว)
+  addOnIds: number[]; // รายการ Add-on ID ที่อยู่ในกลุ่มนี้
+  category: string; // e.g., 'beverage-set', 'dessert-set', 'combo'
+  image?: string;
+}
+
 // Set item component (for set meals)
 export interface SetComponent {
   id: number;
@@ -27,6 +38,7 @@ export interface MenuItem {
   type: 'single' | 'set' | 'group'; // Type of menu item
   setComponents?: SetComponent[]; // For set meals, list of items included
   availableAddOns?: number[]; // IDs of add-ons available for this item
+  availableAddOnGroups?: number[]; // IDs of add-on groups available for this item
   isActive?: boolean; // Whether this item is currently available
 }
 
@@ -37,6 +49,7 @@ export interface CartItem extends MenuItem {
   diningOption: 'dine-in' | 'takeaway';
   itemStatus?: 'preparing' | 'completed' | 'delivered';
   selectedAddOns?: AddOn[]; // Add-ons selected by customer
+  selectedAddOnGroups?: AddOnGroup[]; // Add-on groups selected by customer
 }
 
 export interface Order {

@@ -11,7 +11,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, AddOn } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, AddOn, AddOnGroup } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TableOrderClientProps {
@@ -66,17 +66,20 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[]) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => {
     setCart(prevCart => {
-      // Serialize add-ons for comparison
+      // Serialize add-ons and groups for comparison
       const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
+      const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
 
       const existingItem = prevCart.find(item => {
         const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
+        const itemAddOnGroupsKey = item.selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
         return item.id === menuItem.id &&
                item.specialInstructions === specialInstructions &&
                item.diningOption === diningOption &&
-               itemAddOnsKey === addOnsKey;
+               itemAddOnsKey === addOnsKey &&
+               itemAddOnGroupsKey === addOnGroupsKey;
       });
 
       if (existingItem) {
@@ -87,9 +90,10 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         );
       }
 
-      // คำนวณราคารวมกับ add-ons
+      // คำนวณราคารวมกับ add-ons และ groups
       const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
-      const finalPrice = menuItem.price + addOnsTotal;
+      const addOnGroupsTotal = selectedAddOnGroups?.reduce((sum, group) => sum + group.price, 0) || 0;
+      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal;
 
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
       return [...prevCart, {
@@ -99,7 +103,8 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         specialInstructions,
         cartItemId,
         diningOption,
-        selectedAddOns
+        selectedAddOns,
+        selectedAddOnGroups
       }];
     });
   };

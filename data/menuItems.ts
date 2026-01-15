@@ -12,6 +12,7 @@ export const menuItems: MenuItem[] = [
     reviewCount: 128,
     type: 'single',
     availableAddOns: [1, 2, 4, 12],
+    availableAddOnGroups: [1, 4, 6], // เซ็ตเครื่องดื่ม, เซ็ตโปรตีน, เซ็ตพรีเมี่ยม
     isActive: true,
   },
   {
@@ -116,6 +117,7 @@ export const menuItems: MenuItem[] = [
     reviewCount: 234,
     type: 'single',
     availableAddOns: [1, 2, 5, 9],
+    availableAddOnGroups: [1, 4, 5, 8], // เซ็ตเครื่องดื่ม, โปรตีน, เครื่องเคียง, อาหารเช้า
     isActive: true,
   },
   {
