@@ -6,7 +6,8 @@
       "Read(//Users/nateelive/Documents/Projects/GithubProject/crm-system/components/**)",
       "Bash(tree:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

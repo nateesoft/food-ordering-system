@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users } from 'lucide-react';
+import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface StaffUser {
@@ -466,13 +466,24 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* QR Code Management Button - Only for Admin */}
+            {currentUser?.role === 'admin' && (
+              <button
+                onClick={() => router.push('/admin/qr-codes')}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
+              >
+                <QrCode className="w-5 h-5" />
+                <span className="font-semibold hidden sm:inline">QR Code</span>
+              </button>
+            )}
+
             {/* Notification Button */}
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="relative flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
             >
               {unreadCount > 0 ? <BellRing className="w-5 h-5 animate-pulse" /> : <Bell className="w-5 h-5" />}
-              <span className="font-semibold">แจ้งเตือน</span>
+              <span className="font-semibold hidden sm:inline">แจ้งเตือน</span>
               {unreadCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-bounce">
                   {unreadCount}
@@ -485,7 +496,7 @@ export default function OrdersPage() {
               className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
             >
               <LogOut className="w-5 h-5" />
-              ออกจากระบบ
+              <span className="hidden sm:inline">ออกจากระบบ</span>
             </button>
           </div>
         </div>
