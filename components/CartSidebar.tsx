@@ -154,6 +154,24 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                         </div>
                         <p className="text-sm text-orange-600 font-semibold">{t.common.baht}{item.price}</p>
 
+                        {/* Show selected nested menu options */}
+                        {item.selectedNestedOptions && item.selectedNestedOptions.length > 0 && (
+                          <div className="mt-1 text-xs text-purple-700">
+                            <span className="font-medium">🎯 ตัวเลือก: </span>
+                            {item.selectedNestedOptions.map((sel, idx) => {
+                              // Recursively display nested selections
+                              const displayNestedOption = (option: any, depth: number = 0): string => {
+                                let result = option.option.name;
+                                if (option.childSelections && option.childSelections.length > 0) {
+                                  result += ' → ' + option.childSelections.map((child: any) => displayNestedOption(child, depth + 1)).join(', ');
+                                }
+                                return result;
+                              };
+                              return displayNestedOption(sel);
+                            }).join(' | ')}
+                          </div>
+                        )}
+
                         {/* Show selected add-ons */}
                         {item.selectedAddOns && item.selectedAddOns.length > 0 && (
                           <div className="mt-1 text-xs text-gray-600">

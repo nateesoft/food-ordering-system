@@ -12,7 +12,8 @@ import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { FloorPlan } from '@/components/FloorPlan';
 import { WelcomeModal } from '@/components/WelcomeModal';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn, AddOnGroup } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
+import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
@@ -96,21 +97,24 @@ export default function Home() {
   }, [cart]);
 
   // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[]) => {
     setCart(prevCart => {
-      // Serialize add-ons and groups for comparison
+      // Serialize add-ons, groups, and nested options for comparison
       const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
       const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
+      const nestedOptionsKey = JSON.stringify(selectedNestedOptions || []);
 
-      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption, selectedAddOns และ selectedAddOnGroups
+      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption, selectedAddOns, selectedAddOnGroups และ selectedNestedOptions
       const existingItem = prevCart.find(item => {
         const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
         const itemAddOnGroupsKey = item.selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
+        const itemNestedOptionsKey = JSON.stringify(item.selectedNestedOptions || []);
         return item.id === menuItem.id &&
                item.specialInstructions === specialInstructions &&
                item.diningOption === diningOption &&
                itemAddOnsKey === addOnsKey &&
-               itemAddOnGroupsKey === addOnGroupsKey;
+               itemAddOnGroupsKey === addOnGroupsKey &&
+               itemNestedOptionsKey === nestedOptionsKey;
       });
 
       if (existingItem) {
@@ -122,22 +126,24 @@ export default function Home() {
         );
       }
 
-      // คำนวณราคารวมกับ add-ons และ groups
+      // คำนวณราคารวมกับ add-ons, groups และ nested menu
       const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
       const addOnGroupsTotal = selectedAddOnGroups?.reduce((sum, group) => sum + group.price, 0) || 0;
-      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal;
+      const nestedMenuTotal = calculateNestedMenuPrice(selectedNestedOptions || []);
+      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal + nestedMenuTotal;
 
       // ถ้าไม่เจอ หรือมีอะไรต่างกัน ให้สร้างรายการใหม่
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
       return [...prevCart, {
         ...menuItem,
-        price: finalPrice, // Update price to include add-ons and groups
+        price: finalPrice, // Update price to include add-ons, groups, and nested menu
         quantity: 1,
         specialInstructions,
         cartItemId,
         diningOption,
         selectedAddOns,
-        selectedAddOnGroups
+        selectedAddOnGroups,
+        selectedNestedOptions
       }];
     });
   };

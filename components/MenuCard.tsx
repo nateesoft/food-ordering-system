@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronDown } from 'lucide-react';
-import { MenuItem, AddOn, AddOnGroup } from '@/types';
+import { MenuItem, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import StarRating from './StarRating';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { addOns as availableAddOns } from '@/data/addOns';
 import { addOnGroups as availableAddOnGroups } from '@/data/addOnGroups';
+import { nestedMenuOptions, calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
+import { NestedMenuModal } from './NestedMenuModal';
 
 interface MenuCardProps {
   item: MenuItem;
-  onAddToCart: (item: MenuItem, specialInstructions?: string, diningOption?: 'dine-in' | 'takeaway', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => void;
+  onAddToCart: (item: MenuItem, specialInstructions?: string, diningOption?: 'dine-in' | 'takeaway', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[]) => void;
 }
 
 export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
@@ -21,10 +23,24 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
   const [diningOption, setDiningOption] = useState<'dine-in' | 'takeaway'>('dine-in');
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
   const [selectedAddOnGroups, setSelectedAddOnGroups] = useState<AddOnGroup[]>([]);
+  const [selectedNestedOptions, setSelectedNestedOptions] = useState<SelectedNestedOption[]>([]);
+  const [showNestedMenuModal, setShowNestedMenuModal] = useState(false);
   const [isAddOnsExpanded, setIsAddOnsExpanded] = useState(true);
   const [isAddOnGroupsExpanded, setIsAddOnGroupsExpanded] = useState(true);
 
   const handleAddToCart = () => {
+    // ถ้ามี Nested Menu ให้เปิด Modal ชั้นแรก
+    if (item.nestedMenuConfig?.enabled && item.nestedMenuConfig.rootOptions.length > 0) {
+      setShowNestedMenuModal(true);
+    } else {
+      setShowInstructionsModal(true);
+    }
+  };
+
+  const handleNestedMenuConfirm = (selections: SelectedNestedOption[]) => {
+    setSelectedNestedOptions(selections);
+    setShowNestedMenuModal(false);
+    // เปิด modal สำหรับเลือก add-ons และคำขอพิเศษ
     setShowInstructionsModal(true);
   };
 
@@ -34,12 +50,13 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       allInstructions.push(customInstruction.trim());
     }
     const finalInstructions = allInstructions.join(', ');
-    onAddToCart(item, finalInstructions, diningOption, selectedAddOns, selectedAddOnGroups);
+    onAddToCart(item, finalInstructions, diningOption, selectedAddOns, selectedAddOnGroups, selectedNestedOptions);
     setSelectedInstructions([]);
     setCustomInstruction('');
     setDiningOption('dine-in');
     setSelectedAddOns([]);
     setSelectedAddOnGroups([]);
+    setSelectedNestedOptions([]);
     setShowInstructionsModal(false);
   };
 
@@ -48,6 +65,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     setCustomInstruction('');
     setSelectedAddOns([]);
     setSelectedAddOnGroups([]);
+    setSelectedNestedOptions([]);
     setShowInstructionsModal(false);
   };
 
@@ -83,10 +101,16 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     ? availableAddOnGroups.filter(group => item.availableAddOnGroups?.includes(group.id))
     : [];
 
-  // Calculate total price with add-ons and groups
+  // Get nested menu options for this item
+  const itemNestedOptions = item.nestedMenuConfig?.enabled && item.nestedMenuConfig.rootOptions
+    ? nestedMenuOptions.filter(opt => item.nestedMenuConfig?.rootOptions.includes(opt.id))
+    : [];
+
+  // Calculate total price with add-ons, groups, and nested menu
   const addOnsTotalPrice = selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0);
   const addOnGroupsTotalPrice = selectedAddOnGroups.reduce((sum, group) => sum + group.price, 0);
-  const totalPrice = item.price + addOnsTotalPrice + addOnGroupsTotalPrice;
+  const nestedMenuTotalPrice = calculateNestedMenuPrice(selectedNestedOptions);
+  const totalPrice = item.price + addOnsTotalPrice + addOnGroupsTotalPrice + nestedMenuTotalPrice;
 
   // Common instructions - using translations
   const commonInstructions = [
@@ -164,19 +188,24 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       {showInstructionsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={handleCancelAdd}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
-            <button
-              onClick={handleCancelAdd}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-scale-in">
+            {/* Header - Fixed */}
+            <div className="flex-shrink-0 p-6 border-b">
+              <button
+                onClick={handleCancelAdd}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">{item.name}</h3>
+              <p className="text-sm text-gray-500">{t.menuCard.specialInstructions}</p>
+            </div>
 
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{item.name}</h3>
-            <p className="text-sm text-gray-500 mb-4">{t.menuCard.specialInstructions}</p>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
 
             {/* Common instruction buttons */}
-            <div className="mb-4">
+            <div>
               <p className="text-xs text-gray-500 mb-2">{t.menuCard.selectCommonRequests}</p>
               <div className="flex flex-wrap gap-2">
                 {commonInstructions.map((instruction) => (
@@ -197,7 +226,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Show selected items */}
             {selectedInstructions.length > 0 && (
-              <div className="mb-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="p-2 bg-orange-50 rounded-lg border border-orange-200">
                 <p className="text-xs text-orange-800 font-medium mb-1">{t.menuCard.selectedRequests}</p>
                 <p className="text-sm text-orange-900">{selectedInstructions.join(', ')}</p>
               </div>
@@ -214,7 +243,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Set Components Display (if type is set or group) */}
             {(item.type === 'set' || item.type === 'group') && item.setComponents && item.setComponents.length > 0 && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-xs text-blue-800 font-medium mb-2">
                   {item.type === 'set' ? '🍱 รายการในเซ็ต:' : '👥 รายการในเซ็ตกรุ๊ป:'}
                 </p>
@@ -231,7 +260,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Add-ons Selection */}
             {itemAddOns.length > 0 && (
-              <div className="mb-4">
+              <div>
                 <button
                   onClick={() => setIsAddOnsExpanded(!isAddOnsExpanded)}
                   className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
@@ -280,7 +309,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Add-on Groups Selection */}
             {itemAddOnGroups.length > 0 && (
-              <div className="mb-4">
+              <div>
                 <button
                   onClick={() => setIsAddOnGroupsExpanded(!isAddOnGroupsExpanded)}
                   className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
@@ -348,75 +377,100 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               </div>
             )}
 
-            {/* Show selected add-ons and groups and total */}
-            {(selectedAddOns.length > 0 || selectedAddOnGroups.length > 0) && (
-              <div className="mb-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            {/* Show selected nested menu, add-ons and groups */}
+            {(selectedNestedOptions.length > 0 || selectedAddOns.length > 0 || selectedAddOnGroups.length > 0) && (
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                {selectedNestedOptions.length > 0 && (
+                  <>
+                    <p className="text-xs text-purple-800 font-medium mb-1">🎯 ตัวเลือกเมนู:</p>
+                    {selectedNestedOptions.map((sel, idx) => (
+                      <p key={idx} className="text-sm text-purple-900 mb-1">• {sel.option.name}</p>
+                    ))}
+                  </>
+                )}
                 {selectedAddOns.length > 0 && (
                   <>
-                    <p className="text-xs text-orange-800 font-medium mb-1">Add-ons ที่เลือก:</p>
+                    <p className="text-xs text-orange-800 font-medium mb-1 mt-2">Add-ons ที่เลือก:</p>
                     <p className="text-sm text-orange-900 mb-2">{selectedAddOns.map(a => a.name).join(', ')}</p>
                   </>
                 )}
                 {selectedAddOnGroups.length > 0 && (
                   <>
                     <p className="text-xs text-green-800 font-medium mb-1 mt-2">เซ็ตที่เลือก:</p>
-                    <p className="text-sm text-green-900 mb-2">{selectedAddOnGroups.map(g => g.name).join(', ')}</p>
+                    <p className="text-sm text-green-900">{selectedAddOnGroups.map(g => g.name).join(', ')}</p>
                   </>
                 )}
-                <div className="flex justify-between items-center pt-2 border-t border-orange-200">
-                  <span className="text-sm font-medium text-orange-800">ราคารวม:</span>
-                  <span className="text-lg font-bold text-orange-600">฿{totalPrice}</span>
-                </div>
               </div>
             )}
-
-            {/* Dining preference selection */}
-            <div className="mt-4 mb-4">
-              <p className="text-sm font-medium text-gray-700 mb-3">{t.menuCard.diningPreference}</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setDiningOption('dine-in')}
-                  className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
-                    diningOption === 'dine-in'
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {t.menuCard.dineIn}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDiningOption('takeaway')}
-                  className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
-                    diningOption === 'takeaway'
-                      ? 'bg-orange-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {t.menuCard.takeaway}
-                </button>
-              </div>
             </div>
 
-            {/* Confirm buttons */}
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={handleCancelAdd}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
-              >
-                {t.menuCard.cancel}
-              </button>
-              <button
-                onClick={handleConfirmAdd}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg"
-              >
-                {t.menuCard.confirm}
-              </button>
+            {/* Footer - Fixed */}
+            <div className="flex-shrink-0 border-t bg-white p-6 space-y-4">
+              {/* Total Price */}
+              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <span className="text-sm font-medium text-orange-800">ราคารวม:</span>
+                <span className="text-xl font-bold text-orange-600">฿{totalPrice}</span>
+              </div>
+
+              {/* Dining preference selection */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-3">{t.menuCard.diningPreference}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDiningOption('dine-in')}
+                    className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                      diningOption === 'dine-in'
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {t.menuCard.dineIn}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDiningOption('takeaway')}
+                    className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
+                      diningOption === 'takeaway'
+                        ? 'bg-orange-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {t.menuCard.takeaway}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelAdd}
+                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                >
+                  {t.menuCard.cancel}
+                </button>
+                <button
+                  onClick={handleConfirmAdd}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:from-orange-600 hover:to-red-600 transition-all font-semibold shadow-md hover:shadow-lg"
+                >
+                  {t.menuCard.confirm}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Nested Menu Modal */}
+      <NestedMenuModal
+        isOpen={showNestedMenuModal}
+        options={itemNestedOptions}
+        onClose={() => setShowNestedMenuModal(false)}
+        onConfirm={handleNestedMenuConfirm}
+        minSelections={item.nestedMenuConfig?.minSelections}
+        maxSelections={item.nestedMenuConfig?.maxSelections}
+        requireSelection={item.nestedMenuConfig?.requireSelection}
+      />
     </>
   );
 };

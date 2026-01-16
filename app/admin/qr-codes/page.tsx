@@ -31,7 +31,7 @@ export default function QRCodesAdminPage() {
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [baseUrl, setBaseUrl] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [generatingTables, setGeneratingTables] = useState<Set<string>>(new Set());
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
   useEffect(() => {
@@ -39,49 +39,41 @@ export default function QRCodesAdminPage() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  useEffect(() => {
-    if (baseUrl) {
-      generateAllQRCodes();
-    }
-  }, [baseUrl]);
-
-  const generateAllQRCodes = async () => {
-    setIsLoading(true);
+  // สร้าง QR Code สำหรับโต๊ะเดียว
+  const generateSingleQRCode = async (tableNumber: string) => {
+    setGeneratingTables(prev => new Set(prev).add(tableNumber));
 
     try {
-      // Generate all QR codes in parallel for better performance
-      const promises = tables.map(async (table) => {
-        const url = `${baseUrl}/table/${table.number}`;
-        try {
-          const qrDataUrl = await QRCodeLib.toDataURL(url, {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF',
-            },
-          });
-          return { tableNumber: table.number, qrDataUrl };
-        } catch (error) {
-          console.error(`Error generating QR for table ${table.number}:`, error);
-          return null;
-        }
+      const url = `${baseUrl}/table/${tableNumber}`;
+      const qrDataUrl = await QRCodeLib.toDataURL(url, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
       });
 
-      const results = await Promise.all(promises);
-
-      const codes: Record<string, string> = {};
-      results.forEach(result => {
-        if (result) {
-          codes[result.tableNumber] = result.qrDataUrl;
-        }
-      });
-
-      setQrCodes(codes);
+      setQrCodes(prev => ({
+        ...prev,
+        [tableNumber]: qrDataUrl
+      }));
     } catch (error) {
-      console.error('Error generating QR codes:', error);
+      console.error(`Error generating QR for table ${tableNumber}:`, error);
+      alert(`เกิดข้อผิดพลาดในการสร้าง QR Code สำหรับโต๊ะ ${tableNumber}`);
     } finally {
-      setIsLoading(false);
+      setGeneratingTables(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tableNumber);
+        return newSet;
+      });
+    }
+  };
+
+  // สร้าง QR Code ทั้งหมด
+  const generateAllQRCodes = async () => {
+    for (const table of tables) {
+      await generateSingleQRCode(table.number);
     }
   };
 
@@ -247,12 +239,21 @@ export default function QRCodesAdminPage() {
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
+              onClick={generateAllQRCodes}
+              disabled={!baseUrl || generatingTables.size > 0}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>{generatingTables.size > 0 ? 'กำลังสร้าง...' : 'สร้างทั้งหมด'}</span>
+            </button>
+
+            <button
               onClick={downloadAllQRCodes}
-              disabled={!baseUrl || Object.keys(qrCodes).length === 0 || isLoading}
+              disabled={!baseUrl || Object.keys(qrCodes).length === 0}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>{isLoading ? 'โหลด...' : 'ทั้งหมด'}</span>
+              <span>ดาวน์โหลดทั้งหมด</span>
             </button>
 
             <button
@@ -280,20 +281,13 @@ export default function QRCodesAdminPage() {
       {/* QR Codes Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">QR Code ทั้งหมด ({tables.length} โต๊ะ)</h2>
-          <p className="text-gray-600">คลิกเพื่อดาวน์โหลดหรือพิมพ์ QR Code ของแต่ละโต๊ะ</p>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">
+            QR Code ทั้งหมด ({Object.keys(qrCodes).length}/{tables.length} โต๊ะ)
+          </h2>
+          <p className="text-gray-600">คลิก "สร้าง QR Code" ในโต๊ะที่ต้องการ หรือสร้างทั้งหมดพร้อมกัน</p>
         </div>
 
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500 mb-4"></div>
-            <p className="text-gray-600 text-lg font-semibold">กำลังสร้าง QR Code...</p>
-            <p className="text-gray-500 text-sm mt-2">กรุณารอสักครู่</p>
-          </div>
-        )}
-
-        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {tables.map((table) => (
             <div
               key={table.id}
@@ -306,14 +300,21 @@ export default function QRCodesAdminPage() {
                   <p className="text-xs sm:text-sm text-gray-600">ความจุ {table.capacity} ที่นั่ง</p>
                 </div>
 
-                {/* QR Code */}
-                {qrCodes[table.number] && (
+                {/* QR Code หรือปุ่มสร้าง */}
+                {qrCodes[table.number] ? (
                   <div className="bg-gray-50 p-3 sm:p-4 rounded-lg sm:rounded-xl mb-3 sm:mb-4">
                     <img
                       src={qrCodes[table.number]}
                       alt={`QR Code for table ${table.number}`}
                       className="w-full h-auto"
                     />
+                  </div>
+                ) : (
+                  <div className="bg-gray-100 p-8 sm:p-12 rounded-lg sm:rounded-xl mb-3 sm:mb-4 flex items-center justify-center">
+                    <div className="text-center">
+                      <QrCode className="w-16 h-16 mx-auto text-gray-300 mb-3" />
+                      <p className="text-sm text-gray-500">ยังไม่ได้สร้าง QR Code</p>
+                    </div>
                   </div>
                 )}
 
@@ -327,23 +328,45 @@ export default function QRCodesAdminPage() {
 
                 {/* Action Buttons */}
                 <div className="space-y-2">
-                  <button
-                    onClick={() => downloadQRCode(table.number)}
-                    disabled={!baseUrl || !qrCodes[table.number]}
-                    className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {!baseUrl || !qrCodes[table.number] ? 'โหลด...' : 'ดาวน์โหลด'}
-                  </button>
+                  {!qrCodes[table.number] ? (
+                    <button
+                      onClick={() => generateSingleQRCode(table.number)}
+                      disabled={!baseUrl || generatingTables.has(table.number)}
+                      className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {generatingTables.has(table.number) ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <span>กำลังสร้าง...</span>
+                        </>
+                      ) : (
+                        <>
+                          <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
+                          <span>สร้าง QR Code</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => downloadQRCode(table.number)}
+                        disabled={!baseUrl}
+                        className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>ดาวน์โหลด</span>
+                      </button>
 
-                  <button
-                    onClick={() => printQRCode(table.number)}
-                    disabled={!baseUrl || !qrCodes[table.number]}
-                    className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
-                    {!baseUrl || !qrCodes[table.number] ? 'โหลด...' : 'พิมพ์'}
-                  </button>
+                      <button
+                        onClick={() => printQRCode(table.number)}
+                        disabled={!baseUrl}
+                        className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Printer className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <span>พิมพ์</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -359,7 +382,8 @@ export default function QRCodesAdminPage() {
             วิธีใช้งาน
           </h3>
           <ol className="list-decimal list-inside space-y-2 sm:space-y-2 text-xs sm:text-sm text-gray-700">
-            <li className="leading-relaxed">คลิก "ดาวน์โหลด" เพื่อบันทึก QR Code เป็นไฟล์ภาพ</li>
+            <li className="leading-relaxed">คลิก "สร้าง QR Code" ในโต๊ะที่ต้องการสร้าง หรือคลิก "สร้างทั้งหมด" เพื่อสร้างทุกโต๊ะพร้อมกัน</li>
+            <li className="leading-relaxed">เมื่อสร้างเสร็จ คลิก "ดาวน์โหลด" เพื่อบันทึก QR Code เป็นไฟล์ภาพ</li>
             <li className="leading-relaxed">คลิก "พิมพ์" เพื่อพิมพ์ QR Code โดยตรง</li>
             <li className="leading-relaxed">นำ QR Code ไปติดที่โต๊ะที่ตรงกับหมายเลข</li>
             <li className="leading-relaxed">ลูกค้าสแกน QR Code เพื่อเข้าสู่หน้าสั่งอาหารของโต๊ะนั้นๆ</li>

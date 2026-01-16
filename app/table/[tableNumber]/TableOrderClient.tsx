@@ -11,7 +11,8 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, AddOn, AddOnGroup } from '@/types';
+import { MenuItem, CartItem, Order, ServiceRequest, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
+import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TableOrderClientProps {
@@ -66,20 +67,23 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[]) => {
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[]) => {
     setCart(prevCart => {
-      // Serialize add-ons and groups for comparison
+      // Serialize add-ons, groups, and nested options for comparison
       const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
       const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
+      const nestedOptionsKey = JSON.stringify(selectedNestedOptions || []);
 
       const existingItem = prevCart.find(item => {
         const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
         const itemAddOnGroupsKey = item.selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
+        const itemNestedOptionsKey = JSON.stringify(item.selectedNestedOptions || []);
         return item.id === menuItem.id &&
                item.specialInstructions === specialInstructions &&
                item.diningOption === diningOption &&
                itemAddOnsKey === addOnsKey &&
-               itemAddOnGroupsKey === addOnGroupsKey;
+               itemAddOnGroupsKey === addOnGroupsKey &&
+               itemNestedOptionsKey === nestedOptionsKey;
       });
 
       if (existingItem) {
@@ -90,10 +94,11 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         );
       }
 
-      // คำนวณราคารวมกับ add-ons และ groups
+      // คำนวณราคารวมกับ add-ons, groups และ nested menu
       const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
       const addOnGroupsTotal = selectedAddOnGroups?.reduce((sum, group) => sum + group.price, 0) || 0;
-      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal;
+      const nestedMenuTotal = calculateNestedMenuPrice(selectedNestedOptions || []);
+      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal + nestedMenuTotal;
 
       const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
       return [...prevCart, {
@@ -104,7 +109,8 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         cartItemId,
         diningOption,
         selectedAddOns,
-        selectedAddOnGroups
+        selectedAddOnGroups,
+        selectedNestedOptions
       }];
     });
   };

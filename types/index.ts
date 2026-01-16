@@ -25,6 +25,38 @@ export interface SetComponent {
   quantity: number;
 }
 
+// Nested Menu System - สำหรับเมนูที่มีการเลือกหลายชั้น
+export interface NestedMenuOption {
+  id: number;
+  name: string;
+  description?: string;
+  price: number; // ราคาเพิ่มเติมจากการเลือกตัวเลือกนี้
+  image?: string;
+  type: 'single' | 'group'; // ประเภทของตัวเลือก
+  // ถ้ามี childOptions แสดงว่ายังมีชั้นถัดไป
+  childOptions?: NestedMenuOption[];
+  // กำหนดว่าต้องเลือกชั้นถัดไปหรือไม่
+  requireChildSelection?: boolean;
+  // กำหนดจำนวนที่เลือกได้ในชั้นถัดไป
+  minChildSelections?: number; // เลือกได้อย่างน้อย (default: 0 = ไม่บังคับ)
+  maxChildSelections?: number; // เลือกได้สูงสุด (default: 1 = เลือกได้ 1 อย่าง)
+}
+
+export interface NestedMenuConfig {
+  enabled: boolean; // เปิดใช้งาน Nested Menu หรือไม่
+  rootOptions: number[]; // IDs ของตัวเลือกชั้นแรก
+  requireSelection: boolean; // บังคับให้เลือกหรือไม่
+  minSelections?: number; // เลือกได้อย่างน้อย
+  maxSelections?: number; // เลือกได้สูงสุด
+}
+
+// ใช้เก็บตัวเลือกที่ลูกค้าเลือก
+export interface SelectedNestedOption {
+  optionId: number;
+  option: NestedMenuOption;
+  childSelections?: SelectedNestedOption[]; // ตัวเลือกในชั้นถัดไป
+}
+
 export interface MenuItem {
   id: number;
   name: string;
@@ -39,6 +71,7 @@ export interface MenuItem {
   setComponents?: SetComponent[]; // For set meals, list of items included
   availableAddOns?: number[]; // IDs of add-ons available for this item
   availableAddOnGroups?: number[]; // IDs of add-on groups available for this item
+  nestedMenuConfig?: NestedMenuConfig; // Configuration for nested menu
   isActive?: boolean; // Whether this item is currently available
 }
 
@@ -50,6 +83,7 @@ export interface CartItem extends MenuItem {
   itemStatus?: 'preparing' | 'completed' | 'delivered';
   selectedAddOns?: AddOn[]; // Add-ons selected by customer
   selectedAddOnGroups?: AddOnGroup[]; // Add-on groups selected by customer
+  selectedNestedOptions?: SelectedNestedOption[]; // Nested menu selections
 }
 
 export interface Order {

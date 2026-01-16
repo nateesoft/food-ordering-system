@@ -198,4 +198,77 @@ export const menuItems: MenuItem[] = [
     availableAddOns: [4, 8, 9, 11],
     isActive: true,
   },
+
+  // ========================================
+  // Nested Menu Examples
+  // ========================================
+
+  // Nested Menu Example 1: Steak with multi-level selection
+  {
+    id: 15,
+    name: 'สเต็กพรีเมี่ยม',
+    category: 'อาหารจานหลัก',
+    price: 0, // ราคาขึ้นอยู่กับการเลือก
+    image: 'https://images.unsplash.com/photo-1558030006-450675393462?w=400&h=300&fit=crop',
+    description: 'สเต็กเนื้อคุณภาพพรีเมี่ยม เลือกประเภทเนื้อ ขนาด และความสุกได้ตามใจชอบ',
+    rating: 4.9,
+    reviewCount: 312,
+    type: 'single',
+    nestedMenuConfig: {
+      enabled: true,
+      rootOptions: [1, 2, 3], // เนื้อวัว, เนื้อหมู, เนื้อไก่
+      requireSelection: true,
+      minSelections: 1,
+      maxSelections: 1,
+    },
+    availableAddOns: [9, 11, 13, 14],
+    availableAddOnGroups: [2, 3], // เซ็ตของหวาน, เซ็ตกับข้าว
+    isActive: true,
+  },
+
+  // Nested Menu Example 2: Pasta with multi-level selection
+  {
+    id: 16,
+    name: 'พาสต้าสไตล์อิตาเลียน',
+    category: 'อาหารจานหลัก',
+    price: 0, // ราคาขึ้นอยู่กับการเลือก
+    image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop',
+    description: 'พาสต้าสูตรต้นตำรับ เลือกซอสและเส้นได้ตามใจชอบ',
+    rating: 4.6,
+    reviewCount: 189,
+    type: 'single',
+    nestedMenuConfig: {
+      enabled: true,
+      rootOptions: [4, 5], // คาโบนาร่า, มาริน่าร่า
+      requireSelection: true,
+      minSelections: 1,
+      maxSelections: 1,
+    },
+    availableAddOns: [1, 2, 4],
+    availableAddOnGroups: [1, 2], // เซ็ตเครื่องดื่ม, เซ็ตของหวาน
+    isActive: true,
+  },
+
+  // Nested Menu Example 3: Premium Pizza with group selection
+  {
+    id: 17,
+    name: 'พิซซ่าพรีเมี่ยมหน้าพิเศษ',
+    category: 'อาหารจานหลัก',
+    price: 100, // ราคาฐาน
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop',
+    description: 'พิซซ่าหน้าพิเศษ เลือกหน้าได้ 2-4 แบบ ชีสเยอะ อร่อยเต็มคำ',
+    rating: 4.8,
+    reviewCount: 267,
+    type: 'single',
+    nestedMenuConfig: {
+      enabled: true,
+      rootOptions: [6], // พิซซ่าหน้าพิเศษ
+      requireSelection: true,
+      minSelections: 1,
+      maxSelections: 1,
+    },
+    availableAddOns: [1, 2],
+    availableAddOnGroups: [1, 2], // เซ็ตเครื่องดื่ม, เซ็ตของหวาน
+    isActive: true,
+  },
 ];
