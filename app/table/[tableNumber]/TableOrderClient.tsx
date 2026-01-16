@@ -184,6 +184,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
       setCart([]);
       setOrderConfirmed(false);
       setShowCart(false);
+      setAnimatingItems([]);
     }, 4500);
   };
 

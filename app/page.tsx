@@ -226,6 +226,7 @@ export default function Home() {
       setCart([]);
       setOrderConfirmed(false);
       setShowCart(false);
+      setAnimatingItems([]);
       // แสดง Welcome Modal อีกครั้งหลังสั่งอาหารเสร็จ
       setShowWelcome(true);
     }, 4500);
