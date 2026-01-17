@@ -118,3 +118,19 @@ export interface Table {
 }
 
 export type Category = string;
+
+// Queue System for Kiosk
+export interface QueueTicket {
+  queueId: string; // รหัสคิว เช่น "A001"
+  queueNumber: number; // หมายเลขคิว เช่น 1, 2, 3
+  orderType: 'dine-in' | 'takeaway'; // ประเภทการสั่ง
+  items: CartItem[]; // รายการอาหารที่สั่ง
+  totalAmount: number; // ยอดรวม
+  totalItems: number; // จำนวนรายการ
+  status: 'waiting' | 'preparing' | 'ready' | 'completed' | 'cancelled'; // สถานะคิว
+  createdAt: Date; // วันเวลาที่สร้าง
+  estimatedTime?: number; // เวลาโดยประมาณ (นาที)
+  calledAt?: Date; // วันเวลาที่เรียกคิว
+  completedAt?: Date; // วันเวลาที่เสร็จสิ้น
+  customerName?: string; // ชื่อลูกค้า (optional)
+}
