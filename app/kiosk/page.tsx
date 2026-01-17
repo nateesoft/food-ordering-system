@@ -4,8 +4,9 @@ import React, { useState, useMemo } from 'react';
 import { ShoppingCart, Home, Utensils, Package, ArrowLeft } from 'lucide-react';
 import { menuItems } from '@/data/menuItems';
 import { MenuItem, CartItem, QueueTicket, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
-import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
+import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { NestedMenuModal } from '@/components/NestedMenuModal';
 
 export default function KioskPage() {
   const { t, language } = useLanguage();
@@ -16,6 +17,10 @@ export default function KioskPage() {
   const [currentQueue, setCurrentQueue] = useState<QueueTicket | null>(null);
   const [flyingItem, setFlyingItem] = useState<{ item: MenuItem; position: { x: number; y: number } } | null>(null);
   const [showAddNotification, setShowAddNotification] = useState(false);
+
+  // Nested Menu Modal state
+  const [showNestedMenuModal, setShowNestedMenuModal] = useState(false);
+  const [currentNestedMenuItem, setCurrentNestedMenuItem] = useState<MenuItem | null>(null);
 
   // Calculate categories
   const categories = useMemo(() => {
@@ -36,6 +41,28 @@ export default function KioskPage() {
   const totalItems = useMemo(() => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
+
+  // Handle menu item click - check if has nested options
+  const handleMenuItemClick = (menuItem: MenuItem, event?: React.MouseEvent) => {
+    // Check if this menu item has nested menu configuration
+    if (menuItem.nestedMenuConfig && menuItem.nestedMenuConfig.enabled) {
+      setCurrentNestedMenuItem(menuItem);
+      setShowNestedMenuModal(true);
+    } else {
+      // No nested menu, add directly to cart
+      addToCart(menuItem, undefined, undefined, undefined, undefined, event);
+    }
+  };
+
+  // Handle nested menu confirmation
+  const handleNestedMenuConfirm = (selections: SelectedNestedOption[]) => {
+    if (!currentNestedMenuItem) return;
+
+    // Add to cart with nested selections
+    addToCart(currentNestedMenuItem, undefined, undefined, undefined, selections);
+    setShowNestedMenuModal(false);
+    setCurrentNestedMenuItem(null);
+  };
 
   // Add to cart with animation
   const addToCart = (menuItem: MenuItem, specialInstructions?: string, selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[], event?: React.MouseEvent) => {
@@ -311,7 +338,7 @@ export default function KioskPage() {
                     className="cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
-                      addToCart(item, undefined, undefined, undefined, undefined, e);
+                      handleMenuItemClick(item, e);
                     }}
                   >
                     <div className="relative h-64 bg-gray-200">
@@ -322,20 +349,28 @@ export default function KioskPage() {
                           className="w-full h-full object-cover"
                         />
                       )}
+                      {/* Badge for nested menu items */}
+                      {item.nestedMenuConfig && item.nestedMenuConfig.enabled && (
+                        <div className="absolute top-3 right-3 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                          มีตัวเลือก
+                        </div>
+                      )}
                     </div>
                     <div className="p-6">
                       <h3 className="text-2xl font-bold text-gray-800 mb-2">{item.name}</h3>
                       <p className="text-gray-600 text-lg mb-4 line-clamp-2">{item.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-3xl font-bold text-orange-600">฿{item.price}</span>
+                        <span className="text-3xl font-bold text-orange-600">
+                          {item.price > 0 ? `฿${item.price}` : 'ราคาขึ้นอยู่กับตัวเลือก'}
+                        </span>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            addToCart(item, undefined, undefined, undefined, undefined, e);
+                            handleMenuItemClick(item, e);
                           }}
                           className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition-all active:scale-95"
                         >
-                          เพิ่ม
+                          {item.nestedMenuConfig && item.nestedMenuConfig.enabled ? 'เลือก' : 'เพิ่ม'}
                         </button>
                       </div>
                     </div>
@@ -373,7 +408,29 @@ export default function KioskPage() {
                           </div>
                           <div className="flex-1">
                             <h3 className="text-2xl font-bold text-gray-800">{item.name}</h3>
-                            <p className="text-xl text-orange-600 font-bold">฿{item.price}</p>
+
+                            {/* Display nested options if available */}
+                            {item.selectedNestedOptions && item.selectedNestedOptions.length > 0 && (
+                              <div className="mt-2 text-sm text-gray-600">
+                                {item.selectedNestedOptions.map((sel, idx) => {
+                                  const renderSelection = (s: typeof sel, depth = 0): string => {
+                                    let result = s.option.name;
+                                    if (s.childSelections && s.childSelections.length > 0) {
+                                      result += ' → ' + s.childSelections.map(child => renderSelection(child, depth + 1)).join(', ');
+                                    }
+                                    return result;
+                                  };
+                                  return (
+                                    <div key={idx} className="flex items-center gap-1">
+                                      <span className="text-purple-600">•</span>
+                                      <span>{renderSelection(sel)}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <p className="text-xl text-orange-600 font-bold mt-2">฿{item.price}</p>
                           </div>
                           <div className="flex items-center gap-4">
                             <button
@@ -521,6 +578,26 @@ export default function KioskPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Nested Menu Modal */}
+      {showNestedMenuModal && currentNestedMenuItem && currentNestedMenuItem.nestedMenuConfig && (
+        <NestedMenuModal
+          isOpen={showNestedMenuModal}
+          options={
+            currentNestedMenuItem.nestedMenuConfig.rootOptions
+              .map(id => findNestedOptionById(id))
+              .filter(Boolean) as any[]
+          }
+          onClose={() => {
+            setShowNestedMenuModal(false);
+            setCurrentNestedMenuItem(null);
+          }}
+          onConfirm={handleNestedMenuConfirm}
+          minSelections={currentNestedMenuItem.nestedMenuConfig.minSelections || 1}
+          maxSelections={currentNestedMenuItem.nestedMenuConfig.maxSelections || 1}
+          requireSelection={currentNestedMenuItem.nestedMenuConfig.requireSelection}
+        />
       )}
 
       {/* CSS Animations */}
