@@ -146,11 +146,14 @@ export default function KioskPage() {
       estimatedTime: 15,
     };
 
-    // Save to localStorage
+    // Save to localStorage and trigger storage event
     const existingQueues = localStorage.getItem('queueTickets');
     const queues = existingQueues ? JSON.parse(existingQueues) : [];
     const updatedQueues = [newQueue, ...queues];
     localStorage.setItem('queueTickets', JSON.stringify(updatedQueues));
+
+    // Dispatch custom event for same-tab listening
+    window.dispatchEvent(new CustomEvent('queueUpdated', { detail: updatedQueues }));
 
     setCurrentQueue(newQueue);
     setStep('queue');

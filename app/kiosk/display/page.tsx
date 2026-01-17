@@ -10,11 +10,34 @@ export default function QueueDisplayPage() {
   const [showAnimation, setShowAnimation] = useState(false);
   const [calledQueue, setCalledQueue] = useState<string | null>(null);
 
-  // Load queues from localStorage
+  // Load queues from localStorage with real-time sync
   useEffect(() => {
     loadQueues();
-    const interval = setInterval(loadQueues, 2000); // Refresh every 2 seconds
-    return () => clearInterval(interval);
+
+    // Listen for storage events from other tabs/windows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'queueTickets') {
+        loadQueues();
+      }
+    };
+
+    // Listen for custom events from same tab
+    const handleQueueUpdate = (e: Event) => {
+      loadQueues();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('queueUpdated', handleQueueUpdate);
+
+    // Fallback polling every 2 seconds
+    const interval = setInterval(loadQueues, 2000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('queueUpdated', handleQueueUpdate);
+    };
   }, []);
 
   // Update current time
@@ -22,6 +45,61 @@ export default function QueueDisplayPage() {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Play notification sound
+  const playNotificationSound = () => {
+    // Create bell sound using Web Audio API
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    // Bell sound (3 rings)
+    for (let i = 0; i < 3; i++) {
+      setTimeout(() => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800; // Bell frequency
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      }, i * 300);
+    }
+  };
+
+  // Text-to-Speech announcement
+  const announceQueue = (queueId: string) => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance();
+
+      // Convert queue ID to readable format (e.g., "A001" -> "เอ ศูนย์ ศูนย์ หนึ่ง")
+      const prefix = queueId.charAt(0);
+      const number = queueId.slice(1);
+
+      // Thai pronunciation
+      const thaiText = `เรียกคิว ${prefix === 'A' ? 'เอ' : 'บี'} ${number.split('').join(' ')}. กรุณามารับอาหารที่เคาน์เตอร์`;
+
+      utterance.text = thaiText;
+      utterance.lang = 'th-TH';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      // Speak after a short delay (to sync with bell sound)
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 1000);
+    }
+  };
 
   const loadQueues = () => {
     const stored = localStorage.getItem('queueTickets');
@@ -42,6 +120,13 @@ export default function QueueDisplayPage() {
       if (newlyReady) {
         setCalledQueue(newlyReady.queueId);
         setShowAnimation(true);
+
+        // Play notification sound
+        playNotificationSound();
+
+        // Announce queue number
+        announceQueue(newlyReady.queueId);
+
         setTimeout(() => setShowAnimation(false), 5000);
       }
 

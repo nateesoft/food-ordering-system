@@ -16,8 +16,31 @@ export default function KioskDashboard() {
   // Load queues from localStorage
   useEffect(() => {
     loadQueues();
-    const interval = setInterval(loadQueues, 2000); // Refresh every 2 seconds
-    return () => clearInterval(interval);
+
+    // Listen for storage events from other tabs/windows
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'queueTickets') {
+        loadQueues();
+      }
+    };
+
+    // Listen for custom events from same tab
+    const handleQueueUpdate = (e: Event) => {
+      loadQueues();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('queueUpdated', handleQueueUpdate);
+
+    // Fallback polling every 2 seconds
+    const interval = setInterval(loadQueues, 2000);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('queueUpdated', handleQueueUpdate);
+    };
   }, []);
 
   const loadQueues = () => {
@@ -73,6 +96,9 @@ export default function KioskDashboard() {
 
     setQueues(updatedQueues);
     localStorage.setItem('queueTickets', JSON.stringify(updatedQueues));
+
+    // Dispatch custom event for same-tab listening
+    window.dispatchEvent(new CustomEvent('queueUpdated', { detail: updatedQueues }));
   };
 
   // Group queues by status
