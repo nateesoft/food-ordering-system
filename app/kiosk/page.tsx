@@ -10,7 +10,7 @@ import { NestedMenuModal } from '@/components/NestedMenuModal';
 
 export default function KioskPage() {
   const { t, language } = useLanguage();
-  const [step, setStep] = useState<'welcome' | 'order-type' | 'menu' | 'cart' | 'queue'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'order-type' | 'menu' | 'cart' | 'confirm' | 'queue'>('welcome');
   const [orderType, setOrderType] = useState<'dine-in' | 'takeaway'>('dine-in');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
@@ -21,6 +21,14 @@ export default function KioskPage() {
   // Nested Menu Modal state
   const [showNestedMenuModal, setShowNestedMenuModal] = useState(false);
   const [currentNestedMenuItem, setCurrentNestedMenuItem] = useState<MenuItem | null>(null);
+
+  // Special instructions state
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [specialInstructionsInput, setSpecialInstructionsInput] = useState<string>('');
+
+  // Payment info state
+  const [memberId, setMemberId] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'>('cash');
 
   // Calculate categories
   const categories = useMemo(() => {
@@ -156,6 +164,24 @@ export default function KioskPage() {
     setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
   };
 
+  // Update special instructions for an item
+  const updateSpecialInstructions = (cartItemId: string, instructions: string) => {
+    setCart(prevCart =>
+      prevCart.map(item =>
+        item.cartItemId === cartItemId
+          ? { ...item, specialInstructions: instructions }
+          : item
+      )
+    );
+    setEditingItemId(null);
+    setSpecialInstructionsInput('');
+  };
+
+  // Go to confirmation page
+  const goToConfirmation = () => {
+    setStep('confirm');
+  };
+
   // Confirm order and generate queue
   const confirmOrder = () => {
     const queueNumber = Math.floor(Math.random() * 900) + 100;
@@ -171,6 +197,8 @@ export default function KioskPage() {
       status: 'waiting',
       createdAt: new Date(),
       estimatedTime: 15,
+      memberId: memberId || undefined,
+      paymentMethod,
     };
 
     // Save to localStorage and trigger storage event
@@ -454,6 +482,59 @@ export default function KioskPage() {
                             ลบ
                           </button>
                         </div>
+
+                        {/* Special Instructions Section */}
+                        <div className="mt-4 pt-4 border-t border-gray-200">
+                          {editingItemId === item.cartItemId ? (
+                            <div className="flex gap-3">
+                              <input
+                                type="text"
+                                value={specialInstructionsInput}
+                                onChange={(e) => setSpecialInstructionsInput(e.target.value)}
+                                placeholder="เช่น ไม่ใส่ผัก, เผ็ดน้อย, ไม่ใส่น้ำตาล..."
+                                className="flex-1 px-4 py-3 border-2 border-orange-300 rounded-xl text-lg focus:outline-none focus:border-orange-500"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => updateSpecialInstructions(item.cartItemId, specialInstructionsInput)}
+                                className="bg-green-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600"
+                              >
+                                บันทึก
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingItemId(null);
+                                  setSpecialInstructionsInput('');
+                                }}
+                                className="bg-gray-300 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-400"
+                              >
+                                ยกเลิก
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                {item.specialInstructions ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-blue-600">📝</span>
+                                    <span className="text-gray-700">{item.specialInstructions}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">ไม่มีข้อความพิเศษ</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setEditingItemId(item.cartItemId);
+                                  setSpecialInstructionsInput(item.specialInstructions || '');
+                                }}
+                                className="text-orange-600 hover:text-orange-700 text-lg font-medium ml-4"
+                              >
+                                {item.specialInstructions ? 'แก้ไข' : '+ เพิ่มข้อความ'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -465,10 +546,10 @@ export default function KioskPage() {
                       <span className="text-5xl font-bold text-orange-600">฿{totalAmount}</span>
                     </div>
                     <button
-                      onClick={confirmOrder}
+                      onClick={goToConfirmation}
                       className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-6 rounded-2xl text-3xl font-bold hover:scale-105 transform transition-all shadow-xl"
                     >
-                      ยืนยันการสั่งซื้อ
+                      ดำเนินการต่อ →
                     </button>
                   </div>
                 </>
@@ -476,6 +557,162 @@ export default function KioskPage() {
             </div>
           </div>
         )}
+        </div>
+      );
+    }
+
+    // Confirmation Page (Payment & Member ID)
+    if (step === 'confirm') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
+          <div className="max-w-4xl mx-auto">
+            <button
+              onClick={() => setStep('cart')}
+              className="mb-8 flex items-center gap-3 text-gray-600 hover:text-gray-800 text-2xl"
+            >
+              <ArrowLeft className="w-8 h-8" />
+              ย้อนกลับ
+            </button>
+
+            <h2 className="text-6xl font-bold text-center mb-4 text-gray-800">
+              ยืนยันการสั่งซื้อ
+            </h2>
+            <p className="text-3xl text-center text-gray-600 mb-12">
+              กรุณากรอกข้อมูลเพิ่มเติม
+            </p>
+
+            <div className="space-y-6">
+              {/* Member ID Section */}
+              <div className="bg-white rounded-3xl shadow-lg p-8">
+                <h3 className="text-3xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                  <span className="bg-purple-100 text-purple-600 w-12 h-12 rounded-full flex items-center justify-center text-2xl">
+                    1
+                  </span>
+                  รหัสสมาชิก (ถ้ามี)
+                </h3>
+                <p className="text-gray-600 text-lg mb-4 ml-16">ใส่รหัสเพื่อรับส่วนลดและสะสมแต้ม</p>
+                <input
+                  type="text"
+                  value={memberId}
+                  onChange={(e) => setMemberId(e.target.value)}
+                  placeholder="กรอกรหัสสมาชิก (ไม่บังคับ)"
+                  className="ml-16 w-[calc(100%-4rem)] px-6 py-4 border-2 border-gray-300 rounded-2xl text-2xl focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              {/* Payment Method Section */}
+              <div className="bg-white rounded-3xl shadow-lg p-8">
+                <h3 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                  <span className="bg-green-100 text-green-600 w-12 h-12 rounded-full flex items-center justify-center text-2xl">
+                    2
+                  </span>
+                  เลือกวิธีการชำระเงิน
+                </h3>
+
+                <div className="ml-16 grid grid-cols-2 gap-6">
+                  {/* Cash */}
+                  <button
+                    onClick={() => setPaymentMethod('cash')}
+                    className={`p-6 rounded-2xl border-4 transition-all ${
+                      paymentMethod === 'cash'
+                        ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <div className="text-6xl mb-4">💵</div>
+                    <h4 className="text-2xl font-bold text-gray-800">เงินสด</h4>
+                    <p className="text-gray-600 text-lg mt-2">Cash</p>
+                  </button>
+
+                  {/* Credit Card */}
+                  <button
+                    onClick={() => setPaymentMethod('credit-card')}
+                    className={`p-6 rounded-2xl border-4 transition-all ${
+                      paymentMethod === 'credit-card'
+                        ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <div className="text-6xl mb-4">💳</div>
+                    <h4 className="text-2xl font-bold text-gray-800">บัตรเครดิต</h4>
+                    <p className="text-gray-600 text-lg mt-2">Credit Card</p>
+                  </button>
+
+                  {/* QR Code */}
+                  <button
+                    onClick={() => setPaymentMethod('qr-code')}
+                    className={`p-6 rounded-2xl border-4 transition-all ${
+                      paymentMethod === 'qr-code'
+                        ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <div className="text-6xl mb-4">📱</div>
+                    <h4 className="text-2xl font-bold text-gray-800">QR Code</h4>
+                    <p className="text-gray-600 text-lg mt-2">PromptPay / Thai QR</p>
+                  </button>
+
+                  {/* Mobile Banking */}
+                  <button
+                    onClick={() => setPaymentMethod('mobile-banking')}
+                    className={`p-6 rounded-2xl border-4 transition-all ${
+                      paymentMethod === 'mobile-banking'
+                        ? 'border-green-500 bg-green-50 shadow-lg scale-105'
+                        : 'border-gray-200 hover:border-green-300'
+                    }`}
+                  >
+                    <div className="text-6xl mb-4">🏦</div>
+                    <h4 className="text-2xl font-bold text-gray-800">Mobile Banking</h4>
+                    <p className="text-gray-600 text-lg mt-2">โอนผ่านแอปธนาคาร</p>
+                  </button>
+                </div>
+              </div>
+
+              {/* Order Summary */}
+              <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-3xl shadow-2xl p-8">
+                <h3 className="text-3xl font-bold mb-6">สรุปคำสั่งซื้อ</h3>
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-xl">
+                    <span>ประเภท:</span>
+                    <span className="font-bold">
+                      {orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 ซื้อกลับบ้าน'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xl">
+                    <span>จำนวนรายการ:</span>
+                    <span className="font-bold">{totalItems} รายการ</span>
+                  </div>
+                  {memberId && (
+                    <div className="flex justify-between text-xl">
+                      <span>รหัสสมาชิก:</span>
+                      <span className="font-bold">{memberId}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-xl">
+                    <span>วิธีชำระเงิน:</span>
+                    <span className="font-bold">
+                      {paymentMethod === 'cash' && '💵 เงินสด'}
+                      {paymentMethod === 'credit-card' && '💳 บัตรเครดิต'}
+                      {paymentMethod === 'qr-code' && '📱 QR Code'}
+                      {paymentMethod === 'mobile-banking' && '🏦 Mobile Banking'}
+                    </span>
+                  </div>
+                </div>
+                <div className="border-t-2 border-white/30 pt-6 mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="text-3xl font-bold">ยอดรวมทั้งหมด</span>
+                    <span className="text-6xl font-bold">฿{totalAmount}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={confirmOrder}
+                  className="w-full bg-white text-orange-600 py-6 rounded-2xl text-3xl font-bold hover:scale-105 transform transition-all shadow-xl"
+                >
+                  ยืนยันการสั่งซื้อ ✓
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -509,16 +746,57 @@ export default function KioskPage() {
             <h3 className="text-3xl font-bold text-gray-800 mb-6">รายการสั่งซื้อ</h3>
             <div className="space-y-4 mb-6">
               {currentQueue.items.map(item => (
-                <div key={item.cartItemId} className="flex justify-between text-xl">
-                  <span className="text-gray-700">{item.name} x{item.quantity}</span>
-                  <span className="font-bold text-gray-800">฿{item.price * item.quantity}</span>
+                <div key={item.cartItemId}>
+                  <div className="flex justify-between text-xl">
+                    <span className="text-gray-700">{item.name} x{item.quantity}</span>
+                    <span className="font-bold text-gray-800">฿{item.price * item.quantity}</span>
+                  </div>
+                  {/* Show special instructions */}
+                  {item.specialInstructions && (
+                    <div className="flex items-center gap-2 text-sm text-blue-600 mt-1 ml-4">
+                      <span>📝</span>
+                      <span>{item.specialInstructions}</span>
+                    </div>
+                  )}
+                  {/* Show nested options */}
+                  {item.selectedNestedOptions && item.selectedNestedOptions.length > 0 && (
+                    <div className="text-sm text-purple-600 mt-1 ml-4">
+                      {item.selectedNestedOptions.map((sel, idx) => {
+                        const renderSelection = (s: typeof sel): string => {
+                          let result = s.option.name;
+                          if (s.childSelections && s.childSelections.length > 0) {
+                            result += ' → ' + s.childSelections.map(child => renderSelection(child)).join(', ');
+                          }
+                          return result;
+                        };
+                        return <div key={idx}>• {renderSelection(sel)}</div>;
+                      })}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="border-t-2 border-gray-300 pt-4">
-              <div className="flex justify-between text-3xl font-bold">
-                <span className="text-gray-800">ยอดรวม</span>
-                <span className="text-orange-600">฿{currentQueue.totalAmount}</span>
+            <div className="border-t-2 border-gray-300 pt-4 space-y-2">
+              {currentQueue.memberId && (
+                <div className="flex justify-between text-lg text-purple-700">
+                  <span>รหัสสมาชิก:</span>
+                  <span className="font-bold">{currentQueue.memberId}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-lg text-gray-600">
+                <span>วิธีชำระเงิน:</span>
+                <span className="font-bold">
+                  {currentQueue.paymentMethod === 'cash' && '💵 เงินสด'}
+                  {currentQueue.paymentMethod === 'credit-card' && '💳 บัตรเครดิต'}
+                  {currentQueue.paymentMethod === 'qr-code' && '📱 QR Code'}
+                  {currentQueue.paymentMethod === 'mobile-banking' && '🏦 Mobile Banking'}
+                </span>
+              </div>
+              <div className="border-t-2 border-gray-300 pt-4 mt-4">
+                <div className="flex justify-between text-3xl font-bold">
+                  <span className="text-gray-800">ยอดรวม</span>
+                  <span className="text-orange-600">฿{currentQueue.totalAmount}</span>
+                </div>
               </div>
             </div>
           </div>

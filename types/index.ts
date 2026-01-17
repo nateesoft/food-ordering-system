@@ -133,4 +133,6 @@ export interface QueueTicket {
   calledAt?: Date; // วันเวลาที่เรียกคิว
   completedAt?: Date; // วันเวลาที่เสร็จสิ้น
   customerName?: string; // ชื่อลูกค้า (optional)
+  memberId?: string; // รหัสสมาชิก (optional)
+  paymentMethod?: 'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'; // วิธีการชำระเงิน
 }
