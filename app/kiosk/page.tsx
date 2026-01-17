@@ -14,6 +14,8 @@ export default function KioskPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('ทั้งหมด');
   const [currentQueue, setCurrentQueue] = useState<QueueTicket | null>(null);
+  const [flyingItem, setFlyingItem] = useState<{ item: MenuItem; position: { x: number; y: number } } | null>(null);
+  const [showAddNotification, setShowAddNotification] = useState(false);
 
   // Calculate categories
   const categories = useMemo(() => {
@@ -35,8 +37,28 @@ export default function KioskPage() {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   }, [cart]);
 
-  // Add to cart
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[]) => {
+  // Add to cart with animation
+  const addToCart = (menuItem: MenuItem, specialInstructions?: string, selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[], event?: React.MouseEvent) => {
+    // Trigger flying animation
+    if (event) {
+      const target = event.currentTarget as HTMLElement;
+      const rect = target.getBoundingClientRect();
+      setFlyingItem({
+        item: menuItem,
+        position: {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2
+        }
+      });
+
+      // Remove flying item after animation
+      setTimeout(() => setFlyingItem(null), 1000);
+    }
+
+    // Show notification
+    setShowAddNotification(true);
+    setTimeout(() => setShowAddNotification(false), 2000);
+
     setCart(prevCart => {
       const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
       const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
@@ -143,34 +165,36 @@ export default function KioskPage() {
     setCurrentQueue(null);
   };
 
-  // Welcome Screen
-  if (step === 'welcome') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="mb-8 animate-bounce">
-            <Utensils className="w-32 h-32 text-white mx-auto" />
+  // Render main content
+  const renderContent = () => {
+    // Welcome Screen
+    if (step === 'welcome') {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="mb-8 animate-bounce">
+              <Utensils className="w-32 h-32 text-white mx-auto" />
+            </div>
+            <h1 className="text-7xl font-bold text-white mb-4 drop-shadow-lg">
+              ยินดีต้อนรับ
+            </h1>
+            <p className="text-3xl text-white mb-12 drop-shadow-md">
+              สั่งอาหารง่ายๆ ด้วยตัวเอง
+            </p>
+            <button
+              onClick={() => setStep('order-type')}
+              className="bg-white text-orange-600 px-16 py-8 rounded-3xl text-4xl font-bold shadow-2xl hover:scale-110 transform transition-all duration-300 hover:shadow-orange-300"
+            >
+              เริ่มสั่งอาหาร 🍽️
+            </button>
           </div>
-          <h1 className="text-7xl font-bold text-white mb-4 drop-shadow-lg">
-            ยินดีต้อนรับ
-          </h1>
-          <p className="text-3xl text-white mb-12 drop-shadow-md">
-            สั่งอาหารง่ายๆ ด้วยตัวเอง
-          </p>
-          <button
-            onClick={() => setStep('order-type')}
-            className="bg-white text-orange-600 px-16 py-8 rounded-3xl text-4xl font-bold shadow-2xl hover:scale-110 transform transition-all duration-300 hover:shadow-orange-300"
-          >
-            เริ่มสั่งอาหาร 🍽️
-          </button>
         </div>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Order Type Selection
-  if (step === 'order-type') {
-    return (
+    // Order Type Selection
+    if (step === 'order-type') {
+      return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
         <div className="max-w-6xl mx-auto">
           <button
@@ -216,13 +240,13 @@ export default function KioskPage() {
             </button>
           </div>
         </div>
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
-  // Menu & Cart View
-  if (step === 'menu' || step === 'cart') {
-    return (
+    // Menu & Cart View
+    if (step === 'menu' || step === 'cart') {
+      return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 shadow-lg sticky top-0 z-50">
@@ -278,26 +302,39 @@ export default function KioskPage() {
               {filteredMenu.map(item => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all hover:scale-105 cursor-pointer"
-                  onClick={() => addToCart(item)}
+                  className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all hover:scale-105"
                 >
-                  <div className="relative h-64 bg-gray-200">
-                    {item.image && (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    )}
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-2xl font-bold text-gray-800 mb-2">{item.name}</h3>
-                    <p className="text-gray-600 text-lg mb-4 line-clamp-2">{item.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-3xl font-bold text-orange-600">฿{item.price}</span>
-                      <button className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition-all">
-                        เพิ่ม
-                      </button>
+                  <div
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(item, undefined, undefined, undefined, undefined, e);
+                    }}
+                  >
+                    <div className="relative h-64 bg-gray-200">
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">{item.name}</h3>
+                      <p className="text-gray-600 text-lg mb-4 line-clamp-2">{item.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-3xl font-bold text-orange-600">฿{item.price}</span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(item, undefined, undefined, undefined, undefined, e);
+                          }}
+                          className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition-all active:scale-95"
+                        >
+                          เพิ่ม
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -379,13 +416,13 @@ export default function KioskPage() {
             </div>
           </div>
         )}
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
-  // Queue Ticket Display
-  if (step === 'queue' && currentQueue) {
-    return (
+    // Queue Ticket Display
+    if (step === 'queue' && currentQueue) {
+      return (
       <div className="min-h-screen bg-gradient-to-br from-green-400 via-emerald-500 to-teal-500 flex items-center justify-center p-8">
         <div className="bg-white rounded-3xl shadow-2xl p-12 max-w-3xl w-full text-center">
           <div className="mb-8">
@@ -438,9 +475,90 @@ export default function KioskPage() {
             เสร็จสิ้น
           </button>
         </div>
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
-  return null;
+    return null;
+  };
+
+  return (
+    <>
+      {/* Main Content */}
+      {renderContent()}
+
+      {/* Flying Item Animation */}
+      {flyingItem && (
+        <div
+          className="fixed z-[200] pointer-events-none"
+          style={{
+            left: flyingItem.position.x,
+            top: flyingItem.position.y,
+            transform: 'translate(-50%, -50%)'
+          }}
+        >
+          <div className="animate-fly-to-cart">
+            <div className="bg-orange-500 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-2xl">
+              <span className="text-3xl">🍽️</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add to Cart Notification */}
+      {showAddNotification && (
+        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-[150] animate-bounce-in">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3">
+            <div className="bg-white rounded-full w-10 h-10 flex items-center justify-center">
+              <span className="text-2xl">✅</span>
+            </div>
+            <div>
+              <p className="text-xl font-bold">เพิ่มลงตะกร้าแล้ว!</p>
+              <p className="text-sm text-green-100">Added to cart</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes fly-to-cart {
+          0% {
+            transform: translate(-50%, -50%) scale(1) rotate(0deg);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(calc(100vw - 50%), calc(-100vh + 50%)) scale(0.5) rotate(180deg);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(calc(100vw - 50%), calc(-100vh + 50%)) scale(0) rotate(360deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes bounce-in {
+          0% {
+            transform: translate(-50%, -100px);
+            opacity: 0;
+          }
+          50% {
+            transform: translate(-50%, 10px);
+          }
+          100% {
+            transform: translate(-50%, 0);
+            opacity: 1;
+          }
+        }
+
+        .animate-fly-to-cart {
+          animation: fly-to-cart 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) forwards;
+        }
+
+        .animate-bounce-in {
+          animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+      `}</style>
+    </>
+  );
 }

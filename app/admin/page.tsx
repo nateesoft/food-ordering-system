@@ -9,7 +9,8 @@ import {
   Monitor,
   LayoutGrid,
   ArrowRight,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -40,6 +41,15 @@ export default function AdminDashboard() {
       color: 'from-purple-500 to-pink-500',
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-600'
+    },
+    {
+      title: 'Kitchen Dashboard',
+      description: 'Dashboard แสดงคิวแบบ Kanban Board',
+      icon: BarChart3,
+      href: '/kiosk/dashboard',
+      color: 'from-slate-600 to-slate-800',
+      iconBg: 'bg-slate-100',
+      iconColor: 'text-slate-600'
     },
     {
       title: 'Queue Management',
