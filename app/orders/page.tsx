@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { api, OrderResponse } from '@/lib/api';
 
 interface StaffUser {
   pin: string;
@@ -87,19 +88,82 @@ export default function OrdersPage() {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const loadOrders = () => {
-    const savedOrders = localStorage.getItem('orderHistory');
-    if (savedOrders) {
-      const parsedOrders = JSON.parse(savedOrders);
-      // Initialize itemStatus for existing items if not present
-      const ordersWithItemStatus = parsedOrders.map((order: Order) => ({
-        ...order,
-        items: order.items.map((item: CartItem) => ({
-          ...item,
-          itemStatus: item.itemStatus || 'preparing',
-        })),
-      }));
-      setOrders(ordersWithItemStatus);
+  const loadOrders = async () => {
+    try {
+      // Fetch orders and menu items from API in parallel
+      const [apiOrders, menuItems] = await Promise.all([
+        api.getAllOrders(),
+        api.getMenuItems(),
+      ]);
+
+      // Create a map of menuItemId to name for quick lookup
+      const menuNameMap = new Map(menuItems.map(item => [item.id, item.name]));
+
+      // Transform API orders to match local Order interface
+      const transformedOrders: Order[] = apiOrders.map((apiOrder: OrderResponse) => {
+        const items = Array.isArray(apiOrder.items) ? apiOrder.items : [];
+        return {
+          orderId: apiOrder.orderId,
+          tableNumber: apiOrder.tableNumber,
+          totalAmount: apiOrder.totalAmount,
+          totalItems: apiOrder.totalItems,
+          orderDate: new Date(apiOrder.createdAt),
+          status: (apiOrder.status?.toLowerCase() || 'preparing') as 'preparing' | 'completed' | 'delivered',
+          items: items.map((item: any, index: number) => ({
+            id: item.menuItemId || item.id || index,
+            name: item.menuItem?.name || item.name || menuNameMap.get(item.menuItemId) || `เมนู #${item.menuItemId || index + 1}`,
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            cartItemId: item.cartItemId || `${apiOrder.orderId}-${index}`,
+            specialInstructions: item.specialInstructions,
+            diningOption: item.diningOption || 'dine-in',
+            itemStatus: item.status || item.itemStatus || 'preparing',
+          })),
+        };
+      });
+
+      // Also load local orders from localStorage (for backward compatibility)
+      const savedOrders = localStorage.getItem('orderHistory');
+      if (savedOrders) {
+        const localOrders = JSON.parse(savedOrders);
+        // Merge: use API orders as primary, local orders as fallback for status updates
+        const localOrderMap = new Map(localOrders.map((o: Order) => [o.orderId, o]));
+
+        const mergedOrders = transformedOrders.map(apiOrder => {
+          const localOrder = localOrderMap.get(apiOrder.orderId) as Order | undefined;
+          if (localOrder) {
+            // Use local status/itemStatus if available (for real-time updates)
+            return {
+              ...apiOrder,
+              status: localOrder.status || apiOrder.status,
+              items: apiOrder.items.map((item, idx) => ({
+                ...item,
+                itemStatus: localOrder.items[idx]?.itemStatus || item.itemStatus,
+              })),
+            };
+          }
+          return apiOrder;
+        });
+
+        setOrders(mergedOrders);
+      } else {
+        setOrders(transformedOrders);
+      }
+    } catch (error) {
+      console.error('Failed to load orders from API:', error);
+      // Fallback to localStorage if API fails
+      const savedOrders = localStorage.getItem('orderHistory');
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        const ordersWithItemStatus = parsedOrders.map((order: Order) => ({
+          ...order,
+          items: order.items.map((item: CartItem) => ({
+            ...item,
+            itemStatus: item.itemStatus || 'preparing',
+          })),
+        }));
+        setOrders(ordersWithItemStatus);
+      }
     }
   };
 

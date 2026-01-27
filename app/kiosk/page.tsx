@@ -2,29 +2,61 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { ShoppingCart, Home, Utensils, Package, ArrowLeft, Loader2 } from 'lucide-react';
-import { MenuItem, CartItem, QueueTicket, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
+import { MenuItem, CartItem, QueueTicket, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { NestedMenuModal } from '@/components/NestedMenuModal';
-import { api, ApiMenuItem } from '@/lib/api';
+import { api, ApiMenuItem, ApiNestedMenuOption } from '@/lib/api';
+
+// Helper function to convert API nested option to frontend NestedMenuOption
+const convertNestedOption = (apiOption: ApiNestedMenuOption): NestedMenuOption => ({
+  id: apiOption.id,
+  name: apiOption.name,
+  description: apiOption.description || undefined,
+  price: apiOption.price,
+  image: apiOption.image || undefined,
+  type: apiOption.type as 'single' | 'group',
+  requireChildSelection: apiOption.requireChildSelection,
+  minChildSelections: apiOption.minChildSelections || undefined,
+  maxChildSelections: apiOption.maxChildSelections || undefined,
+  childOptions: apiOption.children?.map(convertNestedOption),
+});
 
 // Helper function to convert API menu item to frontend MenuItem
-const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => ({
-  id: apiItem.id,
-  name: apiItem.name,
-  category: apiItem.category,
-  price: apiItem.price,
-  image: apiItem.image || '',
-  description: apiItem.description || '',
-  rating: apiItem.rating || undefined,
-  reviewCount: apiItem.reviewCount,
-  type: apiItem.type.toLowerCase() as 'single' | 'set' | 'group',
-  setComponents: apiItem.setComponents,
-  availableAddOns: apiItem.availableAddOns?.map((a: any) => a.addOnId || a.id) || [],
-  availableAddOnGroups: apiItem.availableAddOnGroups?.map((g: any) => g.addOnGroupId || g.id) || [],
-  nestedMenuConfig: apiItem.nestedMenuConfig,
-  isActive: apiItem.isActive,
-});
+const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
+  // Convert nested menu config if exists
+  let nestedMenuConfig = undefined;
+  if (apiItem.nestedMenuConfig && apiItem.nestedMenuConfig.enabled) {
+    const rootOptionObjects = apiItem.nestedMenuConfig.rootOptions.map(
+      opt => convertNestedOption(opt.nestedMenuOption)
+    );
+    nestedMenuConfig = {
+      enabled: apiItem.nestedMenuConfig.enabled,
+      requireSelection: apiItem.nestedMenuConfig.requireSelection,
+      minSelections: apiItem.nestedMenuConfig.minSelections,
+      maxSelections: apiItem.nestedMenuConfig.maxSelections,
+      rootOptions: rootOptionObjects.map(opt => opt.id),
+      rootOptionObjects: rootOptionObjects,
+    };
+  }
+
+  return {
+    id: apiItem.id,
+    name: apiItem.name,
+    category: apiItem.category,
+    price: apiItem.price,
+    image: apiItem.image || '',
+    description: apiItem.description || '',
+    rating: apiItem.rating || undefined,
+    reviewCount: apiItem.reviewCount,
+    type: apiItem.type.toLowerCase() as 'single' | 'set' | 'group',
+    setComponents: apiItem.setComponents,
+    availableAddOns: apiItem.availableAddOns?.map((a: any) => a.addOnId || a.id) || [],
+    availableAddOnGroups: apiItem.availableAddOnGroups?.map((g: any) => g.addOnGroupId || g.id) || [],
+    nestedMenuConfig,
+    isActive: apiItem.isActive,
+  };
+};
 
 export default function KioskPage() {
   const { t, language } = useLanguage();
@@ -232,8 +264,8 @@ export default function KioskPage() {
       setIsSubmitting(true);
       setError(null);
 
-      // Prepare items for API
-      const apiItems = cart.map(item => ({
+      // Prepare items for Queue API
+      const queueItems = cart.map(item => ({
         menuItemId: item.id,
         quantity: item.quantity,
         price: item.price,
@@ -244,15 +276,38 @@ export default function KioskPage() {
         selectedNestedOptions: item.selectedNestedOptions ? JSON.stringify(item.selectedNestedOptions) : undefined,
       }));
 
-      // Send to backend API
-      const response = await api.createQueueTicket({
-        orderType,
-        totalAmount,
-        totalItems,
-        memberId: memberId || undefined,
-        paymentMethod,
-        items: apiItems,
-      });
+      // Prepare items for Order API
+      const orderItems = cart.map(item => ({
+        menuItemId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        diningOption: item.diningOption,
+        specialInstructions: item.specialInstructions,
+        selectedAddOns: item.selectedAddOns,
+        selectedAddOnGroups: item.selectedAddOnGroups,
+        selectedNestedOptions: item.selectedNestedOptions,
+      }));
+
+      // Create both Queue and Order in parallel
+      const [queueResponse, orderResponse] = await Promise.all([
+        api.createQueueTicket({
+          orderType,
+          totalAmount,
+          totalItems,
+          memberId: memberId || undefined,
+          paymentMethod,
+          items: queueItems,
+        }),
+        api.createOrder({
+          tableNumber: 'KIOSK',
+          totalAmount,
+          totalItems,
+          items: orderItems,
+        }),
+      ]);
+
+      const response = queueResponse;
+      console.log('Order created:', orderResponse.orderId);
 
       // Convert response to QueueTicket format
       const newQueue: QueueTicket = {

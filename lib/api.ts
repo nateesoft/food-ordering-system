@@ -1,5 +1,29 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+export interface ApiNestedMenuOption {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number;
+  image: string | null;
+  type: string;
+  requireChildSelection: boolean;
+  minChildSelections: number | null;
+  maxChildSelections: number | null;
+  children?: ApiNestedMenuOption[];
+}
+
+export interface ApiNestedMenuConfig {
+  id: number;
+  enabled: boolean;
+  requireSelection: boolean;
+  minSelections: number;
+  maxSelections: number;
+  rootOptions: {
+    nestedMenuOption: ApiNestedMenuOption;
+  }[];
+}
+
 export interface ApiMenuItem {
   id: number;
   name: string;
@@ -14,7 +38,7 @@ export interface ApiMenuItem {
   setComponents: any[];
   availableAddOns: any[];
   availableAddOnGroups: any[];
-  nestedMenuConfig: any | null;
+  nestedMenuConfig: ApiNestedMenuConfig | null;
 }
 
 export interface ApiAddOn {
@@ -71,6 +95,34 @@ export interface QueueTicketResponse {
   createdAt: string;
 }
 
+export interface CreateOrderDto {
+  tableNumber?: string;
+  totalAmount: number;
+  totalItems: number;
+  items: {
+    menuItemId: number;
+    quantity: number;
+    price: number;
+    diningOption: string;
+    specialInstructions?: string;
+    selectedAddOns?: any;
+    selectedAddOnGroups?: any;
+    selectedNestedOptions?: any;
+  }[];
+}
+
+export interface OrderResponse {
+  id: number;
+  orderId: string;
+  tableNumber: string;
+  totalAmount: number;
+  totalItems: number;
+  status: string;
+  items: any;
+  createdAt: string;
+  updatedAt: string;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
@@ -121,6 +173,20 @@ export const api = {
 
   // Members
   getMemberByMemberId: (memberId: string) => fetchApi<any>(`/members/member-id/${memberId}`),
+
+  // Orders
+  createOrder: (data: CreateOrderDto) =>
+    fetchApi<OrderResponse>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getOrdersByTable: (tableNumber: string) =>
+    fetchApi<OrderResponse[]>(`/orders/table/${tableNumber}`),
+
+  getTodayOrders: () => fetchApi<OrderResponse[]>('/orders/today'),
+
+  getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
 };
 
 export default api;
