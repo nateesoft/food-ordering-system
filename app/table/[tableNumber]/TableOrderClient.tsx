@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, ArrowLeft, Loader2, QrCode, X } from 'lucide-react';
+import QRCode from 'qrcode';
 import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { SearchBar } from '@/components/SearchBar';
@@ -84,6 +85,22 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   const [showOrderAnimation, setShowOrderAnimation] = useState(false);
   const [animatingItems, setAnimatingItems] = useState<CartItem[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+
+  const handleShowQr = async () => {
+    try {
+      const url = `${window.location.origin}/table/${tableNumber}`;
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 300, margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      setQrDataUrl(dataUrl);
+      setShowQrModal(true);
+    } catch (err) {
+      console.error('Failed to generate QR code:', err);
+    }
+  };
 
   // API data state
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -292,23 +309,19 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     }
   };
 
-  const handleServiceRequest = (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
-    const newRequest: ServiceRequest = {
-      id: `REQ-${Date.now()}`,
-      type,
-      timestamp: new Date(),
-      details,
-      items,
-      status: 'pending',
-      tableNumber: tableNumber,
-    };
-
-    const existingRequests = localStorage.getItem('serviceRequests');
-    const requests = existingRequests ? JSON.parse(existingRequests) : [];
-    const updatedRequests = [newRequest, ...requests];
-    localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
-
-    console.log('Service Request:', newRequest);
+  const handleServiceRequest = async (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
+    const typeMap = { staff: 'STAFF', utensils: 'UTENSILS', payment: 'PAYMENT' } as const;
+    try {
+      await api.createServiceRequest({
+        type: typeMap[type],
+        tableNumber: tableNumber,
+        details,
+        items,
+      });
+      console.log('Service Request sent via API:', type);
+    } catch (err) {
+      console.error('Failed to send service request:', err);
+    }
   };
 
   const categories = React.useMemo(() => {
@@ -345,6 +358,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         totalItems={totalItems}
         onCartClick={() => setShowCart(true)}
         onHistoryClick={() => setShowOrderHistory(true)}
+        onQrClick={handleShowQr}
         orderCount={orderHistory.length}
       />
 
@@ -428,6 +442,44 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         onOpenFloorPlan={() => {}}
         onOpenWelcome={() => setShowWelcome(true)}
       />
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowQrModal(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-indigo-100 rounded-full">
+                <QrCode className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">แชร์โต๊ะ {tableNumber}</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              ให้เพื่อนสแกน QR Code นี้เพื่อเข้าร่วมสั่งอาหารที่โต๊ะเดียวกัน
+            </p>
+            <div className="flex justify-center mb-4">
+              {qrDataUrl && (
+                <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-2 border-gray-200" />
+              )}
+            </div>
+            <p className="text-xs text-center text-gray-400 mb-4 break-all">
+              {typeof window !== 'undefined' && `${window.location.origin}/table/${tableNumber}`}
+            </p>
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="w-full px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-semibold"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      )}
 
       <WelcomeModal
         isOpen={showWelcome && !isLoading}

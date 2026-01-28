@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { ShoppingCart, UtensilsCrossed, ClipboardList, Languages } from 'lucide-react';
+import { ShoppingCart, UtensilsCrossed, ClipboardList, Languages, QrCode } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface HeaderProps {
   totalItems: number;
   onCartClick: () => void;
   onHistoryClick: () => void;
+  onQrClick?: () => void;
   orderCount?: number;
 }
 
@@ -15,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   totalItems,
   onCartClick,
   onHistoryClick,
+  onQrClick,
   orderCount = 0
 }) => {
   const { language, setLanguage, t } = useLanguage();
@@ -59,6 +61,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* QR Share button */}
+            {onQrClick && (
+              <button
+                onClick={onQrClick}
+                className="bg-indigo-100 text-indigo-600 p-3 rounded-full hover:bg-indigo-200 transition-all shadow hover:shadow-md"
+                title="แชร์โต๊ะ"
+              >
+                <QrCode className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Cart button */}
             <button
@@ -111,6 +124,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               )}
             </button>
+
+            {/* QR Share button */}
+            {onQrClick && (
+              <button
+                onClick={onQrClick}
+                className="bg-indigo-100 text-indigo-600 p-2 rounded-full hover:bg-indigo-200 transition-all shadow hover:shadow-md"
+                title="แชร์โต๊ะ"
+              >
+                <QrCode className="w-5 h-5" />
+              </button>
+            )}
 
             {/* Cart button */}
             <button

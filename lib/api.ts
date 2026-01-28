@@ -1,4 +1,12 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    // In browser: use the same hostname the user is accessing, with port 3001
+    return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface ApiNestedMenuOption {
   id: number;
@@ -95,6 +103,25 @@ export interface QueueTicketResponse {
   createdAt: string;
 }
 
+export interface CreateServiceRequestDto {
+  type: 'STAFF' | 'UTENSILS' | 'PAYMENT';
+  tableNumber?: string;
+  details?: string;
+  items?: string[];
+}
+
+export interface ServiceRequestResponse {
+  id: number;
+  requestId: string;
+  type: string;
+  tableNumber: string | null;
+  details: string | null;
+  items: string[];
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateOrderDto {
   tableNumber?: string;
   totalAmount: number;
@@ -187,6 +214,25 @@ export const api = {
   getTodayOrders: () => fetchApi<OrderResponse[]>('/orders/today'),
 
   getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
+
+  // Service Requests
+  createServiceRequest: (data: CreateServiceRequestDto) =>
+    fetchApi<ServiceRequestResponse>('/service-requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getPendingServiceRequests: () =>
+    fetchApi<ServiceRequestResponse[]>('/service-requests/pending'),
+
+  getAllServiceRequests: () =>
+    fetchApi<ServiceRequestResponse[]>('/service-requests'),
+
+  updateServiceRequestStatus: (id: number, status: 'COMPLETED' | 'PENDING') =>
+    fetchApi<ServiceRequestResponse>(`/service-requests/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
 
 export default api;

@@ -25,7 +25,8 @@
       "Bash(xargs kill:*)",
       "Bash(npm run prisma:seed:*)",
       "Bash(npm run:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx next build:*)"
     ],
     "deny": [],
     "ask": []
