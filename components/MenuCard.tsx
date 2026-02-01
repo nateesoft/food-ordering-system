@@ -102,8 +102,10 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     : [];
 
   // Get nested menu options for this item
-  const itemNestedOptions = item.nestedMenuConfig?.enabled && item.nestedMenuConfig.rootOptions
-    ? nestedMenuOptions.filter(opt => item.nestedMenuConfig?.rootOptions.includes(opt.id))
+  // Prefer rootOptionObjects from API, fall back to filtering static data by IDs
+  const itemNestedOptions = item.nestedMenuConfig?.enabled
+    ? (item.nestedMenuConfig.rootOptionObjects ||
+       nestedMenuOptions.filter(opt => item.nestedMenuConfig?.rootOptions?.includes(opt.id)))
     : [];
 
   // Calculate total price with add-ons, groups, and nested menu

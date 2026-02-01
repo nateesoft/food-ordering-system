@@ -1,37 +1,52 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Check, Search } from 'lucide-react';
-import { Header } from '@/components/Header';
-import { CategoryFilter } from '@/components/CategoryFilter';
-import { SearchBar } from '@/components/SearchBar';
-import { MenuCard } from '@/components/MenuCard';
-import { CartSidebar } from '@/components/CartSidebar';
-import { OrderHistory } from '@/components/OrderHistory';
-import { FloatingActionMenu } from '@/components/FloatingActionMenu';
-import { FloorPlan } from '@/components/FloorPlan';
-import { WelcomeModal } from '@/components/WelcomeModal';
-import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, Table, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
-import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { ChefHat, Users, MapPin, UserCheck, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Table } from '@/types';
+import { api } from '@/lib/api';
+
+interface StaffAssignment {
+  staffId: number;
+  staffName: string;
+  staffRole: string;
+  checkedInAt: string;
+  lastSeenAt: string;
+}
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('th-TH', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export default function Home() {
-  const { t, language } = useLanguage();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState(t.categories.all);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCart, setShowCart] = useState(false);
-  const [orderConfirmed, setOrderConfirmed] = useState(false);
-  const [orderHistory, setOrderHistory] = useState<Order[]>([]);
-  const [showOrderHistory, setShowOrderHistory] = useState(false);
-  const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
-  const [currentTableId, setCurrentTableId] = useState(5);
-  const [showFloorPlan, setShowFloorPlan] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [showOrderAnimation, setShowOrderAnimation] = useState(false);
-  const [animatingItems, setAnimatingItems] = useState<CartItem[]>([]);
-  const [tables, setTables] = useState<Table[]>([
+  const router = useRouter();
+  const { t } = useLanguage();
+  const [staffAssignments, setStaffAssignments] = useState<Record<string, StaffAssignment[]>>({});
+
+  // Fetch staff assignments
+  const fetchStaffAssignments = useCallback(async () => {
+    try {
+      const data = await api.getAllStaffAssignments();
+      setStaffAssignments(data);
+    } catch (err) {
+      console.log('Failed to fetch staff assignments');
+    }
+  }, []);
+
+  // Initial fetch and polling every 15 seconds
+  useEffect(() => {
+    fetchStaffAssignments();
+    const interval = setInterval(fetchStaffAssignments, 15000);
+    return () => clearInterval(interval);
+  }, [fetchStaffAssignments]);
+
+  const [tables] = useState<Table[]>([
     // ด้านหน้าร้าน
     { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
     { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small' },
@@ -39,449 +54,233 @@ export default function Home() {
     { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium' },
 
     // กลางร้าน
-    { id: 5, number: 'B1', capacity: 4, status: 'occupied', position: { x: 10, y: 40 }, size: 'medium' },
+    { id: 5, number: 'B1', capacity: 4, status: 'available', position: { x: 10, y: 40 }, size: 'medium' },
     { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium' },
-    { id: 7, number: 'B3', capacity: 6, status: 'occupied', position: { x: 60, y: 40 }, size: 'large' },
+    { id: 7, number: 'B3', capacity: 6, status: 'available', position: { x: 60, y: 40 }, size: 'large' },
 
     // ด้านหลัง
     { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small' },
     { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small' },
-    { id: 10, number: 'C3', capacity: 4, status: 'occupied', position: { x: 50, y: 70 }, size: 'medium' },
+    { id: 10, number: 'C3', capacity: 4, status: 'available', position: { x: 50, y: 70 }, size: 'medium' },
     { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large' },
   ]);
 
-  // Calculate categories - use Thai category names internally
-  const categories = useMemo(() => {
-    const cats = ['ทั้งหมด', ...new Set(menuItems.map(item => item.category))];
-    return cats;
-  }, []);
+  const handleSelectTable = (tableNumber: string) => {
+    router.push(`/table/${tableNumber}`);
+  };
 
-  // Filter menu by category and search - using Thai category names for filtering
-  const filteredMenu = useMemo(() => {
-    const allCategoryInThai = 'ทั้งหมด';
-    let filtered = menuItems;
-
-    // Filter by category
-    if (selectedCategory !== t.categories.all && selectedCategory !== allCategoryInThai) {
-      // Map translated category back to Thai for filtering
-      const categoryMap: Record<string, string> = {
-        [t.foodCategories.singleDish]: 'อาหารจานเดียว',
-        [t.foodCategories.appetizers]: 'อาหารว่าง',
-        [t.foodCategories.desserts]: 'ของหวาน',
-        [t.foodCategories.beverages]: 'เครื่องดื่ม',
-      };
-      const thaiCategory = categoryMap[selectedCategory] || selectedCategory;
-      filtered = filtered.filter(item => item.category === thaiCategory);
+  const getTableColor = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600';
+      case 'occupied':
+        return 'from-red-400 to-rose-500 cursor-not-allowed opacity-60';
+      case 'reserved':
+        return 'from-yellow-400 to-amber-500 cursor-not-allowed opacity-60';
+      default:
+        return 'from-gray-400 to-gray-500';
     }
+  };
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query)
-      );
+  const getTableSize = (size: string) => {
+    switch (size) {
+      case 'small':
+        return 'w-20 h-20 sm:w-24 sm:h-24';
+      case 'medium':
+        return 'w-24 h-24 sm:w-28 sm:h-28';
+      case 'large':
+        return 'w-28 h-28 sm:w-32 sm:h-32';
+      default:
+        return 'w-24 h-24';
     }
-
-    return filtered;
-  }, [selectedCategory, searchQuery, t]);
-
-  // คำนวณยอดรวม
-  const totalAmount = useMemo(() => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  }, [cart]);
-
-  const totalItems = useMemo(() => {
-    return cart.reduce((sum, item) => sum + item.quantity, 0);
-  }, [cart]);
-
-  // เพิ่มสินค้าลงตะกร้า
-  const addToCart = (menuItem: MenuItem, specialInstructions?: string, diningOption: 'dine-in' | 'takeaway' = 'dine-in', selectedAddOns?: AddOn[], selectedAddOnGroups?: AddOnGroup[], selectedNestedOptions?: SelectedNestedOption[]) => {
-    setCart(prevCart => {
-      // Serialize add-ons, groups, and nested options for comparison
-      const addOnsKey = selectedAddOns?.map(a => a.id).sort().join(',') || '';
-      const addOnGroupsKey = selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
-      const nestedOptionsKey = JSON.stringify(selectedNestedOptions || []);
-
-      // หารายการที่ตรงกันทั้ง id, specialInstructions, diningOption, selectedAddOns, selectedAddOnGroups และ selectedNestedOptions
-      const existingItem = prevCart.find(item => {
-        const itemAddOnsKey = item.selectedAddOns?.map(a => a.id).sort().join(',') || '';
-        const itemAddOnGroupsKey = item.selectedAddOnGroups?.map(g => g.id).sort().join(',') || '';
-        const itemNestedOptionsKey = JSON.stringify(item.selectedNestedOptions || []);
-        return item.id === menuItem.id &&
-               item.specialInstructions === specialInstructions &&
-               item.diningOption === diningOption &&
-               itemAddOnsKey === addOnsKey &&
-               itemAddOnGroupsKey === addOnGroupsKey &&
-               itemNestedOptionsKey === nestedOptionsKey;
-      });
-
-      if (existingItem) {
-        // ถ้าเจอรายการที่ตรงกันทุกอย่าง ให้เพิ่มจำนวน
-        return prevCart.map(item =>
-          item.cartItemId === existingItem.cartItemId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-
-      // คำนวณราคารวมกับ add-ons, groups และ nested menu
-      const addOnsTotal = selectedAddOns?.reduce((sum, addOn) => sum + addOn.price, 0) || 0;
-      const addOnGroupsTotal = selectedAddOnGroups?.reduce((sum, group) => sum + group.price, 0) || 0;
-      const nestedMenuTotal = calculateNestedMenuPrice(selectedNestedOptions || []);
-      const finalPrice = menuItem.price + addOnsTotal + addOnGroupsTotal + nestedMenuTotal;
-
-      // ถ้าไม่เจอ หรือมีอะไรต่างกัน ให้สร้างรายการใหม่
-      const cartItemId = `${menuItem.id}-${Date.now()}-${Math.random()}`;
-      return [...prevCart, {
-        ...menuItem,
-        price: finalPrice, // Update price to include add-ons, groups, and nested menu
-        quantity: 1,
-        specialInstructions,
-        cartItemId,
-        diningOption,
-        selectedAddOns,
-        selectedAddOnGroups,
-        selectedNestedOptions
-      }];
-    });
   };
 
-  // เพิ่มจำนวนสินค้า
-  const increaseQuantity = (cartItemId: string) => {
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.cartItemId === cartItemId ? { ...item, quantity: item.quantity + 1 } : item
-      )
-    );
-  };
-
-  // ลดจำนวนสินค้า
-  const decreaseQuantity = (cartItemId: string) => {
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.cartItemId === cartItemId && item.quantity > 1
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      ).filter(item => item.quantity > 0)
-    );
-  };
-
-  // ลบสินค้าออกจากตะกร้า
-  const removeFromCart = (cartItemId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.cartItemId !== cartItemId));
-  };
-
-  // อัปเดตคำขอพิเศษ
-  const updateSpecialInstructions = (cartItemId: string, instructions: string) => {
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.cartItemId === cartItemId ? { ...item, specialInstructions: instructions } : item
-      )
-    );
-  };
-
-  // อัปเดตประเภทการรับประทาน
-  const updateDiningOption = (cartItemId: string, option: 'dine-in' | 'takeaway') => {
-    setCart(prevCart =>
-      prevCart.map(item =>
-        item.cartItemId === cartItemId ? { ...item, diningOption: option } : item
-      )
-    );
-  };
-
-  // ยืนยันการสั่งซื้อ
-  const confirmOrder = () => {
-    // Store items for animation
-    setAnimatingItems([...cart]);
-    setShowOrderAnimation(true);
-
-    // สร้าง order ใหม่
-    const newOrder: Order = {
-      orderId: `ORD-${Date.now()}`,
-      items: [...cart],
-      totalAmount,
-      totalItems,
-      orderDate: new Date(),
-      status: 'preparing',
-      tableNumber: currentTable?.number,
-    };
-
-    // เพิ่มลงประวัติการสั่งซื้อ
-    const updatedHistory = [newOrder, ...orderHistory];
-    setOrderHistory(updatedHistory);
-
-    // บันทึกลง localStorage สำหรับหน้า /orders
-    localStorage.setItem('orderHistory', JSON.stringify(updatedHistory));
-
-    // Hide animation after items fly away
-    setTimeout(() => {
-      setShowOrderAnimation(false);
-      setOrderConfirmed(true);
-    }, 2000);
-
-    // Clear cart and close
-    setTimeout(() => {
-      setCart([]);
-      setOrderConfirmed(false);
-      setShowCart(false);
-      setAnimatingItems([]);
-      // แสดง Welcome Modal อีกครั้งหลังสั่งอาหารเสร็จ
-      setShowWelcome(true);
-    }, 4500);
-  };
-
-  // เลือกหมวดหมู่จาก Welcome Modal
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category);
-    setSearchQuery('');
-  };
-
-  // จัดการ Service Request
-  const handleServiceRequest = (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
-    const newRequest: ServiceRequest = {
-      id: `REQ-${Date.now()}`,
-      type,
-      timestamp: new Date(),
-      details,
-      items,
-      status: 'pending',
-      tableNumber: currentTable?.number,
-    };
-
-    // Save to state
-    setServiceRequests(prev => [newRequest, ...prev]);
-
-    // Save to localStorage for staff/kitchen to see
-    const existingRequests = localStorage.getItem('serviceRequests');
-    const requests = existingRequests ? JSON.parse(existingRequests) : [];
-    const updatedRequests = [newRequest, ...requests];
-    localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
-
-    console.log('Service Request:', newRequest);
-  };
-
-  // เปลี่ยนโต๊ะ
-  const handleChangeTable = (newTableId: number) => {
-    // อัปเดตสถานะโต๊ะเก่า
-    setTables(prev =>
-      prev.map(table => {
-        if (table.id === currentTableId) {
-          return { ...table, status: 'available' as const };
-        }
-        if (table.id === newTableId) {
-          return { ...table, status: 'occupied' as const };
-        }
-        return table;
-      })
-    );
-    setCurrentTableId(newTableId);
-  };
-
-  // รวมโต๊ะ
-  const handleMergeTables = (tableIds: number[]) => {
-    setTables(prev =>
-      prev.map(table => {
-        if (tableIds.includes(table.id)) {
-          return { ...table, mergedWith: tableIds.filter(id => id !== table.id) };
-        }
-        return table;
-      })
-    );
-    console.log('Merged tables:', tableIds);
-  };
-
-  const currentTable = tables.find(t => t.id === currentTableId);
+  const availableTables = tables.filter(t => t.status === 'available');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      <Header
-        totalItems={totalItems}
-        onCartClick={() => setShowCart(true)}
-        onHistoryClick={() => setShowOrderHistory(true)}
-        orderCount={orderHistory.length}
-      />
-
-      <CategoryFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-      />
-
-      <SearchBar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
-
-      {/* Menu Grid */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
-        {filteredMenu.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="text-gray-400 mb-4">
-              <Search className="w-20 h-20 mx-auto mb-4" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">{t.search.noResults}</h3>
-            <p className="text-gray-500">{t.search.tryDifferentKeyword}</p>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="text-center pt-8 pb-6 px-4 bg-gradient-to-b from-orange-500 to-orange-600">
+        <div className="inline-block mb-4 animate-bounce">
+          <ChefHat className="w-16 h-16 sm:w-20 sm:h-20 text-white mx-auto" />
+        </div>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+          {t.header.restaurantName}
+        </h1>
+        <p className="text-lg sm:text-xl text-orange-100 mb-4">
+          ยินดีต้อนรับ กรุณาเลือกโต๊ะของคุณ
+        </p>
+        <div className="flex items-center justify-center gap-6 text-white text-sm sm:text-base">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-green-400 border-2 border-white"></div>
+            <span>ว่าง ({availableTables.length})</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredMenu.map(item => (
-              <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
-            ))}
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-red-400 border-2 border-white"></div>
+            <span>ไม่ว่าง</span>
           </div>
-        )}
-      </main>
-
-      <CartSidebar
-        isOpen={showCart}
-        cart={cart}
-        totalAmount={totalAmount}
-        totalItems={totalItems}
-        orderConfirmed={orderConfirmed}
-        onClose={() => setShowCart(false)}
-        onIncreaseQuantity={increaseQuantity}
-        onDecreaseQuantity={decreaseQuantity}
-        onRemoveFromCart={removeFromCart}
-        onUpdateSpecialInstructions={updateSpecialInstructions}
-        onUpdateDiningOption={updateDiningOption}
-        onConfirmOrder={confirmOrder}
-      />
-
-      {/* Order History Sidebar */}
-      <OrderHistory
-        isOpen={showOrderHistory}
-        orders={orderHistory}
-        onClose={() => setShowOrderHistory(false)}
-      />
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-yellow-400 border-2 border-white"></div>
+            <span>จอง</span>
+          </div>
+        </div>
+      </div>
 
       {/* Floor Plan */}
-      <FloorPlan
-        isOpen={showFloorPlan}
-        currentTableId={currentTableId}
-        tables={tables}
-        onClose={() => setShowFloorPlan(false)}
-        onChangeTable={handleChangeTable}
-        onMergeTables={handleMergeTables}
-      />
-
-      {/* Welcome Modal */}
-      <WelcomeModal
-        isOpen={showWelcome}
-        onClose={() => setShowWelcome(false)}
-        onSelectCategory={handleCategorySelect}
-        tableNumber={currentTable?.number}
-      />
-
-      {/* Floating Action Menu */}
-      <FloatingActionMenu
-        currentTableNumber={currentTable?.number || 'N/A'}
-        onServiceRequest={handleServiceRequest}
-        onOpenFloorPlan={() => setShowFloorPlan(true)}
-        onOpenWelcome={() => setShowWelcome(true)}
-      />
-
-      {/* Order Flying Animation */}
-      {showOrderAnimation && (
-        <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
-          {/* Kitchen Icon at top */}
-          <div className="absolute top-10 left-1/2 transform -translate-x-1/2">
-            <div className="bg-orange-500 text-white p-6 rounded-full shadow-2xl animate-pulse">
-              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
+      <div className="max-w-6xl mx-auto px-4 pb-8">
+        <div className="bg-gray-100 rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-lg">
+          {/* Zone Labels */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 text-orange-600 mb-4">
+              <MapPin className="w-5 h-5" />
+              <span className="font-bold text-lg">แผนผังร้าน</span>
             </div>
-            <p className="text-center text-orange-600 font-bold mt-2 text-xl">ห้องครัว</p>
           </div>
 
-          {/* Flying Food Items */}
-          {animatingItems.map((item, index) => (
-            <div
-              key={item.cartItemId}
-              className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2"
-              style={{
-                animation: `flyToKitchen 2s ease-in-out ${index * 0.15}s forwards`,
-                animationDelay: `${index * 0.15}s`,
-              }}
-            >
-              <div className="bg-white rounded-2xl shadow-2xl p-4 border-2 border-orange-500 min-w-[200px]">
-                <div className="flex items-center gap-3">
-                  <div className="bg-orange-100 rounded-full p-2">
-                    <span className="text-2xl">🍽️</span>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-gray-800 text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-600">จำนวน: {item.quantity}</p>
-                    {item.specialInstructions && (
-                      <p className="text-xs text-orange-600 mt-1">📝 {item.specialInstructions}</p>
+          {/* Zone A - Front */}
+          <div className="mb-12 pb-4">
+            <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน A - ด้านหน้าร้าน</h3>
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
+              {tables.filter(t => t.number.startsWith('A')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Trail particles */}
-          <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2">
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-2 h-2 bg-orange-400 rounded-full"
-                style={{
-                  animation: `sparkle 1.5s ease-out ${i * 0.05}s forwards`,
-                  left: `${Math.random() * 40 - 20}px`,
-                  bottom: `${Math.random() * 40 - 20}px`,
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Success Message */}
-      {orderConfirmed && (
-        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-4 rounded-xl shadow-2xl z-50 animate-bounce">
-          <div className="flex items-center space-x-3">
-            <Check className="w-6 h-6" />
-            <div>
-              <p className="font-bold text-lg">สั่งอาหารสำเร็จแล้ว!</p>
-              <p className="text-sm text-green-100">ห้องครัวได้รับออเดอร์แล้วครับ ขอบคุณครับ</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
+
+          {/* Zone B - Middle */}
+          <div className="mb-12 pb-4">
+            <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน B - กลางร้าน</h3>
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
+              {tables.filter(t => t.number.startsWith('B')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Zone C - Back */}
+          <div className="pb-4">
+            <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน C - ด้านหลังร้าน</h3>
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
+              {tables.filter(t => t.number.startsWith('C')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes flyToKitchen {
-          0% {
-            transform: translate(-50%, 0) scale(1) rotate(0deg);
-            opacity: 1;
-          }
-          50% {
-            transform: translate(-50%, -200px) scale(1.1) rotate(5deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(-50%, -500px) scale(0.3) rotate(15deg);
-            opacity: 0;
-          }
-        }
-
-        @keyframes sparkle {
-          0% {
-            transform: translate(0, 0) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(
-              ${Math.random() * 200 - 100}px,
-              ${Math.random() * -300 - 100}px
-            ) scale(0);
-            opacity: 0;
-          }
-        }
-      `}</style>
+        {/* Kiosk Option */}
+        <div className="mt-8 text-center">
+          <p className="text-gray-500 mb-4">หรือสั่งอาหารแบบ Self-Service</p>
+          <button
+            onClick={() => router.push('/kiosk')}
+            className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-orange-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
+          >
+            🥡 สั่งผ่าน Kiosk (ไม่ต้องเลือกโต๊ะ)
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

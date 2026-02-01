@@ -92,55 +92,54 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
 
   return (
     <>
-      {/* Fixed Footer Menu */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 shadow-2xl z-40">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="grid grid-cols-5 gap-2">
-            {/* Home / Welcome Button */}
-            {onOpenWelcome && (
-              <button
-                onClick={onOpenWelcome}
-                className="flex flex-col items-center justify-center p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
-              >
-                <Home className="w-6 h-6 text-gray-600 mb-1" />
-                <span className="text-xs font-semibold text-gray-700">หน้าหลัก</span>
-              </button>
-            )}
-
+      {/* Footer Menu */}
+      <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-2xl z-40">
+        <div className="max-w-7xl mx-auto px-2 py-3">
+          <div className="flex gap-2 items-end justify-center overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory sm:flex-wrap sm:overflow-x-visible">
             {/* Table / Floor Plan Button */}
             <button
               onClick={onOpenFloorPlan}
-              className="flex flex-col items-center justify-center p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="flex flex-col items-center justify-center p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
               <MapPin className="w-6 h-6 text-orange-600 mb-1" />
-              <span className="text-xs font-semibold text-orange-700">{t.floatingMenu.table} {currentTableNumber}</span>
+              <span className="text-xs font-semibold text-orange-700 whitespace-nowrap">{t.floatingMenu.table} {currentTableNumber}</span>
             </button>
 
             {/* Call Staff Button */}
             <button
               onClick={() => setShowStaffModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
               <Bell className="w-6 h-6 text-blue-600 mb-1" />
-              <span className="text-xs font-semibold text-blue-700">{t.floatingMenu.staff}</span>
+              <span className="text-xs font-semibold text-blue-700 whitespace-nowrap">{t.floatingMenu.staff}</span>
             </button>
+
+            {/* Home / Welcome Button - Center, larger like iPhone home button */}
+            {onOpenWelcome && (
+              <button
+                onClick={onOpenWelcome}
+                className="flex flex-col items-center justify-center w-16 h-16 -mt-6 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-full transition-all shadow-lg hover:shadow-xl active:scale-95 snap-start ring-4 ring-white"
+              >
+                <Home className="w-7 h-7 text-white" />
+              </button>
+            )}
 
             {/* Request Utensils Button */}
             <button
               onClick={() => setShowUtensilsModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
               <Utensils className="w-6 h-6 text-green-600 mb-1" />
-              <span className="text-xs font-semibold text-green-700">{t.floatingMenu.utensils}</span>
+              <span className="text-xs font-semibold text-green-700 whitespace-nowrap">{t.floatingMenu.utensils}</span>
             </button>
 
             {/* Payment Button */}
             <button
               onClick={() => setShowPaymentModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="flex flex-col items-center justify-center p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
               <CreditCard className="w-6 h-6 text-purple-600 mb-1" />
-              <span className="text-xs font-semibold text-purple-700">{t.floatingMenu.payment}</span>
+              <span className="text-xs font-semibold text-purple-700 whitespace-nowrap">{t.floatingMenu.payment}</span>
             </button>
           </div>
         </div>

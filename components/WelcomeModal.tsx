@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ChefHat, Soup, Salad, UtensilsCrossed, Coffee, Cake, LayoutGrid, List } from 'lucide-react';
+import { X, ChefHat, Soup, Salad, UtensilsCrossed, Coffee, Cake, LayoutGrid, List, Pizza, Utensils } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WelcomeModalProps {
@@ -9,75 +9,50 @@ interface WelcomeModalProps {
   onClose: () => void;
   onSelectCategory: (category: string) => void;
   tableNumber?: string;
+  categories?: string[]; // Dynamic categories from API
 }
+
+// Icon mapping for categories
+const getCategoryIcon = (category: string) => {
+  const lowerCategory = category.toLowerCase();
+  if (lowerCategory.includes('thai')) return ChefHat;
+  if (lowerCategory.includes('rice')) return Utensils;
+  if (lowerCategory.includes('set')) return UtensilsCrossed;
+  if (lowerCategory.includes('appetizer')) return Salad;
+  if (lowerCategory.includes('dessert')) return Cake;
+  if (lowerCategory.includes('western')) return Pizza;
+  if (lowerCategory.includes('soup') || lowerCategory.includes('curry')) return Soup;
+  if (lowerCategory.includes('drink') || lowerCategory.includes('beverage')) return Coffee;
+  return Utensils;
+};
+
+// Color mapping for categories
+const getCategoryColors = (index: number) => {
+  const colors = [
+    { bgColor: 'bg-gradient-to-br from-orange-50 to-red-50', iconColor: 'text-orange-600' },
+    { bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50', iconColor: 'text-blue-600' },
+    { bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50', iconColor: 'text-green-600' },
+    { bgColor: 'bg-gradient-to-br from-purple-50 to-pink-50', iconColor: 'text-purple-600' },
+    { bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50', iconColor: 'text-amber-600' },
+    { bgColor: 'bg-gradient-to-br from-red-50 to-pink-50', iconColor: 'text-red-600' },
+  ];
+  return colors[index % colors.length];
+};
 
 export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   isOpen,
   onClose,
   onSelectCategory,
   tableNumber = 'B1',
+  categories = [],
 }) => {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   if (!isOpen) return null;
 
-  const categoryData = [
-    {
-      category: 'อาหารจานเดียว',
-      translatedName: t.foodCategories['อาหารจานเดียว'] || 'อาหารจานเดียว',
-      icon: ChefHat,
-      color: 'from-orange-400 to-red-500',
-      bgColor: 'bg-gradient-to-br from-orange-50 to-red-50',
-      iconColor: 'text-orange-600',
-      description: 'ผัดไทย ข้าวผัด ก๋วยเตี๋ยว',
-    },
-    {
-      category: 'ต้ม/แกง',
-      translatedName: t.foodCategories['ต้ม/แกง'] || 'ต้ม/แกง',
-      icon: Soup,
-      color: 'from-red-400 to-pink-500',
-      bgColor: 'bg-gradient-to-br from-red-50 to-pink-50',
-      iconColor: 'text-red-600',
-      description: 'ต้มยำ แกงเขียวหวาน ต้มข่าไก่',
-    },
-    {
-      category: 'ยำ/สลัด',
-      translatedName: t.foodCategories['ยำ/สลัด'] || 'ยำ/สลัด',
-      icon: Salad,
-      color: 'from-green-400 to-emerald-500',
-      bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50',
-      iconColor: 'text-green-600',
-      description: 'ยำวุ้นเส้น ส้มตำ ลาบ',
-    },
-    {
-      category: 'อาหารจานหลัก',
-      translatedName: t.foodCategories['อาหารจานหลัก'] || 'อาหารจานหลัก',
-      icon: UtensilsCrossed,
-      color: 'from-blue-400 to-indigo-500',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-indigo-50',
-      iconColor: 'text-blue-600',
-      description: 'ผัดกะเพรา ผัดพริกแกง ปลาราดพริก',
-    },
-    {
-      category: 'ของหวาน',
-      translatedName: t.foodCategories['ของหวาน'] || 'ของหวาน',
-      icon: Cake,
-      color: 'from-purple-400 to-pink-500',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-pink-50',
-      iconColor: 'text-purple-600',
-      description: 'ข้าวเหนียวมะม่วง ทับทิมกรอบ',
-    },
-    {
-      category: 'เครื่องดื่ม',
-      translatedName: t.foodCategories['เครื่องดื่ม'] || 'เครื่องดื่ม',
-      icon: Coffee,
-      color: 'from-amber-400 to-orange-500',
-      bgColor: 'bg-gradient-to-br from-amber-50 to-orange-50',
-      iconColor: 'text-amber-600',
-      description: 'ชาเย็น กาแฟ น้ำผลไม้ปั่น',
-    },
-  ];
+  // Filter out 'ทั้งหมด' from categories for display
+  const displayCategories = categories.filter(cat => cat !== 'ทั้งหมด');
 
   const handleCategoryClick = (category: string) => {
     onSelectCategory(category);
@@ -85,7 +60,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   };
 
   const handleViewAll = () => {
-    onSelectCategory(t.categories.all);
+    onSelectCategory('ทั้งหมด');
     onClose();
   };
 
@@ -160,25 +135,23 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             </div>
 
             {/* Grid View */}
-            {viewMode === 'grid' && (
+            {viewMode === 'grid' && displayCategories.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {categoryData.map((cat) => {
-                  const Icon = cat.icon;
+                {displayCategories.map((category, index) => {
+                  const Icon = getCategoryIcon(category);
+                  const colors = getCategoryColors(index);
                   return (
                     <button
-                      key={cat.category}
-                      onClick={() => handleCategoryClick(cat.category)}
-                      className={`${cat.bgColor} p-6 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 text-left border-2 border-transparent hover:border-gray-200`}
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      className={`${colors.bgColor} p-6 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 text-left border-2 border-transparent hover:border-gray-200`}
                     >
-                      <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-md mb-4`}>
-                        <Icon className={`w-8 h-8 ${cat.iconColor}`} />
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-md mb-4">
+                        <Icon className={`w-8 h-8 ${colors.iconColor}`} />
                       </div>
                       <h3 className="text-xl font-bold text-gray-800 mb-2">
-                        {cat.translatedName}
+                        {category}
                       </h3>
-                      <p className="text-sm text-gray-600">
-                        {cat.description}
-                      </p>
                     </button>
                   );
                 })}
@@ -186,26 +159,24 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             )}
 
             {/* List View */}
-            {viewMode === 'list' && (
+            {viewMode === 'list' && displayCategories.length > 0 && (
               <div className="space-y-3 mb-6">
-                {categoryData.map((cat) => {
-                  const Icon = cat.icon;
+                {displayCategories.map((category, index) => {
+                  const Icon = getCategoryIcon(category);
+                  const colors = getCategoryColors(index);
                   return (
                     <button
-                      key={cat.category}
-                      onClick={() => handleCategoryClick(cat.category)}
-                      className={`w-full ${cat.bgColor} p-4 rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] border-2 border-transparent hover:border-gray-200 flex items-center gap-4`}
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      className={`w-full ${colors.bgColor} p-4 rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] border-2 border-transparent hover:border-gray-200 flex items-center gap-4`}
                     >
-                      <div className={`inline-flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-md flex-shrink-0`}>
-                        <Icon className={`w-7 h-7 ${cat.iconColor}`} />
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-md flex-shrink-0">
+                        <Icon className={`w-7 h-7 ${colors.iconColor}`} />
                       </div>
                       <div className="flex-1 text-left">
-                        <h3 className="text-lg font-bold text-gray-800 mb-1">
-                          {cat.translatedName}
+                        <h3 className="text-lg font-bold text-gray-800">
+                          {category}
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          {cat.description}
-                        </p>
                       </div>
                       <div className="text-gray-400">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,6 +186,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {/* No categories message */}
+            {displayCategories.length === 0 && (
+              <div className="text-center py-8 text-gray-500 mb-6">
+                <p>กำลังโหลดหมวดหมู่...</p>
               </div>
             )}
 
