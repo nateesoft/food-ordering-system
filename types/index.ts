@@ -44,7 +44,8 @@ export interface NestedMenuOption {
 
 export interface NestedMenuConfig {
   enabled: boolean; // เปิดใช้งาน Nested Menu หรือไม่
-  rootOptions: number[]; // IDs ของตัวเลือกชั้นแรก
+  rootOptions: number[]; // IDs ของตัวเลือกชั้นแรก (for static data compatibility)
+  rootOptionObjects?: NestedMenuOption[]; // Full nested option objects from API
   requireSelection: boolean; // บังคับให้เลือกหรือไม่
   minSelections?: number; // เลือกได้อย่างน้อย
   maxSelections?: number; // เลือกได้สูงสุด
@@ -133,4 +134,6 @@ export interface QueueTicket {
   calledAt?: Date; // วันเวลาที่เรียกคิว
   completedAt?: Date; // วันเวลาที่เสร็จสิ้น
   customerName?: string; // ชื่อลูกค้า (optional)
+  memberId?: string; // รหัสสมาชิก (optional)
+  paymentMethod?: 'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'; // วิธีการชำระเงิน
 }

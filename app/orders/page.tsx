@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { api, OrderResponse, ServiceRequestResponse } from '@/lib/api';
 
 interface StaffUser {
   pin: string;
@@ -59,6 +60,7 @@ export default function OrdersPage() {
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
 
   useEffect(() => {
     const authData = localStorage.getItem('staff_auth');
@@ -87,36 +89,106 @@ export default function OrdersPage() {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
-  const loadOrders = () => {
-    const savedOrders = localStorage.getItem('orderHistory');
-    if (savedOrders) {
-      const parsedOrders = JSON.parse(savedOrders);
-      // Initialize itemStatus for existing items if not present
-      const ordersWithItemStatus = parsedOrders.map((order: Order) => ({
-        ...order,
-        items: order.items.map((item: CartItem) => ({
-          ...item,
-          itemStatus: item.itemStatus || 'preparing',
-        })),
-      }));
-      setOrders(ordersWithItemStatus);
+  const loadOrders = async () => {
+    try {
+      // Fetch orders and menu items from API in parallel
+      const [apiOrders, menuItems] = await Promise.all([
+        api.getAllOrders(),
+        api.getMenuItems(),
+      ]);
+
+      // Create a map of menuItemId to name for quick lookup
+      const menuNameMap = new Map(menuItems.map(item => [item.id, item.name]));
+
+      // Transform API orders to match local Order interface
+      const transformedOrders: Order[] = apiOrders.map((apiOrder: OrderResponse) => {
+        const items = Array.isArray(apiOrder.items) ? apiOrder.items : [];
+        return {
+          orderId: apiOrder.orderId,
+          tableNumber: apiOrder.tableNumber,
+          totalAmount: apiOrder.totalAmount,
+          totalItems: apiOrder.totalItems,
+          orderDate: new Date(apiOrder.createdAt),
+          status: (apiOrder.status?.toLowerCase() || 'preparing') as 'preparing' | 'completed' | 'delivered',
+          items: items.map((item: any, index: number) => ({
+            id: item.menuItemId || item.id || index,
+            name: item.menuItem?.name || item.name || menuNameMap.get(item.menuItemId) || `เมนู #${item.menuItemId || index + 1}`,
+            price: item.price || 0,
+            quantity: item.quantity || 1,
+            cartItemId: item.cartItemId || `${apiOrder.orderId}-${index}`,
+            specialInstructions: item.specialInstructions,
+            diningOption: item.diningOption || 'dine-in',
+            itemStatus: item.status || item.itemStatus || 'preparing',
+          })),
+        };
+      });
+
+      // Also load local orders from localStorage (for backward compatibility)
+      const savedOrders = localStorage.getItem('orderHistory');
+      if (savedOrders) {
+        const localOrders = JSON.parse(savedOrders);
+        // Merge: use API orders as primary, local orders as fallback for status updates
+        const localOrderMap = new Map(localOrders.map((o: Order) => [o.orderId, o]));
+
+        const mergedOrders = transformedOrders.map(apiOrder => {
+          const localOrder = localOrderMap.get(apiOrder.orderId) as Order | undefined;
+          if (localOrder) {
+            // Use local status/itemStatus if available (for real-time updates)
+            return {
+              ...apiOrder,
+              status: localOrder.status || apiOrder.status,
+              items: apiOrder.items.map((item, idx) => ({
+                ...item,
+                itemStatus: localOrder.items[idx]?.itemStatus || item.itemStatus,
+              })),
+            };
+          }
+          return apiOrder;
+        });
+
+        setOrders(mergedOrders);
+      } else {
+        setOrders(transformedOrders);
+      }
+    } catch (error) {
+      console.error('Failed to load orders from API:', error);
+      // Fallback to localStorage if API fails
+      const savedOrders = localStorage.getItem('orderHistory');
+      if (savedOrders) {
+        const parsedOrders = JSON.parse(savedOrders);
+        const ordersWithItemStatus = parsedOrders.map((order: Order) => ({
+          ...order,
+          items: order.items.map((item: CartItem) => ({
+            ...item,
+            itemStatus: item.itemStatus || 'preparing',
+          })),
+        }));
+        setOrders(ordersWithItemStatus);
+      }
     }
   };
 
-  const loadServiceRequests = () => {
-    const savedRequests = localStorage.getItem('serviceRequests');
-    if (savedRequests) {
-      const parsedRequests: ServiceRequest[] = JSON.parse(savedRequests);
-      setServiceRequests(parsedRequests);
+  const loadServiceRequests = async () => {
+    try {
+      const apiRequests = await api.getPendingServiceRequests();
+      const transformed: ServiceRequest[] = apiRequests.map((req: ServiceRequestResponse) => ({
+        id: String(req.id),
+        type: req.type.toLowerCase() as 'staff' | 'utensils' | 'payment',
+        timestamp: new Date(req.createdAt),
+        details: req.details || undefined,
+        items: req.items?.length ? req.items : undefined,
+        status: req.status === 'PENDING' ? 'pending' as const : 'completed' as const,
+        tableNumber: req.tableNumber || undefined,
+      }));
+      setServiceRequests(transformed);
 
-      // Count pending requests
-      const pendingCount = parsedRequests.filter(req => req.status === 'pending').length;
-      setUnreadCount(pendingCount);
-
-      // Play sound notification if there are new pending requests
+      const pendingCount = transformed.filter(req => req.status === 'pending').length;
       if (pendingCount > unreadCount && unreadCount !== 0) {
         playNotificationSound();
       }
+      setUnreadCount(pendingCount);
+    } catch (error) {
+      console.error('Failed to load service requests from API:', error);
     }
   };
 
@@ -290,31 +362,24 @@ export default function OrdersPage() {
     }
   };
 
-  const markRequestAsCompleted = (requestId: string) => {
-    // Find the request to check its type
+  const markRequestAsCompleted = async (requestId: string) => {
     const request = serviceRequests.find(req => req.id === requestId);
 
-    const updatedRequests = serviceRequests.map(req =>
-      req.id === requestId ? { ...req, status: 'completed' as const } : req
-    );
+    try {
+      await api.updateServiceRequestStatus(Number(requestId), 'COMPLETED');
+    } catch (err) {
+      console.error('Failed to update service request status:', err);
+    }
+
+    // Update local state immediately (remove from pending list)
+    const updatedRequests = serviceRequests.filter(req => req.id !== requestId);
     setServiceRequests(updatedRequests);
-    localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
+    setUnreadCount(updatedRequests.filter(req => req.status === 'pending').length);
 
     // If this is a payment request, clear all orders for that table
     if (request && request.type === 'payment' && request.tableNumber) {
-      const tableNumber = request.tableNumber;
-
-      // Filter out orders from this table
-      const updatedOrders = orders.filter(order => order.tableNumber !== tableNumber);
+      const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber);
       setOrders(updatedOrders);
-      localStorage.setItem('orderHistory', JSON.stringify(updatedOrders));
-
-      // Also clear completed service requests for this table
-      const cleanedRequests = updatedRequests.filter(req =>
-        !(req.tableNumber === tableNumber && req.status === 'completed')
-      );
-      setServiceRequests(cleanedRequests);
-      localStorage.setItem('serviceRequests', JSON.stringify(cleanedRequests));
     }
   };
 
@@ -618,9 +683,35 @@ export default function OrdersPage() {
 
       {/* Orders List */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">รายการออเดอร์</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-4">รายการออเดอร์</h1>
 
-        {orders.length === 0 ? (
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all ${activeTab === 'active' ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            ยังไม่ชำระเงิน
+            {orders.filter(o => o.status === 'preparing' || o.status === 'completed').length > 0 && (
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${activeTab === 'active' ? 'bg-white text-orange-500' : 'bg-gray-300 text-gray-700'}`}>
+                {orders.filter(o => o.status === 'preparing' || o.status === 'completed').length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-5 py-2.5 rounded-full font-semibold text-sm transition-all ${activeTab === 'history' ? 'bg-orange-500 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            ประวัติ (ชำระแล้ว/ยกเลิก)
+            {orders.filter(o => o.status === 'delivered').length > 0 && (
+              <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${activeTab === 'history' ? 'bg-white text-orange-500' : 'bg-gray-300 text-gray-700'}`}>
+                {orders.filter(o => o.status === 'delivered').length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {orders.filter(o => activeTab === 'active' ? (o.status === 'preparing' || o.status === 'completed') : o.status === 'delivered').length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <ChefHat className="w-20 h-20 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-600 mb-2">ยังไม่มีออเดอร์</h3>
@@ -628,7 +719,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => {
+            {orders.filter(o => activeTab === 'active' ? (o.status === 'preparing' || o.status === 'completed') : o.status === 'delivered').map((order) => {
               const isExpanded = expandedOrders.has(order.orderId);
               const allItemsCompleted = order.items.every(item =>
                 item.itemStatus === 'completed' || item.itemStatus === 'delivered'

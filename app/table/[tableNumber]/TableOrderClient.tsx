@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ArrowLeft } from 'lucide-react';
+import { Check, ArrowLeft, Loader2, QrCode, X, UserCheck } from 'lucide-react';
+import QRCode from 'qrcode';
 import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
 import { SearchBar } from '@/components/SearchBar';
@@ -10,10 +11,63 @@ import { MenuCard } from '@/components/MenuCard';
 import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
-import { menuItems } from '@/data/menuItems';
-import { MenuItem, CartItem, Order, ServiceRequest, AddOn, AddOnGroup, SelectedNestedOption } from '@/types';
+import { WelcomeModal } from '@/components/WelcomeModal';
+import StaffCheckInModal from '@/components/StaffCheckInModal';
+import StaffBadge from '@/components/StaffBadge';
+import { MenuItem, CartItem, Order, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { api, ApiMenuItem, ApiNestedMenuOption, StaffInfo } from '@/lib/api';
+
+// Helper function to convert API nested option to frontend NestedMenuOption
+const convertNestedOption = (apiOption: ApiNestedMenuOption): NestedMenuOption => ({
+  id: apiOption.id,
+  name: apiOption.name,
+  description: apiOption.description || undefined,
+  price: apiOption.price,
+  image: apiOption.image || undefined,
+  type: apiOption.type as 'single' | 'group',
+  requireChildSelection: apiOption.requireChildSelection,
+  minChildSelections: apiOption.minChildSelections || undefined,
+  maxChildSelections: apiOption.maxChildSelections || undefined,
+  childOptions: apiOption.children?.map(convertNestedOption),
+});
+
+// Helper function to convert API menu item to frontend MenuItem
+const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
+  // Convert nested menu config if exists
+  let nestedMenuConfig = undefined;
+  if (apiItem.nestedMenuConfig && apiItem.nestedMenuConfig.enabled) {
+    const rootOptionObjects = apiItem.nestedMenuConfig.rootOptions.map(
+      opt => convertNestedOption(opt.nestedMenuOption)
+    );
+    nestedMenuConfig = {
+      enabled: apiItem.nestedMenuConfig.enabled,
+      requireSelection: apiItem.nestedMenuConfig.requireSelection,
+      minSelections: apiItem.nestedMenuConfig.minSelections,
+      maxSelections: apiItem.nestedMenuConfig.maxSelections,
+      rootOptions: rootOptionObjects.map(opt => opt.id),
+      rootOptionObjects: rootOptionObjects,
+    };
+  }
+
+  return {
+    id: apiItem.id,
+    name: apiItem.name,
+    category: apiItem.category,
+    price: apiItem.price,
+    image: apiItem.image || '',
+    description: apiItem.description || '',
+    rating: apiItem.rating || undefined,
+    reviewCount: apiItem.reviewCount,
+    type: apiItem.type.toLowerCase() as 'single' | 'set' | 'group',
+    setComponents: apiItem.setComponents,
+    availableAddOns: apiItem.availableAddOns?.map((a: any) => a.addOnId || a.id) || [],
+    availableAddOnGroups: apiItem.availableAddOnGroups?.map((g: any) => g.addOnGroupId || g.id) || [],
+    nestedMenuConfig,
+    isActive: apiItem.isActive,
+  };
+};
 
 interface TableOrderClientProps {
   tableNumber: string;
@@ -32,22 +86,108 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [showOrderAnimation, setShowOrderAnimation] = useState(false);
   const [animatingItems, setAnimatingItems] = useState<CartItem[]>([]);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [currentStaff, setCurrentStaff] = useState<StaffInfo | null>(null);
+
+  const handleShowQr = async () => {
+    try {
+      const url = `${window.location.origin}/table/${tableNumber}`;
+      const dataUrl = await QRCode.toDataURL(url, {
+        width: 300, margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      setQrDataUrl(dataUrl);
+      setShowQrModal(true);
+    } catch (err) {
+      console.error('Failed to generate QR code:', err);
+    }
+  };
+
+  // API data state
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch menu items from API
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const apiItems = await api.getMenuItems({ isActive: true });
+        const convertedItems = apiItems.map(convertApiMenuItem);
+        setMenuItems(convertedItems);
+      } catch (err) {
+        console.error('Failed to fetch menu items:', err);
+        setError('ไม่สามารถโหลดเมนูได้ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMenuItems();
+  }, []);
+
+  // Fetch current staff assignment for this table
+  useEffect(() => {
+    const fetchTableStaff = async () => {
+      try {
+        const response = await api.getTableStaff(tableNumber);
+        if (response.staff && response.staff.length > 0) {
+          setCurrentStaff(response.staff[0]);
+        }
+      } catch (err) {
+        // Table might not have staff assigned, that's ok
+        console.log('No staff assigned to this table');
+      }
+    };
+
+    fetchTableStaff();
+  }, [tableNumber]);
+
+  // Heartbeat to update lastSeenAt when staff is checked in
+  useEffect(() => {
+    if (!currentStaff) return;
+
+    const storedPin = sessionStorage.getItem(`staff_pin_${tableNumber}`);
+    if (!storedPin) return;
+
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await api.staffHeartbeat({ pin: storedPin, tableNumber });
+      } catch (err) {
+        console.error('Heartbeat failed:', err);
+      }
+    }, 60000); // Every 1 minute
+
+    return () => clearInterval(heartbeatInterval);
+  }, [currentStaff, tableNumber]);
+
+  const handleStaffCheckInSuccess = (staffInfo: StaffInfo, pin: string) => {
+    setCurrentStaff(staffInfo);
+    // Store PIN in session for heartbeat
+    sessionStorage.setItem(`staff_pin_${tableNumber}`, pin);
+  };
+
+  const handleStaffCheckOutSuccess = () => {
+    setCurrentStaff(null);
+    sessionStorage.removeItem(`staff_pin_${tableNumber}`);
+  };
 
   // Filter menu
   const filteredMenu = React.useMemo(() => {
     let filtered = menuItems;
 
+    // Filter by category (use category name directly from API)
     if (selectedCategory !== t.categories.all && selectedCategory !== 'ทั้งหมด') {
-      const categoryMap: Record<string, string> = {
-        [t.foodCategories.singleDish]: 'อาหารจานเดียว',
-        [t.foodCategories.appetizers]: 'อาหารว่าง',
-        [t.foodCategories.desserts]: 'ของหวาน',
-        [t.foodCategories.beverages]: 'เครื่องดื่ม',
-      };
-      const thaiCategory = categoryMap[selectedCategory] || selectedCategory;
-      filtered = filtered.filter(item => item.category === thaiCategory);
+      filtered = filtered.filter(item => item.category === selectedCategory);
     }
 
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(item =>
@@ -57,7 +197,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     }
 
     return filtered;
-  }, [selectedCategory, searchQuery, t]);
+  }, [selectedCategory, searchQuery, t, menuItems]);
 
   const totalAmount = React.useMemo(() => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -153,63 +293,90 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     );
   };
 
-  const confirmOrder = () => {
+  const confirmOrder = async () => {
     // Store items for animation
     setAnimatingItems([...cart]);
     setShowOrderAnimation(true);
+    setIsSubmitting(true);
 
-    const newOrder: Order = {
-      orderId: `ORD-${Date.now()}`,
-      items: [...cart],
-      totalAmount,
-      totalItems,
-      orderDate: new Date(),
-      status: 'preparing',
-      tableNumber: tableNumber,
-    };
+    try {
+      // Prepare items for API
+      const apiItems = cart.map(item => ({
+        menuItemId: item.id,
+        quantity: item.quantity,
+        price: item.price,
+        diningOption: item.diningOption,
+        specialInstructions: item.specialInstructions,
+        selectedAddOns: item.selectedAddOns,
+        selectedAddOnGroups: item.selectedAddOnGroups,
+        selectedNestedOptions: item.selectedNestedOptions,
+      }));
 
-    const updatedHistory = [newOrder, ...orderHistory];
-    setOrderHistory(updatedHistory);
+      // Create order via API
+      const response = await api.createOrder({
+        tableNumber,
+        items: apiItems,
+        totalAmount,
+        totalItems,
+      });
 
-    localStorage.setItem('orderHistory', JSON.stringify(updatedHistory));
+      const newOrder: Order = {
+        orderId: response.orderId,
+        items: [...cart],
+        totalAmount,
+        totalItems,
+        orderDate: new Date(response.createdAt),
+        status: 'preparing',
+        tableNumber: tableNumber,
+      };
 
-    // Hide animation after items fly away
-    setTimeout(() => {
+      const updatedHistory = [newOrder, ...orderHistory];
+      setOrderHistory(updatedHistory);
+
+      // Also save to localStorage for backward compatibility
+      localStorage.setItem('orderHistory', JSON.stringify(updatedHistory));
+
+      // Hide animation after items fly away
+      setTimeout(() => {
+        setShowOrderAnimation(false);
+        setOrderConfirmed(true);
+      }, 2000);
+
+      // Clear cart and close, then show WelcomeModal again
+      setTimeout(() => {
+        setCart([]);
+        setOrderConfirmed(false);
+        setShowCart(false);
+        setAnimatingItems([]);
+        setShowWelcome(true);
+      }, 4500);
+    } catch (err) {
+      console.error('Failed to create order:', err);
+      setError('ไม่สามารถสร้างคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง');
       setShowOrderAnimation(false);
-      setOrderConfirmed(true);
-    }, 2000);
-
-    // Clear cart and close
-    setTimeout(() => {
-      setCart([]);
-      setOrderConfirmed(false);
-      setShowCart(false);
-      setAnimatingItems([]);
-    }, 4500);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleServiceRequest = (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
-    const newRequest: ServiceRequest = {
-      id: `REQ-${Date.now()}`,
-      type,
-      timestamp: new Date(),
-      details,
-      items,
-      status: 'pending',
-      tableNumber: tableNumber,
-    };
-
-    const existingRequests = localStorage.getItem('serviceRequests');
-    const requests = existingRequests ? JSON.parse(existingRequests) : [];
-    const updatedRequests = [newRequest, ...requests];
-    localStorage.setItem('serviceRequests', JSON.stringify(updatedRequests));
-
-    console.log('Service Request:', newRequest);
+  const handleServiceRequest = async (type: 'staff' | 'utensils' | 'payment', details?: string, items?: string[]) => {
+    const typeMap = { staff: 'STAFF', utensils: 'UTENSILS', payment: 'PAYMENT' } as const;
+    try {
+      await api.createServiceRequest({
+        type: typeMap[type],
+        tableNumber: tableNumber,
+        details,
+        items,
+      });
+      console.log('Service Request sent via API:', type);
+    } catch (err) {
+      console.error('Failed to send service request:', err);
+    }
   };
 
   const categories = React.useMemo(() => {
     return ['ทั้งหมด', ...new Set(menuItems.map(item => item.category))];
-  }, []);
+  }, [menuItems]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
@@ -229,9 +396,22 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
                 <p className="text-orange-100 text-sm">สั่งอาหารและเครื่องดื่ม</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-orange-100">Table Number</p>
-              <p className="text-3xl font-bold">{tableNumber}</p>
+            <div className="flex items-center gap-3">
+              {currentStaff ? (
+                <StaffBadge staff={currentStaff} onClick={() => setShowStaffModal(true)} />
+              ) : (
+                <button
+                  onClick={() => setShowStaffModal(true)}
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <UserCheck className="w-5 h-5" />
+                  <span className="text-sm font-medium">Staff</span>
+                </button>
+              )}
+              <div className="text-right">
+                <p className="text-sm text-orange-100">Table Number</p>
+                <p className="text-3xl font-bold">{tableNumber}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -241,6 +421,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         totalItems={totalItems}
         onCartClick={() => setShowCart(true)}
         onHistoryClick={() => setShowOrderHistory(true)}
+        onQrClick={handleShowQr}
         orderCount={orderHistory.length}
       />
 
@@ -255,18 +436,45 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         onSearchChange={setSearchQuery}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-32">
-        {filteredMenu.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">{t.search.noResults}</h3>
-            <p className="text-gray-500">{t.search.tryDifferentKeyword}</p>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-8">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-16 h-16 text-orange-500 animate-spin mb-4" />
+            <p className="text-xl text-gray-600">กำลังโหลดเมนู...</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredMenu.map(item => (
-              <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
-            ))}
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="text-6xl mb-4">😕</div>
+            <p className="text-xl text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600"
+            >
+              ลองใหม่
+            </button>
           </div>
+        )}
+
+        {/* Menu Content */}
+        {!isLoading && !error && (
+          <>
+            {filteredMenu.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">{t.search.noResults}</h3>
+                <p className="text-gray-500">{t.search.tryDifferentKeyword}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredMenu.map(item => (
+                  <MenuCard key={item.id} item={item} onAddToCart={addToCart} />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -295,7 +503,62 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         currentTableNumber={tableNumber}
         onServiceRequest={handleServiceRequest}
         onOpenFloorPlan={() => {}}
-        onOpenWelcome={() => {}}
+        onOpenWelcome={() => setShowWelcome(true)}
+      />
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowQrModal(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-indigo-100 rounded-full">
+                <QrCode className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800">แชร์โต๊ะ {tableNumber}</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              ให้เพื่อนสแกน QR Code นี้เพื่อเข้าร่วมสั่งอาหารที่โต๊ะเดียวกัน
+            </p>
+            <div className="flex justify-center mb-4">
+              {qrDataUrl && (
+                <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-2 border-gray-200" />
+              )}
+            </div>
+            <p className="text-xs text-center text-gray-400 mb-4 break-all">
+              {typeof window !== 'undefined' && `${window.location.origin}/table/${tableNumber}`}
+            </p>
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="w-full px-4 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-semibold"
+            >
+              ปิด
+            </button>
+          </div>
+        </div>
+      )}
+
+      <WelcomeModal
+        isOpen={showWelcome && !isLoading}
+        onClose={() => setShowWelcome(false)}
+        onSelectCategory={setSelectedCategory}
+        tableNumber={tableNumber}
+        categories={categories}
+      />
+
+      <StaffCheckInModal
+        isOpen={showStaffModal}
+        onClose={() => setShowStaffModal(false)}
+        tableNumber={tableNumber}
+        onCheckInSuccess={handleStaffCheckInSuccess}
+        onCheckOutSuccess={handleStaffCheckOutSuccess}
+        currentStaff={currentStaff}
       />
 
       {/* Order Flying Animation */}
