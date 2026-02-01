@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChefHat, Users, MapPin, UserCheck } from 'lucide-react';
+import { ChefHat, Users, MapPin, UserCheck, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Table } from '@/types';
 import { api } from '@/lib/api';
@@ -14,6 +14,15 @@ interface StaffAssignment {
   checkedInAt: string;
   lastSeenAt: string;
 }
+
+// Helper function to format time
+const formatTime = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('th-TH', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
 
 export default function Home() {
   const router = useRouter();
@@ -129,9 +138,9 @@ export default function Home() {
           </div>
 
           {/* Zone A - Front */}
-          <div className="mb-8">
+          <div className="mb-12 pb-4">
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน A - ด้านหน้าร้าน</h3>
-            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
               {tables.filter(t => t.number.startsWith('A')).map(table => {
                 const staff = staffAssignments[table.number];
                 return (
@@ -147,9 +156,23 @@ export default function Home() {
                       <span>{table.capacity}</span>
                     </div>
                     {staff && staff.length > 0 && (
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
-                        <UserCheck className="w-3 h-3" />
-                        <span>{staff[0].staffName}</span>
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
                       </div>
                     )}
                   </button>
@@ -159,9 +182,9 @@ export default function Home() {
           </div>
 
           {/* Zone B - Middle */}
-          <div className="mb-8">
+          <div className="mb-12 pb-4">
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน B - กลางร้าน</h3>
-            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
               {tables.filter(t => t.number.startsWith('B')).map(table => {
                 const staff = staffAssignments[table.number];
                 return (
@@ -177,9 +200,23 @@ export default function Home() {
                       <span>{table.capacity}</span>
                     </div>
                     {staff && staff.length > 0 && (
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
-                        <UserCheck className="w-3 h-3" />
-                        <span>{staff[0].staffName}</span>
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
                       </div>
                     )}
                   </button>
@@ -189,9 +226,9 @@ export default function Home() {
           </div>
 
           {/* Zone C - Back */}
-          <div>
+          <div className="pb-4">
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน C - ด้านหลังร้าน</h3>
-            <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
+            <div className="flex flex-wrap gap-6 justify-center sm:justify-start">
               {tables.filter(t => t.number.startsWith('C')).map(table => {
                 const staff = staffAssignments[table.number];
                 return (
@@ -207,9 +244,23 @@ export default function Home() {
                       <span>{table.capacity}</span>
                     </div>
                     {staff && staff.length > 0 && (
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
-                        <UserCheck className="w-3 h-3" />
-                        <span>{staff[0].staffName}</span>
+                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-0.5">
+                        {staff.slice(0, 2).map((s, idx) => (
+                          <div
+                            key={s.staffId}
+                            className={`${idx === 0 ? 'bg-blue-500' : 'bg-blue-400'} text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg`}
+                          >
+                            <UserCheck className="w-3 h-3" />
+                            <span>{s.staffName}</span>
+                            <Clock className="w-3 h-3 ml-1" />
+                            <span>{formatTime(s.checkedInAt)}</span>
+                          </div>
+                        ))}
+                        {staff.length > 2 && (
+                          <div className="bg-gray-500 text-white text-xs px-2 py-0.5 rounded-full">
+                            +{staff.length - 2} คน
+                          </div>
+                        )}
                       </div>
                     )}
                   </button>
