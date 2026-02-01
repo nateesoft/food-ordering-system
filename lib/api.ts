@@ -150,6 +150,47 @@ export interface OrderResponse {
   updatedAt: string;
 }
 
+// Staff Check-in Types
+export interface StaffCheckInDto {
+  pin: string;
+  tableNumber: string;
+}
+
+export interface StaffCheckOutDto {
+  pin: string;
+  tableNumber: string;
+}
+
+export interface StaffInfo {
+  id: number;
+  name: string;
+  role: string;
+  checkedInAt: string;
+  lastSeenAt: string;
+}
+
+export interface TableStaffResponse {
+  tableNumber: string;
+  staff: StaffInfo[];
+}
+
+export interface StaffCheckInResponse {
+  message: string;
+  assignment: {
+    id: number;
+    tableNumber: string;
+    userId: number;
+    checkedInAt: string;
+    lastSeenAt: string;
+    isActive: boolean;
+    user: {
+      id: number;
+      name: string;
+      role: string;
+    };
+  };
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
@@ -233,6 +274,44 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ status }),
     }),
+
+  // Staff Check-in
+  staffCheckIn: (data: StaffCheckInDto) =>
+    fetchApi<StaffCheckInResponse>('/staff/check-in', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  staffCheckOut: (data: StaffCheckOutDto) =>
+    fetchApi<StaffCheckInResponse>('/staff/check-out', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  staffHeartbeat: (data: StaffCheckInDto) =>
+    fetchApi<{ message: string; lastSeenAt: string; staffName: string }>('/staff/heartbeat', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  verifyStaffPin: (pin: string) =>
+    fetchApi<{ valid: boolean; staff: { id: number; name: string; role: string } }>('/staff/verify-pin', {
+      method: 'POST',
+      body: JSON.stringify({ pin }),
+    }),
+
+  getTableStaff: (tableNumber: string) =>
+    fetchApi<TableStaffResponse>(`/tables/number/${tableNumber}/staff`),
+
+  // Get all staff assignments grouped by table (for floor plan)
+  getAllStaffAssignments: () =>
+    fetchApi<Record<string, {
+      staffId: number;
+      staffName: string;
+      staffRole: string;
+      checkedInAt: string;
+      lastSeenAt: string;
+    }[]>>('/staff/assignments/public'),
 };
 
 export default api;

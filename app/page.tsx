@@ -1,14 +1,42 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChefHat, Users, MapPin } from 'lucide-react';
+import { ChefHat, Users, MapPin, UserCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Table } from '@/types';
+import { api } from '@/lib/api';
+
+interface StaffAssignment {
+  staffId: number;
+  staffName: string;
+  staffRole: string;
+  checkedInAt: string;
+  lastSeenAt: string;
+}
 
 export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
+  const [staffAssignments, setStaffAssignments] = useState<Record<string, StaffAssignment[]>>({});
+
+  // Fetch staff assignments
+  const fetchStaffAssignments = useCallback(async () => {
+    try {
+      const data = await api.getAllStaffAssignments();
+      setStaffAssignments(data);
+    } catch (err) {
+      console.log('Failed to fetch staff assignments');
+    }
+  }, []);
+
+  // Initial fetch and polling every 15 seconds
+  useEffect(() => {
+    fetchStaffAssignments();
+    const interval = setInterval(fetchStaffAssignments, 15000);
+    return () => clearInterval(interval);
+  }, [fetchStaffAssignments]);
+
   const [tables] = useState<Table[]>([
     // ด้านหน้าร้าน
     { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
@@ -104,20 +132,29 @@ export default function Home() {
           <div className="mb-8">
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน A - ด้านหน้าร้าน</h3>
             <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-              {tables.filter(t => t.number.startsWith('A')).map(table => (
-                <button
-                  key={table.id}
-                  onClick={() => table.status === 'available' && handleSelectTable(table.number)}
-                  disabled={table.status !== 'available'}
-                  className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''}`}
-                >
-                  <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
-                  <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{table.capacity}</span>
-                  </div>
-                </button>
-              ))}
+              {tables.filter(t => t.number.startsWith('A')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
+                        <UserCheck className="w-3 h-3" />
+                        <span>{staff[0].staffName}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -125,20 +162,29 @@ export default function Home() {
           <div className="mb-8">
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน B - กลางร้าน</h3>
             <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-              {tables.filter(t => t.number.startsWith('B')).map(table => (
-                <button
-                  key={table.id}
-                  onClick={() => table.status === 'available' && handleSelectTable(table.number)}
-                  disabled={table.status !== 'available'}
-                  className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''}`}
-                >
-                  <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
-                  <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{table.capacity}</span>
-                  </div>
-                </button>
-              ))}
+              {tables.filter(t => t.number.startsWith('B')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
+                        <UserCheck className="w-3 h-3" />
+                        <span>{staff[0].staffName}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -146,20 +192,29 @@ export default function Home() {
           <div>
             <h3 className="text-gray-800 font-bold mb-4 text-lg border-b border-gray-300 pb-2">โซน C - ด้านหลังร้าน</h3>
             <div className="flex flex-wrap gap-4 justify-center sm:justify-start">
-              {tables.filter(t => t.number.startsWith('C')).map(table => (
-                <button
-                  key={table.id}
-                  onClick={() => table.status === 'available' && handleSelectTable(table.number)}
-                  disabled={table.status !== 'available'}
-                  className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''}`}
-                >
-                  <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
-                  <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
-                    <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span>{table.capacity}</span>
-                  </div>
-                </button>
-              ))}
+              {tables.filter(t => t.number.startsWith('C')).map(table => {
+                const staff = staffAssignments[table.number];
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => table.status === 'available' && handleSelectTable(table.number)}
+                    disabled={table.status !== 'available'}
+                    className={`${getTableSize(table.size)} bg-gradient-to-br ${getTableColor(table.status)} rounded-2xl shadow-xl flex flex-col items-center justify-center text-white transform transition-all duration-300 ${table.status === 'available' ? 'hover:scale-110 hover:shadow-2xl active:scale-95' : ''} relative`}
+                  >
+                    <span className="text-xl sm:text-2xl font-bold">{table.number}</span>
+                    <div className="flex items-center gap-1 text-xs sm:text-sm mt-1">
+                      <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{table.capacity}</span>
+                    </div>
+                    {staff && staff.length > 0 && (
+                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full flex items-center gap-1 whitespace-nowrap shadow-lg">
+                        <UserCheck className="w-3 h-3" />
+                        <span>{staff[0].staffName}</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

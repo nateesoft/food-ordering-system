@@ -26,7 +26,12 @@
       "Bash(npm run prisma:seed:*)",
       "Bash(npm run:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx next build:*)"
+      "Bash(npx next build:*)",
+      "Bash(find:*)",
+      "Bash(/usr/libexec/java_home:*)",
+      "Bash(java:*)",
+      "WebFetch(domain:netbeans.apache.org)",
+      "WebFetch(domain:www.codelerity.com)"
     ],
     "deny": [],
     "ask": []

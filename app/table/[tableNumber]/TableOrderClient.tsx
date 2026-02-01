@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, ArrowLeft, Loader2, QrCode, X } from 'lucide-react';
+import { Check, ArrowLeft, Loader2, QrCode, X, UserCheck } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
@@ -12,10 +12,12 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { WelcomeModal } from '@/components/WelcomeModal';
-import { MenuItem, CartItem, Order, ServiceRequest, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
+import StaffCheckInModal from '@/components/StaffCheckInModal';
+import StaffBadge from '@/components/StaffBadge';
+import { MenuItem, CartItem, Order, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { api, ApiMenuItem, ApiNestedMenuOption } from '@/lib/api';
+import { api, ApiMenuItem, ApiNestedMenuOption, StaffInfo } from '@/lib/api';
 
 // Helper function to convert API nested option to frontend NestedMenuOption
 const convertNestedOption = (apiOption: ApiNestedMenuOption): NestedMenuOption => ({
@@ -87,6 +89,8 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   const [showWelcome, setShowWelcome] = useState(true);
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [showStaffModal, setShowStaffModal] = useState(false);
+  const [currentStaff, setCurrentStaff] = useState<StaffInfo | null>(null);
 
   const handleShowQr = async () => {
     try {
@@ -127,6 +131,52 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
 
     fetchMenuItems();
   }, []);
+
+  // Fetch current staff assignment for this table
+  useEffect(() => {
+    const fetchTableStaff = async () => {
+      try {
+        const response = await api.getTableStaff(tableNumber);
+        if (response.staff && response.staff.length > 0) {
+          setCurrentStaff(response.staff[0]);
+        }
+      } catch (err) {
+        // Table might not have staff assigned, that's ok
+        console.log('No staff assigned to this table');
+      }
+    };
+
+    fetchTableStaff();
+  }, [tableNumber]);
+
+  // Heartbeat to update lastSeenAt when staff is checked in
+  useEffect(() => {
+    if (!currentStaff) return;
+
+    const storedPin = sessionStorage.getItem(`staff_pin_${tableNumber}`);
+    if (!storedPin) return;
+
+    const heartbeatInterval = setInterval(async () => {
+      try {
+        await api.staffHeartbeat({ pin: storedPin, tableNumber });
+      } catch (err) {
+        console.error('Heartbeat failed:', err);
+      }
+    }, 60000); // Every 1 minute
+
+    return () => clearInterval(heartbeatInterval);
+  }, [currentStaff, tableNumber]);
+
+  const handleStaffCheckInSuccess = (staffInfo: StaffInfo, pin: string) => {
+    setCurrentStaff(staffInfo);
+    // Store PIN in session for heartbeat
+    sessionStorage.setItem(`staff_pin_${tableNumber}`, pin);
+  };
+
+  const handleStaffCheckOutSuccess = () => {
+    setCurrentStaff(null);
+    sessionStorage.removeItem(`staff_pin_${tableNumber}`);
+  };
 
   // Filter menu
   const filteredMenu = React.useMemo(() => {
@@ -346,9 +396,22 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
                 <p className="text-orange-100 text-sm">สั่งอาหารและเครื่องดื่ม</p>
               </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-orange-100">Table Number</p>
-              <p className="text-3xl font-bold">{tableNumber}</p>
+            <div className="flex items-center gap-3">
+              {currentStaff ? (
+                <StaffBadge staff={currentStaff} onClick={() => setShowStaffModal(true)} />
+              ) : (
+                <button
+                  onClick={() => setShowStaffModal(true)}
+                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors"
+                >
+                  <UserCheck className="w-5 h-5" />
+                  <span className="text-sm font-medium">Staff</span>
+                </button>
+              )}
+              <div className="text-right">
+                <p className="text-sm text-orange-100">Table Number</p>
+                <p className="text-3xl font-bold">{tableNumber}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -487,6 +550,15 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         onSelectCategory={setSelectedCategory}
         tableNumber={tableNumber}
         categories={categories}
+      />
+
+      <StaffCheckInModal
+        isOpen={showStaffModal}
+        onClose={() => setShowStaffModal(false)}
+        tableNumber={tableNumber}
+        onCheckInSuccess={handleStaffCheckInSuccess}
+        onCheckOutSuccess={handleStaffCheckOutSuccess}
+        currentStaff={currentStaff}
       />
 
       {/* Order Flying Animation */}
