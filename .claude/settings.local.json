@@ -31,7 +31,8 @@
       "Bash(/usr/libexec/java_home:*)",
       "Bash(java:*)",
       "WebFetch(domain:netbeans.apache.org)",
-      "WebFetch(domain:www.codelerity.com)"
+      "WebFetch(domain:www.codelerity.com)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

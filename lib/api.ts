@@ -103,6 +103,14 @@ export interface QueueTicketResponse {
   createdAt: string;
 }
 
+export interface StaffInfo {
+  id: number;
+  name: string;
+  role: string;
+  checkedInAt: string;
+  lastSeenAt: string;
+}
+
 export interface CreateServiceRequestDto {
   type: 'STAFF' | 'UTENSILS' | 'PAYMENT';
   tableNumber?: string;
@@ -255,6 +263,18 @@ export const api = {
   getTodayOrders: () => fetchApi<OrderResponse[]>('/orders/today'),
 
   getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
+
+  updateOrderStatus: (id: number, status: 'PREPARING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED') =>
+    fetchApi<OrderResponse>(`/orders/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  updateOrderItemStatus: (orderId: number, itemId: number, status: string) =>
+    fetchApi<any>(`/orders/${orderId}/items/${itemId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 
   // Service Requests
   createServiceRequest: (data: CreateServiceRequestDto) =>

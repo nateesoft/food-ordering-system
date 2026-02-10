@@ -13,6 +13,7 @@ interface StaffUser {
 
 interface CartItem {
   id: number;
+  dbId: number;
   name: string;
   price: number;
   quantity: number;
@@ -23,6 +24,7 @@ interface CartItem {
 }
 
 interface Order {
+  dbId: number;
   orderId: string;
   items: CartItem[];
   totalAmount: number;
@@ -61,6 +63,7 @@ export default function OrdersPage() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const isUpdatingRef = React.useRef(false);
 
   useEffect(() => {
     const authData = localStorage.getItem('staff_auth');
@@ -82,7 +85,9 @@ export default function OrdersPage() {
     if (!isAuthenticated) return;
 
     const interval = setInterval(() => {
-      loadOrders();
+      if (!isUpdatingRef.current) {
+        loadOrders();
+      }
       loadServiceRequests();
     }, 3000);
 
@@ -104,6 +109,7 @@ export default function OrdersPage() {
       const transformedOrders: Order[] = apiOrders.map((apiOrder: OrderResponse) => {
         const items = Array.isArray(apiOrder.items) ? apiOrder.items : [];
         return {
+          dbId: apiOrder.id,
           orderId: apiOrder.orderId,
           tableNumber: apiOrder.tableNumber,
           totalAmount: apiOrder.totalAmount,
@@ -111,6 +117,7 @@ export default function OrdersPage() {
           orderDate: new Date(apiOrder.createdAt),
           status: (apiOrder.status?.toLowerCase() || 'preparing') as 'preparing' | 'completed' | 'delivered',
           items: items.map((item: any, index: number) => ({
+            dbId: item.id,
             id: item.menuItemId || item.id || index,
             name: item.menuItem?.name || item.name || menuNameMap.get(item.menuItemId) || `เมนู #${item.menuItemId || index + 1}`,
             price: item.price || 0,
@@ -118,53 +125,14 @@ export default function OrdersPage() {
             cartItemId: item.cartItemId || `${apiOrder.orderId}-${index}`,
             specialInstructions: item.specialInstructions,
             diningOption: item.diningOption || 'dine-in',
-            itemStatus: item.status || item.itemStatus || 'preparing',
+            itemStatus: (item.status || item.itemStatus || 'preparing').toLowerCase(),
           })),
         };
       });
 
-      // Also load local orders from localStorage (for backward compatibility)
-      const savedOrders = localStorage.getItem('orderHistory');
-      if (savedOrders) {
-        const localOrders = JSON.parse(savedOrders);
-        // Merge: use API orders as primary, local orders as fallback for status updates
-        const localOrderMap = new Map(localOrders.map((o: Order) => [o.orderId, o]));
-
-        const mergedOrders = transformedOrders.map(apiOrder => {
-          const localOrder = localOrderMap.get(apiOrder.orderId) as Order | undefined;
-          if (localOrder) {
-            // Use local status/itemStatus if available (for real-time updates)
-            return {
-              ...apiOrder,
-              status: localOrder.status || apiOrder.status,
-              items: apiOrder.items.map((item, idx) => ({
-                ...item,
-                itemStatus: localOrder.items[idx]?.itemStatus || item.itemStatus,
-              })),
-            };
-          }
-          return apiOrder;
-        });
-
-        setOrders(mergedOrders);
-      } else {
-        setOrders(transformedOrders);
-      }
+      setOrders(transformedOrders);
     } catch (error) {
       console.error('Failed to load orders from API:', error);
-      // Fallback to localStorage if API fails
-      const savedOrders = localStorage.getItem('orderHistory');
-      if (savedOrders) {
-        const parsedOrders = JSON.parse(savedOrders);
-        const ordersWithItemStatus = parsedOrders.map((order: Order) => ({
-          ...order,
-          items: order.items.map((item: CartItem) => ({
-            ...item,
-            itemStatus: item.itemStatus || 'preparing',
-          })),
-        }));
-        setOrders(ordersWithItemStatus);
-      }
     }
   };
 
@@ -267,47 +235,76 @@ export default function OrdersPage() {
     });
   };
 
-  const updateItemStatus = (orderId: string, cartItemId: string, newStatus: 'preparing' | 'completed' | 'delivered') => {
-    const updatedOrders = orders.map(order => {
-      if (order.orderId === orderId) {
-        const updatedItems = order.items.map(item =>
-          item.cartItemId === cartItemId ? { ...item, itemStatus: newStatus } : item
-        );
-
-        // Update order overall status based on all items
-        const allCompleted = updatedItems.every(item => item.itemStatus === 'completed' || item.itemStatus === 'delivered');
-        const allDelivered = updatedItems.every(item => item.itemStatus === 'delivered');
-        const anyDelivered = updatedItems.some(item => item.itemStatus === 'delivered');
-
-        let orderStatus: 'preparing' | 'completed' | 'delivered' = 'preparing';
-        if (allDelivered) {
-          orderStatus = 'delivered';
-        } else if (allCompleted) {
-          orderStatus = 'completed';
-        } else if (anyDelivered) {
-          orderStatus = 'completed';
-        }
-
-        return { ...order, items: updatedItems, status: orderStatus };
-      }
-      return order;
-    });
-
-    setOrders(updatedOrders);
-    localStorage.setItem('orderHistory', JSON.stringify(updatedOrders));
+  const computeOrderStatus = (items: CartItem[]): 'preparing' | 'completed' | 'delivered' => {
+    const allDelivered = items.every(i => i.itemStatus === 'delivered');
+    const allCompleted = items.every(i => i.itemStatus === 'completed' || i.itemStatus === 'delivered');
+    if (allDelivered) return 'delivered';
+    if (allCompleted) return 'completed';
+    return 'preparing';
   };
 
-  const updateAllItemsStatus = (orderId: string, newStatus: 'preparing' | 'completed' | 'delivered') => {
-    const updatedOrders = orders.map(order => {
-      if (order.orderId === orderId) {
-        const updatedItems = order.items.map(item => ({ ...item, itemStatus: newStatus }));
-        return { ...order, items: updatedItems, status: newStatus };
-      }
-      return order;
-    });
+  const updateItemStatus = async (orderId: string, cartItemId: string, newStatus: 'preparing' | 'completed' | 'delivered') => {
+    const order = orders.find(o => o.orderId === orderId);
+    if (!order) return;
 
-    setOrders(updatedOrders);
-    localStorage.setItem('orderHistory', JSON.stringify(updatedOrders));
+    const item = order.items.find(i => i.cartItemId === cartItemId);
+    if (!item) return;
+
+    // Optimistic update — update UI immediately
+    const updatedItems = order.items.map(i =>
+      i.cartItemId === cartItemId ? { ...i, itemStatus: newStatus } : i
+    );
+    const newOrderStatus = computeOrderStatus(updatedItems);
+
+    setOrders(prev => prev.map(o =>
+      o.orderId === orderId
+        ? { ...o, items: updatedItems, status: newOrderStatus }
+        : o
+    ));
+
+    // Sync with API in background
+    isUpdatingRef.current = true;
+    try {
+      await api.updateOrderItemStatus(order.dbId, item.dbId, newStatus);
+      if (newOrderStatus !== order.status) {
+        await api.updateOrderStatus(order.dbId, newOrderStatus.toUpperCase() as 'PREPARING' | 'COMPLETED' | 'DELIVERED');
+      }
+    } catch (error) {
+      console.error('Failed to update item status:', error);
+      await loadOrders();
+    } finally {
+      isUpdatingRef.current = false;
+    }
+  };
+
+  const updateAllItemsStatus = async (orderId: string, newStatus: 'preparing' | 'completed' | 'delivered') => {
+    const order = orders.find(o => o.orderId === orderId);
+    if (!order) return;
+
+    // Optimistic update — update UI immediately
+    const updatedItems = order.items.map(item => ({ ...item, itemStatus: newStatus }));
+
+    setOrders(prev => prev.map(o =>
+      o.orderId === orderId
+        ? { ...o, items: updatedItems, status: newStatus }
+        : o
+    ));
+
+    // Sync with API in background
+    isUpdatingRef.current = true;
+    try {
+      await Promise.all(
+        order.items.map(item =>
+          api.updateOrderItemStatus(order.dbId, item.dbId, newStatus)
+        )
+      );
+      await api.updateOrderStatus(order.dbId, newStatus.toUpperCase() as 'PREPARING' | 'COMPLETED' | 'DELIVERED');
+    } catch (error) {
+      console.error('Failed to update all items status:', error);
+      await loadOrders();
+    } finally {
+      isUpdatingRef.current = false;
+    }
   };
 
   const getStatusColor = (status: string) => {

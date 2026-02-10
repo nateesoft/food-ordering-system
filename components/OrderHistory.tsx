@@ -206,7 +206,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                 {orders.map((order) => (
                   <div
                     key={order.orderId}
-                    className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
                   >
                     {/* Order Header */}
                     <div className="flex justify-between items-start mb-3">
