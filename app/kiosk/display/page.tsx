@@ -6,7 +6,7 @@ import { QueueTicket } from '@/types';
 
 export default function QueueDisplayPage() {
   const [queues, setQueues] = useState<QueueTicket[]>([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [showAnimation, setShowAnimation] = useState(false);
   const [calledQueue, setCalledQueue] = useState<string | null>(null);
 
@@ -40,8 +40,9 @@ export default function QueueDisplayPage() {
     };
   }, []);
 
-  // Update current time
+  // Update current time (set initial value on mount to avoid hydration mismatch)
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -74,31 +75,76 @@ export default function QueueDisplayPage() {
 
   // Text-to-Speech announcement
   const announceQueue = (queueId: string) => {
-    if ('speechSynthesis' in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+    if (!('speechSynthesis' in window)) return;
 
-      // Create utterance
-      const utterance = new SpeechSynthesisUtterance();
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
 
-      // Convert queue ID to readable format (e.g., "A001" -> "เอ ศูนย์ ศูนย์ หนึ่ง")
-      const prefix = queueId.charAt(0);
-      const number = queueId.slice(1);
+    // Thai digit pronunciation map
+    const thaiDigits: Record<string, string> = {
+      '0': 'ศูนย์', '1': 'หนึ่ง', '2': 'สอง', '3': 'สาม', '4': 'สี่',
+      '5': 'ห้า', '6': 'หก', '7': 'เจ็ด', '8': 'แปด', '9': 'เก้า',
+    };
 
-      // Thai pronunciation
-      const thaiText = `เรียกคิว ${prefix === 'A' ? 'เอ' : 'บี'} ${number.split('').join(' ')}. กรุณามารับอาหารที่เคาน์เตอร์`;
+    // Thai letter pronunciation map
+    const thaiLetters: Record<string, string> = {
+      'A': 'เอ', 'B': 'บี', 'C': 'ซี', 'D': 'ดี', 'E': 'อี',
+      'F': 'เอฟ', 'G': 'จี', 'H': 'เอช', 'K': 'เค', 'T': 'ที',
+    };
 
-      utterance.text = thaiText;
+    // Parse queue ID - extract letter prefix and number part
+    const prefix = queueId.charAt(0);
+    const numberPart = queueId.slice(1);
+
+    const prefixThai = thaiLetters[prefix.toUpperCase()] || prefix;
+
+    // Convert number to Thai readable format
+    const num = parseInt(numberPart, 10);
+    let numberThai: string;
+    if (num === 0) {
+      numberThai = 'ศูนย์';
+    } else {
+      // Read as natural number (e.g., 1 -> "หนึ่ง", 15 -> "สิบห้า", 100 -> "หนึ่งร้อย")
+      // For simplicity and clarity, read digit by digit for numbers with leading zeros
+      // but read naturally for the actual number value
+      if (numberPart.startsWith('0')) {
+        // Has leading zeros - read digit by digit
+        numberThai = numberPart.split('').map(d => thaiDigits[d] || d).join(' ');
+      } else {
+        // Read as natural Thai number
+        numberThai = num.toString().split('').map(d => thaiDigits[d] || d).join(' ');
+      }
+    }
+
+    const queueText = `${prefixThai} ${numberThai}`;
+    const announcementText = `เรียกคิวหมายเลข ${queueText}. กรุณามารับอาหารที่เคาน์เตอร์. ขอเรียกอีกครั้ง. คิวหมายเลข ${queueText}`;
+
+    const speak = () => {
+      const utterance = new SpeechSynthesisUtterance(announcementText);
       utterance.lang = 'th-TH';
-      utterance.rate = 0.9;
+      utterance.rate = 0.85;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // Speak after a short delay (to sync with bell sound)
-      setTimeout(() => {
-        window.speechSynthesis.speak(utterance);
-      }, 1000);
-    }
+      // Try to find a Thai voice
+      const voices = window.speechSynthesis.getVoices();
+      const thaiVoice = voices.find(v => v.lang.startsWith('th'));
+      if (thaiVoice) {
+        utterance.voice = thaiVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // Speak after bell sound finishes
+    setTimeout(() => {
+      // Voices may not be loaded yet, wait for them
+      if (window.speechSynthesis.getVoices().length > 0) {
+        speak();
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => speak();
+      }
+    }, 1000);
   };
 
   const loadQueues = () => {
@@ -151,18 +197,18 @@ export default function QueueDisplayPage() {
           </div>
           <div className="text-right">
             <div className="text-5xl font-bold">
-              {currentTime.toLocaleTimeString('th-TH', {
+              {currentTime ? currentTime.toLocaleTimeString('th-TH', {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-              })}
+              }) : '--:--:--'}
             </div>
             <div className="text-2xl text-purple-200 mt-2">
-              {currentTime.toLocaleDateString('th-TH', {
+              {currentTime ? currentTime.toLocaleDateString('th-TH', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
-              })}
+              }) : ''}
             </div>
           </div>
         </div>

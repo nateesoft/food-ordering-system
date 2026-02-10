@@ -112,14 +112,28 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch menu items from API
+  // Fetch menu items and stock availability from API
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const apiItems = await api.getMenuItems({ isActive: true });
-        const convertedItems = apiItems.map(convertApiMenuItem);
+        const [apiItems, availability] = await Promise.all([
+          api.getMenuItems({ isActive: true }),
+          api.getMenuAvailability().catch(() => []),
+        ]);
+        const availabilityMap = new Map(
+          availability.map((a: any) => [a.menuItemId, a])
+        );
+        const convertedItems = apiItems.map((item) => {
+          const converted = convertApiMenuItem(item);
+          const avail = availabilityMap.get(item.id);
+          return {
+            ...converted,
+            isOutOfStock: avail ? !avail.available : false,
+            insufficientIngredients: avail?.insufficientIngredients || [],
+          };
+        });
         setMenuItems(convertedItems);
       } catch (err) {
         console.error('Failed to fetch menu items:', err);

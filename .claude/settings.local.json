@@ -32,7 +32,9 @@
       "Bash(java:*)",
       "WebFetch(domain:netbeans.apache.org)",
       "WebFetch(domain:www.codelerity.com)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(timeout 15 npx nest start:*)",
+      "Bash(pg_isready:*)"
     ],
     "deny": [],
     "ask": []

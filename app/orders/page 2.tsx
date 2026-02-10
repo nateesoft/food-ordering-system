@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package } from 'lucide-react';
+import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api, OrderResponse, ServiceRequestResponse } from '@/lib/api';
 
@@ -539,17 +539,6 @@ export default function OrdersPage() {
               </button>
             )}
 
-            {/* Inventory Management Button - Only for Admin */}
-            {currentUser?.role === 'admin' && (
-              <button
-                onClick={() => router.push('/admin/inventory')}
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-all"
-              >
-                <Package className="w-5 h-5" />
-                <span className="font-semibold hidden sm:inline">สต็อก</span>
-              </button>
-            )}
-
             {/* QR Code Management Button - Only for Admin */}
             {currentUser?.role === 'admin' && (
               <button
@@ -835,25 +824,23 @@ export default function OrdersPage() {
                         })}
                       </div>
 
-                      {/* Bulk Actions - only show for active orders */}
-                      {activeTab === 'active' && (
-                        <div className="flex gap-3 pt-4 border-t">
+                      {/* Bulk Actions */}
+                      <div className="flex gap-3 pt-4 border-t">
+                        <button
+                          onClick={() => updateAllItemsStatus(order.orderId, 'completed')}
+                          className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-semibold"
+                        >
+                          ✓ ทำเสร็จทั้งหมด
+                        </button>
+                        {allItemsCompleted && (
                           <button
-                            onClick={() => updateAllItemsStatus(order.orderId, 'completed')}
-                            className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all font-semibold"
+                            onClick={() => updateAllItemsStatus(order.orderId, 'delivered')}
+                            className="flex-1 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold"
                           >
-                            ✓ ทำเสร็จทั้งหมด
+                            🚚 ส่งทั้งหมด
                           </button>
-                          {allItemsCompleted && (
-                            <button
-                              onClick={() => updateAllItemsStatus(order.orderId, 'delivered')}
-                              className="flex-1 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all font-semibold"
-                            >
-                              🚚 ส่งทั้งหมด
-                            </button>
-                          )}
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -74,6 +74,8 @@ export interface MenuItem {
   availableAddOnGroups?: number[]; // IDs of add-on groups available for this item
   nestedMenuConfig?: NestedMenuConfig; // Configuration for nested menu
   isActive?: boolean; // Whether this item is currently available
+  isOutOfStock?: boolean; // Whether this item is out of stock due to ingredients
+  insufficientIngredients?: string[]; // List of insufficient ingredient names
 }
 
 export interface CartItem extends MenuItem {
@@ -136,4 +138,50 @@ export interface QueueTicket {
   customerName?: string; // ชื่อลูกค้า (optional)
   memberId?: string; // รหัสสมาชิก (optional)
   paymentMethod?: 'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'; // วิธีการชำระเงิน
+}
+
+// ===== Inventory / Stock Management =====
+
+export type IngredientUnit = 'GRAM' | 'KILOGRAM' | 'MILLILITER' | 'LITER' | 'PIECE' | 'TABLESPOON' | 'TEASPOON' | 'CUP';
+
+export type TransactionType = 'STOCK_IN' | 'STOCK_OUT' | 'ORDER_DEDUCTION' | 'ADJUSTMENT';
+
+export interface Ingredient {
+  id: number;
+  name: string;
+  unit: IngredientUnit;
+  currentStock: number;
+  minStock: number;
+  costPerUnit: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MenuItemIngredient {
+  id: number;
+  menuItemId: number;
+  ingredientId: number;
+  quantityUsed: number;
+  ingredient: Ingredient;
+}
+
+export interface InventoryTransaction {
+  id: number;
+  ingredientId: number;
+  type: TransactionType;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  orderId: string | null;
+  notes: string | null;
+  performedBy: string | null;
+  createdAt: string;
+  ingredient: Ingredient;
+}
+
+export interface MenuAvailability {
+  menuItemId: number;
+  available: boolean;
+  insufficientIngredients: string[];
 }

@@ -158,47 +158,6 @@ export interface OrderResponse {
   updatedAt: string;
 }
 
-// Staff Check-in Types
-export interface StaffCheckInDto {
-  pin: string;
-  tableNumber: string;
-}
-
-export interface StaffCheckOutDto {
-  pin: string;
-  tableNumber: string;
-}
-
-export interface StaffInfo {
-  id: number;
-  name: string;
-  role: string;
-  checkedInAt: string;
-  lastSeenAt: string;
-}
-
-export interface TableStaffResponse {
-  tableNumber: string;
-  staff: StaffInfo[];
-}
-
-export interface StaffCheckInResponse {
-  message: string;
-  assignment: {
-    id: number;
-    tableNumber: string;
-    userId: number;
-    checkedInAt: string;
-    lastSeenAt: string;
-    isActive: boolean;
-    user: {
-      id: number;
-      name: string;
-      role: string;
-    };
-  };
-}
-
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
@@ -264,9 +223,6 @@ export const api = {
 
   getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
 
-  getTableOrdersAll: (tableNumber: string) =>
-    fetchApi<OrderResponse[]>(`/orders?tableNumber=${tableNumber}`),
-
   updateOrderStatus: (id: number, status: 'PREPARING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED') =>
     fetchApi<OrderResponse>(`/orders/${id}/status`, {
       method: 'PATCH',
@@ -298,109 +254,18 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
 
-  // Staff Check-in
-  staffCheckIn: (data: StaffCheckInDto) =>
-    fetchApi<StaffCheckInResponse>('/staff/check-in', {
+  // Staff
+  staffCheckIn: (data: { pin: string; tableNumber: string }) =>
+    fetchApi<any>('/staff/check-in', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  staffCheckOut: (data: StaffCheckOutDto) =>
-    fetchApi<StaffCheckInResponse>('/staff/check-out', {
+  staffCheckOut: (data: { pin: string; tableNumber: string }) =>
+    fetchApi<any>('/staff/check-out', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-
-  staffHeartbeat: (data: StaffCheckInDto) =>
-    fetchApi<{ message: string; lastSeenAt: string; staffName: string }>('/staff/heartbeat', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
-
-  verifyStaffPin: (pin: string) =>
-    fetchApi<{ valid: boolean; staff: { id: number; name: string; role: string } }>('/staff/verify-pin', {
-      method: 'POST',
-      body: JSON.stringify({ pin }),
-    }),
-
-  getTableStaff: (tableNumber: string) =>
-    fetchApi<TableStaffResponse>(`/tables/number/${tableNumber}/staff`),
-
-  // Get all staff assignments grouped by table (for floor plan)
-  getAllStaffAssignments: () =>
-    fetchApi<Record<string, {
-      staffId: number;
-      staffName: string;
-      staffRole: string;
-      checkedInAt: string;
-      lastSeenAt: string;
-    }[]>>('/staff/assignments/public'),
-
-  // ===== Inventory =====
-
-  // Ingredients
-  getIngredients: (isActive?: boolean) => {
-    const params = isActive !== undefined ? `?isActive=${isActive}` : '';
-    return fetchApi<any[]>(`/inventory/ingredients${params}`);
-  },
-
-  getIngredient: (id: number) => fetchApi<any>(`/inventory/ingredients/${id}`),
-
-  createIngredient: (data: { name: string; unit: string; currentStock?: number; minStock?: number; costPerUnit?: number }) =>
-    fetchApi<any>('/inventory/ingredients', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  updateIngredient: (id: number, data: Record<string, any>) =>
-    fetchApi<any>(`/inventory/ingredients/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-
-  deleteIngredient: (id: number) =>
-    fetchApi<any>(`/inventory/ingredients/${id}`, {
-      method: 'DELETE',
-    }),
-
-  // Recipes
-  getAllRecipes: () => fetchApi<any[]>('/inventory/recipes'),
-
-  getRecipe: (menuItemId: number) => fetchApi<any[]>(`/inventory/recipes/${menuItemId}`),
-
-  setRecipe: (data: { menuItemId: number; ingredients: { ingredientId: number; quantityUsed: number }[] }) =>
-    fetchApi<any>('/inventory/recipes', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  deleteRecipe: (menuItemId: number) =>
-    fetchApi<any>(`/inventory/recipes/${menuItemId}`, {
-      method: 'DELETE',
-    }),
-
-  // Stock
-  adjustStock: (data: { ingredientId: number; quantity: number; type: string; notes?: string }) =>
-    fetchApi<any>('/inventory/stock/adjust', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  // Alerts & Monitoring
-  getLowStockAlerts: () => fetchApi<any[]>('/inventory/alerts/low-stock'),
-
-  getMenuAvailability: () => fetchApi<{ menuItemId: number; available: boolean; insufficientIngredients: string[] }[]>('/inventory/menu-availability'),
-
-  getStockOverview: () => fetchApi<any>('/inventory/stock-overview'),
-
-  // Transactions
-  getInventoryTransactions: (params?: { ingredientId?: number; type?: string }) => {
-    const searchParams = new URLSearchParams();
-    if (params?.ingredientId) searchParams.append('ingredientId', String(params.ingredientId));
-    if (params?.type) searchParams.append('type', params.type);
-    const query = searchParams.toString();
-    return fetchApi<any[]>(`/inventory/transactions${query ? `?${query}` : ''}`);
-  },
 };
 
 export default api;

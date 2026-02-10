@@ -6,12 +6,20 @@ import { QueueTicket } from '@/types';
 
 export default function KioskDashboard() {
   const [queues, setQueues] = useState<QueueTicket[]>([]);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [stats, setStats] = useState({
     totalToday: 0,
     avgWaitTime: 0,
     dineInCount: 0,
     takeawayCount: 0
   });
+
+  // Update current time on client only to avoid hydration mismatch
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Load queues from localStorage
   useEffect(() => {
@@ -118,78 +126,78 @@ export default function KioskDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 shadow-2xl sticky top-0 z-50">
+      <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 md:p-6 shadow-2xl sticky top-0 z-50">
         <div className="max-w-[1920px] mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
-              <h1 className="text-5xl font-bold mb-2 flex items-center gap-3">
-                <ChefHat className="w-12 h-12" />
+              <h1 className="text-2xl md:text-5xl font-bold mb-1 md:mb-2 flex items-center gap-2 md:gap-3">
+                <ChefHat className="w-7 h-7 md:w-12 md:h-12" />
                 Kitchen Dashboard
               </h1>
-              <p className="text-xl text-slate-300">ระบบจัดการคิวอาหาร • Queue Management</p>
+              <p className="text-sm md:text-xl text-slate-300">ระบบจัดการคิวอาหาร</p>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <button
                 onClick={loadQueues}
-                className="bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2"
+                className="bg-white/10 hover:bg-white/20 text-white p-2 md:px-6 md:py-3 rounded-xl font-bold transition-all flex items-center gap-2"
               >
                 <RefreshCw className="w-5 h-5" />
-                รีเฟรช
+                <span className="hidden md:inline">รีเฟรช</span>
               </button>
               <div className="text-right">
-                <div className="text-3xl font-bold">
-                  {new Date().toLocaleTimeString('th-TH', {
+                <div className="text-xl md:text-3xl font-bold">
+                  {currentTime ? currentTime.toLocaleTimeString('th-TH', {
                     hour: '2-digit',
                     minute: '2-digit',
-                  })}
+                  }) : '--:--'}
                 </div>
-                <div className="text-sm text-slate-300">
-                  {new Date().toLocaleDateString('th-TH', {
+                <div className="text-xs md:text-sm text-slate-300 hidden sm:block">
+                  {currentTime ? currentTime.toLocaleDateString('th-TH', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric'
-                  })}
+                  }) : ''}
                 </div>
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">ออเดอร์วันนี้</p>
-                  <p className="text-4xl font-bold">{stats.totalToday}</p>
+                  <p className="text-slate-300 text-xs md:text-sm mb-1">ออเดอร์วันนี้</p>
+                  <p className="text-2xl md:text-4xl font-bold">{stats.totalToday}</p>
                 </div>
-                <TrendingUp className="w-10 h-10 text-green-400" />
+                <TrendingUp className="w-7 h-7 md:w-10 md:h-10 text-green-400" />
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">เวลารอเฉลี่ย</p>
-                  <p className="text-4xl font-bold">{stats.avgWaitTime}<span className="text-xl ml-1">นาที</span></p>
+                  <p className="text-slate-300 text-xs md:text-sm mb-1">เวลารอเฉลี่ย</p>
+                  <p className="text-2xl md:text-4xl font-bold">{stats.avgWaitTime}<span className="text-base md:text-xl ml-1">นาที</span></p>
                 </div>
-                <Clock className="w-10 h-10 text-blue-400" />
+                <Clock className="w-7 h-7 md:w-10 md:h-10 text-blue-400" />
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">ทานที่ร้าน</p>
-                  <p className="text-4xl font-bold">{stats.dineInCount}</p>
+                  <p className="text-slate-300 text-xs md:text-sm mb-1">ทานที่ร้าน</p>
+                  <p className="text-2xl md:text-4xl font-bold">{stats.dineInCount}</p>
                 </div>
-                <Home className="w-10 h-10 text-orange-400" />
+                <Home className="w-7 h-7 md:w-10 md:h-10 text-orange-400" />
               </div>
             </div>
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 md:p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-slate-300 text-sm mb-1">กลับบ้าน</p>
-                  <p className="text-4xl font-bold">{stats.takeawayCount}</p>
+                  <p className="text-slate-300 text-xs md:text-sm mb-1">กลับบ้าน</p>
+                  <p className="text-2xl md:text-4xl font-bold">{stats.takeawayCount}</p>
                 </div>
-                <Package className="w-10 h-10 text-purple-400" />
+                <Package className="w-7 h-7 md:w-10 md:h-10 text-purple-400" />
               </div>
             </div>
           </div>
@@ -197,8 +205,8 @@ export default function KioskDashboard() {
       </div>
 
       {/* Kanban Board */}
-      <div className="max-w-[1920px] mx-auto p-6">
-        <div className="grid grid-cols-3 gap-6 h-[calc(100vh-280px)]">
+      <div className="max-w-[1920px] mx-auto p-3 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 md:h-[calc(100vh-280px)]">
           {/* Lane 1: Waiting */}
           <div className="flex flex-col">
             <div className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-4 rounded-t-2xl">
@@ -206,7 +214,7 @@ export default function KioskDashboard() {
                 <div className="flex items-center gap-3">
                   <Clock className="w-6 h-6" />
                   <div>
-                    <h2 className="text-2xl font-bold">รอทำอาหาร</h2>
+                    <h2 className="text-xl md:text-2xl font-bold">รอทำอาหาร</h2>
                     <p className="text-sm text-yellow-100">Waiting</p>
                   </div>
                 </div>
@@ -215,11 +223,11 @@ export default function KioskDashboard() {
                 </div>
               </div>
             </div>
-            <div className="bg-yellow-50 rounded-b-2xl p-4 flex-1 overflow-y-auto space-y-3">
+            <div className="bg-yellow-50 rounded-b-2xl p-3 md:p-4 flex-1 overflow-y-auto space-y-3 max-h-[50vh] md:max-h-none">
               {waitingQueues.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="w-16 h-16 text-yellow-300 mx-auto mb-3" />
-                  <p className="text-xl text-yellow-600">ไม่มีคิวรอ</p>
+                <div className="text-center py-8 md:py-12">
+                  <Clock className="w-12 h-12 md:w-16 md:h-16 text-yellow-300 mx-auto mb-3" />
+                  <p className="text-lg md:text-xl text-yellow-600">ไม่มีคิวรอ</p>
                 </div>
               ) : (
                 waitingQueues.map(queue => (
@@ -230,7 +238,7 @@ export default function KioskDashboard() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                             queue.orderType === 'dine-in'
                               ? 'bg-orange-100 text-orange-700'
@@ -281,7 +289,7 @@ export default function KioskDashboard() {
                 <div className="flex items-center gap-3">
                   <ChefHat className="w-6 h-6 animate-pulse" />
                   <div>
-                    <h2 className="text-2xl font-bold">กำลังทำ</h2>
+                    <h2 className="text-xl md:text-2xl font-bold">กำลังทำ</h2>
                     <p className="text-sm text-blue-100">Preparing</p>
                   </div>
                 </div>
@@ -290,11 +298,11 @@ export default function KioskDashboard() {
                 </div>
               </div>
             </div>
-            <div className="bg-blue-50 rounded-b-2xl p-4 flex-1 overflow-y-auto space-y-3">
+            <div className="bg-blue-50 rounded-b-2xl p-3 md:p-4 flex-1 overflow-y-auto space-y-3 max-h-[50vh] md:max-h-none">
               {preparingQueues.length === 0 ? (
-                <div className="text-center py-12">
-                  <ChefHat className="w-16 h-16 text-blue-300 mx-auto mb-3" />
-                  <p className="text-xl text-blue-600">ไม่มีคิวกำลังทำ</p>
+                <div className="text-center py-8 md:py-12">
+                  <ChefHat className="w-12 h-12 md:w-16 md:h-16 text-blue-300 mx-auto mb-3" />
+                  <p className="text-lg md:text-xl text-blue-600">ไม่มีคิวกำลังทำ</p>
                 </div>
               ) : (
                 preparingQueues.map(queue => (
@@ -305,7 +313,7 @@ export default function KioskDashboard() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                             queue.orderType === 'dine-in'
                               ? 'bg-orange-100 text-orange-700'
@@ -363,7 +371,7 @@ export default function KioskDashboard() {
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-6 h-6 animate-pulse" />
                   <div>
-                    <h2 className="text-2xl font-bold">นำมาเสิร์ฟแล้ว</h2>
+                    <h2 className="text-xl md:text-2xl font-bold">นำมาเสิร์ฟแล้ว</h2>
                     <p className="text-sm text-green-100">Ready to Serve</p>
                   </div>
                 </div>
@@ -372,11 +380,11 @@ export default function KioskDashboard() {
                 </div>
               </div>
             </div>
-            <div className="bg-green-50 rounded-b-2xl p-4 flex-1 overflow-y-auto space-y-3">
+            <div className="bg-green-50 rounded-b-2xl p-3 md:p-4 flex-1 overflow-y-auto space-y-3 max-h-[50vh] md:max-h-none">
               {readyQueues.length === 0 ? (
-                <div className="text-center py-12">
-                  <CheckCircle2 className="w-16 h-16 text-green-300 mx-auto mb-3" />
-                  <p className="text-xl text-green-600">ไม่มีคิวพร้อมเสิร์ฟ</p>
+                <div className="text-center py-8 md:py-12">
+                  <CheckCircle2 className="w-12 h-12 md:w-16 md:h-16 text-green-300 mx-auto mb-3" />
+                  <p className="text-lg md:text-xl text-green-600">ไม่มีคิวพร้อมเสิร์ฟ</p>
                 </div>
               ) : (
                 readyQueues.map(queue => (
@@ -387,7 +395,7 @@ export default function KioskDashboard() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                             queue.orderType === 'dine-in'
                               ? 'bg-orange-100 text-orange-700'
