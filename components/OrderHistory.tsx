@@ -20,26 +20,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
     setOrders(initialOrders);
   }, [initialOrders]);
 
-  // Poll for order updates from localStorage every 3 seconds
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const loadOrders = () => {
-      const savedOrders = localStorage.getItem('orderHistory');
-      if (savedOrders) {
-        const parsedOrders = JSON.parse(savedOrders);
-        setOrders(parsedOrders);
-      }
-    };
-
-    // Initial load
-    loadOrders();
-
-    // Poll every 3 seconds
-    const interval = setInterval(loadOrders, 3000);
-
-    return () => clearInterval(interval);
-  }, [isOpen]);
+  // Orders are now synced via API polling in the parent component (TableOrderClient)
+  // and passed down through props (initialOrders → orders via the useEffect above)
 
   // Prevent body scroll when modal is open
   useEffect(() => {

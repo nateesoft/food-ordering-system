@@ -178,6 +178,57 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     sessionStorage.removeItem(`staff_pin_${tableNumber}`);
   };
 
+  // Poll API for order status updates (syncs with staff updates from /orders)
+  useEffect(() => {
+    const pollOrderStatus = async () => {
+      try {
+        const apiOrders = await api.getTableOrdersAll(tableNumber);
+        if (apiOrders.length === 0 && orderHistory.length === 0) return;
+
+        const updatedOrders: Order[] = apiOrders.map((apiOrder) => {
+          const items = Array.isArray(apiOrder.items) ? apiOrder.items : [];
+          return {
+            orderId: apiOrder.orderId,
+            totalAmount: apiOrder.totalAmount,
+            totalItems: apiOrder.totalItems,
+            orderDate: new Date(apiOrder.createdAt),
+            status: (apiOrder.status?.toLowerCase() || 'preparing') as Order['status'],
+            tableNumber: apiOrder.tableNumber,
+            items: items.map((item: any, index: number) => ({
+              id: item.menuItemId || item.id || index,
+              name: item.menuItem?.name || item.name || `Menu #${item.menuItemId}`,
+              price: item.price || 0,
+              quantity: item.quantity || 1,
+              cartItemId: item.cartItemId || `${apiOrder.orderId}-${index}`,
+              specialInstructions: item.specialInstructions,
+              diningOption: (item.diningOption || 'dine-in') as 'dine-in' | 'takeaway',
+              itemStatus: (item.status || item.itemStatus || 'preparing').toLowerCase() as 'preparing' | 'completed' | 'delivered',
+              category: item.menuItem?.category || '',
+              image: item.menuItem?.image || '',
+              description: item.menuItem?.description || '',
+              reviewCount: 0,
+              type: 'single' as const,
+              setComponents: [],
+              availableAddOns: [],
+              availableAddOnGroups: [],
+              isActive: true,
+            })),
+          };
+        });
+
+        setOrderHistory(updatedOrders);
+        localStorage.setItem('orderHistory', JSON.stringify(updatedOrders));
+      } catch (error) {
+        console.error('Failed to poll order status:', error);
+      }
+    };
+
+    // Start polling after a short delay to avoid interfering with initial order creation
+    const interval = setInterval(pollOrderStatus, 5000);
+
+    return () => clearInterval(interval);
+  }, [tableNumber]);
+
   // Filter menu
   const filteredMenu = React.useMemo(() => {
     let filtered = menuItems;

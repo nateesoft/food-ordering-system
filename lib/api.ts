@@ -264,6 +264,9 @@ export const api = {
 
   getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
 
+  getTableOrdersAll: (tableNumber: string) =>
+    fetchApi<OrderResponse[]>(`/orders?tableNumber=${tableNumber}`),
+
   updateOrderStatus: (id: number, status: 'PREPARING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED') =>
     fetchApi<OrderResponse>(`/orders/${id}/status`, {
       method: 'PATCH',
