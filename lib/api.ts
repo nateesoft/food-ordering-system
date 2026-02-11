@@ -336,6 +336,28 @@ export const api = {
       lastSeenAt: string;
     }[]>>('/staff/assignments/public'),
 
+  // User Management
+  getUsers: () => fetchApi<any[]>('/auth/users'),
+
+  getUser: (id: number) => fetchApi<any>(`/auth/users/${id}`),
+
+  createUser: (data: { username: string; password: string; name: string; role?: string }) =>
+    fetchApi<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateUser: (id: number, data: { name?: string; role?: string; pin?: string; isActive?: boolean; password?: string }) =>
+    fetchApi<any>(`/auth/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteUser: (id: number) =>
+    fetchApi<any>(`/auth/users/${id}`, {
+      method: 'DELETE',
+    }),
+
   // Orders - unpaid
   getUnpaidOrders: () => fetchApi<OrderResponse[]>('/orders/unpaid'),
 

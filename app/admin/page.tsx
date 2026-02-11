@@ -10,7 +10,10 @@ import {
   LayoutGrid,
   ArrowRight,
   Settings,
-  BarChart3
+  BarChart3,
+  Users,
+  Package,
+  DollarSign,
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -77,6 +80,33 @@ export default function AdminDashboard() {
       color: 'from-yellow-500 to-orange-500',
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600'
+    },
+    {
+      title: 'POS System',
+      description: 'ระบบรับชำระเงิน สำหรับแคชเชียร์',
+      icon: DollarSign,
+      href: '/pos',
+      color: 'from-emerald-500 to-teal-500',
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600'
+    },
+    {
+      title: 'Staff Management',
+      description: 'จัดการข้อมูลพนักงาน เพิ่ม/แก้ไข/ลบ',
+      icon: Users,
+      href: '/admin/staff',
+      color: 'from-rose-500 to-pink-500',
+      iconBg: 'bg-rose-100',
+      iconColor: 'text-rose-600'
+    },
+    {
+      title: 'Inventory Management',
+      description: 'จัดการวัตถุดิบและสต็อกสินค้า',
+      icon: Package,
+      href: '/admin/inventory',
+      color: 'from-amber-500 to-yellow-500',
+      iconBg: 'bg-amber-100',
+      iconColor: 'text-amber-600'
     }
   ];
 
