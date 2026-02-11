@@ -336,6 +336,52 @@ export const api = {
       lastSeenAt: string;
     }[]>>('/staff/assignments/public'),
 
+  // Orders - unpaid
+  getUnpaidOrders: () => fetchApi<OrderResponse[]>('/orders/unpaid'),
+
+  // Members - additional
+  getAllMembers: () => fetchApi<any[]>('/members'),
+
+  getMemberByPhone: (phone: string) => fetchApi<any>(`/members/phone/${phone}`),
+
+  // Payments
+  createPayment: (data: {
+    orderId: number;
+    paymentMethod: string;
+    paidAmount: number;
+    memberId?: string;
+    discountPoints?: number;
+    cashierName?: string;
+    note?: string;
+  }) =>
+    fetchApi<any>('/payments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getPayments: (params?: { today?: boolean; paymentMethod?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.today) searchParams.append('today', 'true');
+    if (params?.paymentMethod) searchParams.append('paymentMethod', params.paymentMethod);
+    const query = searchParams.toString();
+    return fetchApi<any[]>(`/payments${query ? `?${query}` : ''}`);
+  },
+
+  getPayment: (id: number) => fetchApi<any>(`/payments/${id}`),
+
+  getPaymentByReceipt: (receiptNumber: string) =>
+    fetchApi<any>(`/payments/receipt/${receiptNumber}`),
+
+  getPaymentByOrder: (orderId: number) =>
+    fetchApi<any[]>(`/payments/order/${orderId}`),
+
+  getPaymentSummary: () => fetchApi<any>('/payments/summary/today'),
+
+  refundPayment: (id: number) =>
+    fetchApi<any>(`/payments/${id}/refund`, {
+      method: 'POST',
+    }),
+
   // ===== Inventory =====
 
   // Ingredients

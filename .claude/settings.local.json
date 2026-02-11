@@ -34,7 +34,8 @@
       "WebFetch(domain:www.codelerity.com)",
       "Bash(git stash:*)",
       "Bash(timeout 15 npx nest start:*)",
-      "Bash(pg_isready:*)"
+      "Bash(pg_isready:*)",
+      "Bash(docker exec:*)"
     ],
     "deny": [],
     "ask": []

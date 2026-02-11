@@ -185,3 +185,53 @@ export interface MenuAvailability {
   available: boolean;
   insufficientIngredients: string[];
 }
+
+// ===== POS / Payment =====
+
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'CREDIT_CARD';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'REFUNDED';
+
+export interface Payment {
+  id: number;
+  receiptNumber: string;
+  orderId: number;
+  order?: any;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  discountAmount: number;
+  discountPoints: number;
+  totalAmount: number;
+  paidAmount: number;
+  changeAmount: number;
+  memberId: string | null;
+  memberName: string | null;
+  pointsEarned: number;
+  cashierName: string | null;
+  note: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export interface PaymentSummary {
+  totalRevenue: number;
+  totalTransactions: number;
+  byMethod: {
+    CASH: { count: number; amount: number };
+    TRANSFER: { count: number; amount: number };
+    CREDIT_CARD: { count: number; amount: number };
+  };
+  totalDiscount: number;
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+}
+
+export interface Member {
+  id: number;
+  memberId: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  points: number;
+  tier: string;
+}
