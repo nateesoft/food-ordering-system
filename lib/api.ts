@@ -469,6 +469,22 @@ export const api = {
     const query = searchParams.toString();
     return fetchApi<any[]>(`/inventory/transactions${query ? `?${query}` : ''}`);
   },
+
+  // ===== Reports =====
+  getRevenueReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/revenue?startDate=${startDate}&endDate=${endDate}`),
+
+  getOrdersReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/orders?startDate=${startDate}&endDate=${endDate}`),
+
+  getMenuPerformanceReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/menu-performance?startDate=${startDate}&endDate=${endDate}`),
+
+  getMemberAnalytics: () =>
+    fetchApi<any>('/dashboard/reports/member-analytics'),
+
+  getDailySummary: (startDate: string, endDate: string) =>
+    fetchApi<any[]>(`/dashboard/reports/daily-summary?startDate=${startDate}&endDate=${endDate}`),
 };
 
 export default api;

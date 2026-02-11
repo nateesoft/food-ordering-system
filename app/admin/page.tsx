@@ -107,6 +107,15 @@ export default function AdminDashboard() {
       color: 'from-amber-500 to-yellow-500',
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600'
+    },
+    {
+      title: 'Reports & Analytics',
+      description: 'รายงานและวิเคราะห์ข้อมูลร้านอาหาร',
+      icon: BarChart3,
+      href: '/admin/reports',
+      color: 'from-cyan-500 to-blue-500',
+      iconBg: 'bg-cyan-100',
+      iconColor: 'text-cyan-600'
     }
   ];
 
