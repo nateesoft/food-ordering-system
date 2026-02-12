@@ -1,58 +1,20 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Bell, Clock } from 'lucide-react';
-import { QueueTicket } from '@/types';
+import { api, QueueTicketResponse } from '@/lib/api';
 
 export default function QueueDisplayPage() {
-  const [queues, setQueues] = useState<QueueTicket[]>([]);
+  const [queues, setQueues] = useState<QueueTicketResponse[]>([]);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [showAnimation, setShowAnimation] = useState(false);
   const [calledQueue, setCalledQueue] = useState<string | null>(null);
-
-  // Load queues from localStorage with real-time sync
-  useEffect(() => {
-    loadQueues();
-
-    // Listen for storage events from other tabs/windows
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'queueTickets') {
-        loadQueues();
-      }
-    };
-
-    // Listen for custom events from same tab
-    const handleQueueUpdate = (e: Event) => {
-      loadQueues();
-    };
-
-    // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('queueUpdated', handleQueueUpdate);
-
-    // Fallback polling every 2 seconds
-    const interval = setInterval(loadQueues, 2000);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('queueUpdated', handleQueueUpdate);
-    };
-  }, []);
-
-  // Update current time (set initial value on mount to avoid hydration mismatch)
-  useEffect(() => {
-    setCurrentTime(new Date());
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+  const prevQueuesRef = useRef<QueueTicketResponse[]>([]);
 
   // Play notification sound
   const playNotificationSound = () => {
-    // Create bell sound using Web Audio API
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-    // Bell sound (3 rings)
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         const oscillator = audioContext.createOscillator();
@@ -61,7 +23,7 @@ export default function QueueDisplayPage() {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        oscillator.frequency.value = 800; // Bell frequency
+        oscillator.frequency.value = 800;
         oscillator.type = 'sine';
 
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
@@ -77,41 +39,31 @@ export default function QueueDisplayPage() {
   const announceQueue = (queueId: string) => {
     if (!('speechSynthesis' in window)) return;
 
-    // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    // Thai digit pronunciation map
     const thaiDigits: Record<string, string> = {
       '0': 'ศูนย์', '1': 'หนึ่ง', '2': 'สอง', '3': 'สาม', '4': 'สี่',
       '5': 'ห้า', '6': 'หก', '7': 'เจ็ด', '8': 'แปด', '9': 'เก้า',
     };
 
-    // Thai letter pronunciation map
     const thaiLetters: Record<string, string> = {
       'A': 'เอ', 'B': 'บี', 'C': 'ซี', 'D': 'ดี', 'E': 'อี',
       'F': 'เอฟ', 'G': 'จี', 'H': 'เอช', 'K': 'เค', 'T': 'ที',
     };
 
-    // Parse queue ID - extract letter prefix and number part
     const prefix = queueId.charAt(0);
     const numberPart = queueId.slice(1);
 
     const prefixThai = thaiLetters[prefix.toUpperCase()] || prefix;
 
-    // Convert number to Thai readable format
     const num = parseInt(numberPart, 10);
     let numberThai: string;
     if (num === 0) {
       numberThai = 'ศูนย์';
     } else {
-      // Read as natural number (e.g., 1 -> "หนึ่ง", 15 -> "สิบห้า", 100 -> "หนึ่งร้อย")
-      // For simplicity and clarity, read digit by digit for numbers with leading zeros
-      // but read naturally for the actual number value
       if (numberPart.startsWith('0')) {
-        // Has leading zeros - read digit by digit
         numberThai = numberPart.split('').map(d => thaiDigits[d] || d).join(' ');
       } else {
-        // Read as natural Thai number
         numberThai = num.toString().split('').map(d => thaiDigits[d] || d).join(' ');
       }
     }
@@ -126,7 +78,6 @@ export default function QueueDisplayPage() {
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
 
-      // Try to find a Thai voice
       const voices = window.speechSynthesis.getVoices();
       const thaiVoice = voices.find(v => v.lang.startsWith('th'));
       if (thaiVoice) {
@@ -136,9 +87,7 @@ export default function QueueDisplayPage() {
       window.speechSynthesis.speak(utterance);
     };
 
-    // Speak after bell sound finishes
     setTimeout(() => {
-      // Voices may not be loaded yet, wait for them
       if (window.speechSynthesis.getVoices().length > 0) {
         speak();
       } else {
@@ -147,42 +96,48 @@ export default function QueueDisplayPage() {
     }, 1000);
   };
 
-  const loadQueues = () => {
-    const stored = localStorage.getItem('queueTickets');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      const queuesWithDates = parsed.map((q: any) => ({
-        ...q,
-        createdAt: new Date(q.createdAt),
-        calledAt: q.calledAt ? new Date(q.calledAt) : undefined,
-        completedAt: q.completedAt ? new Date(q.completedAt) : undefined,
-      }));
+  const loadQueues = useCallback(async () => {
+    try {
+      const data = await api.getTodayQueues();
 
-      // Check for newly ready queues
-      const newlyReady = queuesWithDates.find(
-        (q: QueueTicket) => q.status === 'ready' && !queues.find(old => old.queueId === q.queueId && old.status === 'ready')
+      // Check for newly ready queues by comparing with previous state
+      const prev = prevQueuesRef.current;
+      const newlyReady = data.find(
+        (q) => q.status === 'READY' && !prev.find(old => old.id === q.id && old.status === 'READY')
       );
 
       if (newlyReady) {
         setCalledQueue(newlyReady.queueId);
         setShowAnimation(true);
-
-        // Play notification sound
         playNotificationSound();
-
-        // Announce queue number
         announceQueue(newlyReady.queueId);
-
         setTimeout(() => setShowAnimation(false), 5000);
       }
 
-      setQueues(queuesWithDates);
+      prevQueuesRef.current = data;
+      setQueues(data);
+    } catch (err) {
+      console.error('Failed to load queues:', err);
     }
-  };
+  }, []);
 
-  const readyQueues = queues.filter(q => q.status === 'ready');
-  const preparingQueues = queues.filter(q => q.status === 'preparing');
-  const waitingQueues = queues.filter(q => q.status === 'waiting');
+  // Load queues with polling
+  useEffect(() => {
+    loadQueues();
+    const interval = setInterval(loadQueues, 3000);
+    return () => clearInterval(interval);
+  }, [loadQueues]);
+
+  // Update current time
+  useEffect(() => {
+    setCurrentTime(new Date());
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const readyQueues = queues.filter(q => q.status === 'READY');
+  const preparingQueues = queues.filter(q => q.status === 'PREPARING');
+  const waitingQueues = queues.filter(q => q.status === 'WAITING');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 text-white overflow-hidden">
@@ -257,7 +212,7 @@ export default function QueueDisplayPage() {
               <div className="grid grid-cols-4 gap-6">
                 {readyQueues.map(queue => (
                   <div
-                    key={queue.queueId}
+                    key={queue.id}
                     className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-3xl p-8 text-center shadow-2xl animate-pulse-slow border-4 border-white"
                   >
                     <div className="text-8xl font-bold mb-4 drop-shadow-lg">
@@ -295,7 +250,7 @@ export default function QueueDisplayPage() {
               <div className="grid grid-cols-6 gap-4">
                 {preparingQueues.slice(0, 12).map(queue => (
                   <div
-                    key={queue.queueId}
+                    key={queue.id}
                     className="bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl p-6 text-center shadow-xl border-2 border-blue-300"
                   >
                     <div className="text-5xl font-bold mb-2">
@@ -330,7 +285,7 @@ export default function QueueDisplayPage() {
               <div className="grid grid-cols-8 gap-3">
                 {waitingQueues.slice(0, 16).map(queue => (
                   <div
-                    key={queue.queueId}
+                    key={queue.id}
                     className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl p-4 text-center shadow-lg border-2 border-yellow-300"
                   >
                     <div className="text-3xl font-bold mb-1">

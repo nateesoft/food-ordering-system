@@ -35,7 +35,13 @@
       "Bash(git stash:*)",
       "Bash(timeout 15 npx nest start:*)",
       "Bash(pg_isready:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(PGPASSWORD=password psql:*)",
+      "Bash(brew --prefix:*)",
+      "Bash(node scripts/migrate-branch.js:*)",
+      "Bash(./node_modules/.bin/tsc:*)",
+      "Bash(npx --yes tsc:*)",
+      "Bash(/Users/nateelive/Documents/Projects/GithubProject/food-ordering-service/node_modules/.bin/tsc:*)"
     ],
     "deny": [],
     "ask": []

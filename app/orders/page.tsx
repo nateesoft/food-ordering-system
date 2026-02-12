@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api, OrderResponse, ServiceRequestResponse } from '@/lib/api';
+import BranchSelector from '@/components/BranchSelector';
 
 interface StaffUser {
   pin: string;
@@ -528,6 +529,8 @@ export default function OrdersPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <BranchSelector />
+
             {/* Menu Management Button - Only for Admin */}
             {currentUser?.role === 'admin' && (
               <button

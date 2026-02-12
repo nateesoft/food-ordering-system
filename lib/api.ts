@@ -200,9 +200,18 @@ export interface StaffCheckInResponse {
 }
 
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const branchHeaders: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const branchId = localStorage.getItem('selectedBranchId');
+    if (branchId) {
+      branchHeaders['x-branch-id'] = branchId;
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...branchHeaders,
       ...options?.headers,
     },
     ...options,
@@ -246,6 +255,26 @@ export const api = {
   getWaitingQueues: () => fetchApi<QueueTicketResponse[]>('/queue/waiting'),
 
   getReadyQueues: () => fetchApi<QueueTicketResponse[]>('/queue/ready'),
+
+  getTodayQueues: () => fetchApi<QueueTicketResponse[]>('/queue/today'),
+
+  getAllQueues: (status?: string) => {
+    const query = status ? `?status=${status}` : '';
+    return fetchApi<QueueTicketResponse[]>(`/queue${query}`);
+  },
+
+  getQueueStats: () => fetchApi<any>('/queue/stats'),
+
+  updateQueueStatus: (id: number, status: string) =>
+    fetchApi<QueueTicketResponse>(`/queue/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  callQueue: (id: number) =>
+    fetchApi<QueueTicketResponse>(`/queue/${id}/call`, {
+      method: 'POST',
+    }),
 
   // Members
   getMemberByMemberId: (memberId: string) => fetchApi<any>(`/members/member-id/${memberId}`),
@@ -485,6 +514,28 @@ export const api = {
 
   getDailySummary: (startDate: string, endDate: string) =>
     fetchApi<any[]>(`/dashboard/reports/daily-summary?startDate=${startDate}&endDate=${endDate}`),
+
+  // ===== Branches =====
+  getBranches: () => fetchApi<any[]>('/branches'),
+
+  getBranch: (id: number) => fetchApi<any>(`/branches/${id}`),
+
+  createBranch: (data: { name: string; code: string; address?: string; phone?: string }) =>
+    fetchApi<any>('/branches', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateBranch: (id: number, data: { name?: string; code?: string; address?: string; phone?: string; isActive?: boolean }) =>
+    fetchApi<any>(`/branches/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteBranch: (id: number) =>
+    fetchApi<any>(`/branches/${id}`, {
+      method: 'DELETE',
+    }),
 };
 
 export default api;

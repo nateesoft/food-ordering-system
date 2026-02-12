@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { api, OrderResponse } from '@/lib/api';
 import { Payment, PaymentSummary, Member } from '@/types';
+import BranchSelector from '@/components/BranchSelector';
 
 // ===== PIN Login Screen =====
 function PinLogin({ onLogin }: { onLogin: (name: string) => void }) {
@@ -625,6 +626,7 @@ export default function POSPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <BranchSelector />
           {/* Today Summary */}
           {summary && (
             <div className="flex items-center gap-4 text-sm">

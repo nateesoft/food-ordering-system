@@ -7,6 +7,7 @@ import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMen
 import { useLanguage } from '@/contexts/LanguageContext';
 import { NestedMenuModal } from '@/components/NestedMenuModal';
 import { api, ApiMenuItem, ApiNestedMenuOption } from '@/lib/api';
+import BranchSelector from '@/components/BranchSelector';
 
 // Helper function to convert API nested option to frontend NestedMenuOption
 const convertNestedOption = (apiOption: ApiNestedMenuOption): NestedMenuOption => ({
@@ -338,15 +339,6 @@ export default function KioskPage() {
         paymentMethod: response.paymentMethod as 'cash' | 'credit-card' | 'qr-code' | 'mobile-banking' | undefined,
       };
 
-      // Also save to localStorage for backward compatibility
-      const existingQueues = localStorage.getItem('queueTickets');
-      const queues = existingQueues ? JSON.parse(existingQueues) : [];
-      const updatedQueues = [newQueue, ...queues];
-      localStorage.setItem('queueTickets', JSON.stringify(updatedQueues));
-
-      // Dispatch custom event for same-tab listening
-      window.dispatchEvent(new CustomEvent('queueUpdated', { detail: updatedQueues }));
-
       setCurrentQueue(newQueue);
       setStep('queue');
     } catch (err) {
@@ -467,7 +459,9 @@ export default function KioskPage() {
               </div>
             </div>
 
-            <button
+            <div className="flex items-center gap-2 sm:gap-3">
+              <BranchSelector />
+              <button
               onClick={() => setStep(step === 'menu' ? 'cart' : 'menu')}
               className="bg-white text-orange-600 px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 rounded-lg sm:rounded-xl md:rounded-2xl font-bold text-sm sm:text-base md:text-lg lg:text-2xl shadow-lg hover:scale-105 transform transition-all flex items-center gap-1 sm:gap-2 md:gap-3"
             >
@@ -475,6 +469,7 @@ export default function KioskPage() {
               <span className="hidden sm:inline">{step === 'menu' ? `ตะกร้า (${totalItems})` : 'กลับไปเลือกเมนู'}</span>
               <span className="sm:hidden">{step === 'menu' ? `(${totalItems})` : 'เมนู'}</span>
             </button>
+            </div>
           </div>
         </div>
 

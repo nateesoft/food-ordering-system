@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   BarChart3, TrendingUp, ShoppingCart, UtensilsCrossed, Users,
@@ -11,6 +11,7 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
+import BranchSelector from '@/components/BranchSelector';
 
 type TabType = 'revenue' | 'orders' | 'menu' | 'members';
 
@@ -47,9 +48,11 @@ export default function ReportsPage() {
     setEndDate(today.toISOString().split('T')[0]);
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const isFirstLoad = useRef(true);
+
+  const fetchData = useCallback(async (showLoading = true) => {
     if (!startDate || !endDate) return;
-    setLoading(true);
+    if (showLoading) setLoading(true);
     try {
       const [revenue, orders, menu, members, daily] = await Promise.all([
         api.getRevenueReport(startDate, endDate),
@@ -66,12 +69,17 @@ export default function ReportsPage() {
     } catch (err) {
       console.error('Failed to fetch reports:', err);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (startDate && endDate) fetchData();
+    if (startDate && endDate) {
+      fetchData(isFirstLoad.current);
+      isFirstLoad.current = false;
+    }
+    const interval = setInterval(() => fetchData(false), 15000);
+    return () => clearInterval(interval);
   }, [startDate, endDate, fetchData]);
 
   const setQuickRange = (days: number) => {
@@ -112,10 +120,13 @@ export default function ReportsPage() {
               <p className="text-indigo-100 mt-1">รายงานและวิเคราะห์ข้อมูลร้านอาหาร</p>
             </div>
           </div>
-          <button onClick={fetchData} disabled={loading} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 disabled:opacity-50">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            รีเฟรช
-          </button>
+          <div className="flex items-center gap-2">
+            <BranchSelector />
+            <button onClick={() => fetchData(true)} disabled={loading} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30 disabled:opacity-50">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              รีเฟรช
+            </button>
+          </div>
         </div>
       </div>
 

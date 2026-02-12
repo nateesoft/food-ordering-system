@@ -14,7 +14,9 @@ import {
   Users,
   Package,
   DollarSign,
+  Building2,
 } from 'lucide-react';
+import BranchSelector from '@/components/BranchSelector';
 
 export default function AdminDashboard() {
   const adminSections = [
@@ -116,6 +118,15 @@ export default function AdminDashboard() {
       color: 'from-cyan-500 to-blue-500',
       iconBg: 'bg-cyan-100',
       iconColor: 'text-cyan-600'
+    },
+    {
+      title: 'Branch Management',
+      description: 'จัดการสาขา เพิ่ม/แก้ไข/ลบสาขา',
+      icon: Building2,
+      href: '/admin/branches',
+      color: 'from-teal-500 to-cyan-500',
+      iconBg: 'bg-teal-100',
+      iconColor: 'text-teal-600'
     }
   ];
 
@@ -123,9 +134,12 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 shadow-xl">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl font-bold mb-3">🎛️ Admin Dashboard</h1>
-          <p className="text-2xl text-indigo-100">ระบบจัดการร้านอาหาร</p>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl font-bold mb-3">🎛️ Admin Dashboard</h1>
+            <p className="text-2xl text-indigo-100">ระบบจัดการร้านอาหาร</p>
+          </div>
+          <BranchSelector />
         </div>
       </div>
 

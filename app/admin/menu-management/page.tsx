@@ -6,6 +6,7 @@ import { Plus, Edit, Trash2, Home, Settings, X, Save } from 'lucide-react';
 import { MenuItem, AddOn, SetComponent } from '@/types';
 import { menuItems as initialMenuItems } from '@/data/menuItems';
 import { addOns as initialAddOns } from '@/data/addOns';
+import BranchSelector from '@/components/BranchSelector';
 
 export default function MenuManagementPage() {
   const router = useRouter();
@@ -202,6 +203,7 @@ export default function MenuManagementPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <BranchSelector />
               <button
                 onClick={() => router.push('/orders')}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
