@@ -199,6 +199,34 @@ export interface StaffCheckInResponse {
   };
 }
 
+export interface ShiftResponse {
+  id: number;
+  shiftNumber: string;
+  status: 'OPEN' | 'CLOSED';
+  userId: number;
+  cashierName: string;
+  branchId: number | null;
+  openedAt: string;
+  closedAt: string | null;
+  openingAmount: number;
+  closingAmount: number | null;
+  expectedCashAmount: number | null;
+  cashDifference: number | null;
+  totalRevenue: number | null;
+  totalOrders: number | null;
+  cashTotal: number | null;
+  transferTotal: number | null;
+  creditCardTotal: number | null;
+  openingCashCount: Record<string, number> | null;
+  closingCashCount: Record<string, number> | null;
+  notes: string | null;
+  closingNotes: string | null;
+}
+
+export interface ShiftSummaryResponse extends ShiftResponse {
+  payments: any[];
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const branchHeaders: Record<string, string> = {};
   if (typeof window !== 'undefined') {
@@ -404,6 +432,7 @@ export const api = {
     discountPoints?: number;
     cashierName?: string;
     note?: string;
+    shiftId?: number;
   }) =>
     fetchApi<any>('/payments', {
       method: 'POST',
@@ -536,6 +565,34 @@ export const api = {
     fetchApi<any>(`/branches/${id}`, {
       method: 'DELETE',
     }),
+
+  // ===== Shifts =====
+  openShift: (data: { pin: string; openingAmount: number; openingCashCount?: Record<string, number>; notes?: string }) =>
+    fetchApi<ShiftResponse>('/shifts/open', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  closeShift: (id: number, data: { closingAmount: number; closingCashCount?: Record<string, number>; notes?: string }) =>
+    fetchApi<ShiftResponse>(`/shifts/${id}/close`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getActiveShift: () => fetchApi<ShiftResponse | null>('/shifts/active'),
+
+  getShifts: (params?: { status?: string; startDate?: string; endDate?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+    const query = searchParams.toString();
+    return fetchApi<ShiftResponse[]>(`/shifts${query ? `?${query}` : ''}`);
+  },
+
+  getShift: (id: number) => fetchApi<ShiftResponse>(`/shifts/${id}`),
+
+  getShiftSummary: (id: number) => fetchApi<ShiftSummaryResponse>(`/shifts/${id}/summary`),
 };
 
 export default api;

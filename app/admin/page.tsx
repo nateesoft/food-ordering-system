@@ -15,6 +15,7 @@ import {
   Package,
   DollarSign,
   Building2,
+  Clock,
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -118,6 +119,15 @@ export default function AdminDashboard() {
       color: 'from-cyan-500 to-blue-500',
       iconBg: 'bg-cyan-100',
       iconColor: 'text-cyan-600'
+    },
+    {
+      title: 'Shift Management',
+      description: 'จัดการกะ เปิด/ปิดกะ นับเงินลิ้นชัก สรุปยอด',
+      icon: Clock,
+      href: '/admin/shifts',
+      color: 'from-violet-500 to-purple-500',
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-600'
     },
     {
       title: 'Branch Management',
