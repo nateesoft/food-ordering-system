@@ -262,6 +262,61 @@ export interface CouponValidationResponse {
   discountAmount?: number;
 }
 
+export type WebhookEvent =
+  | 'ORDER_CREATED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_CANCELLED'
+  | 'PAYMENT_COMPLETED'
+  | 'PAYMENT_REFUNDED'
+  | 'QUEUE_CREATED'
+  | 'QUEUE_STATUS_CHANGED'
+  | 'MEMBER_REGISTERED'
+  | 'SHIFT_OPENED'
+  | 'SHIFT_CLOSED'
+  | 'LOW_STOCK_ALERT';
+
+export interface WebhookEndpointResponse {
+  id: number;
+  name: string;
+  url: string;
+  secret: string;
+  events: WebhookEvent[];
+  isActive: boolean;
+  branchId: number | null;
+  headers: Record<string, string> | null;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookDeliveryResponse {
+  id: number;
+  webhookId: number;
+  event: WebhookEvent;
+  payload: any;
+  responseStatus: number | null;
+  responseBody: string | null;
+  success: boolean;
+  attempts: number;
+  error: string | null;
+  duration: number | null;
+  createdAt: string;
+}
+
+export interface WebhookEventInfo {
+  value: WebhookEvent;
+  label: string;
+}
+
+export interface WebhookTestResult {
+  success: boolean;
+  responseStatus: number | null;
+  responseBody: string | null;
+  error: string | null;
+  duration: number | null;
+  delivery: WebhookDeliveryResponse;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const branchHeaders: Record<string, string> = {};
   if (typeof window !== 'undefined') {
@@ -706,6 +761,47 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ groups }),
     }),
+
+  // ===== Webhooks =====
+  getWebhooks: () => fetchApi<WebhookEndpointResponse[]>('/webhooks'),
+
+  getWebhook: (id: number) => fetchApi<WebhookEndpointResponse>(`/webhooks/${id}`),
+
+  createWebhook: (data: {
+    name: string;
+    url: string;
+    events: WebhookEvent[];
+    isActive?: boolean;
+    headers?: Record<string, string>;
+    description?: string;
+  }) =>
+    fetchApi<WebhookEndpointResponse>('/webhooks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateWebhook: (id: number, data: Record<string, any>) =>
+    fetchApi<WebhookEndpointResponse>(`/webhooks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteWebhook: (id: number) =>
+    fetchApi<{ message: string }>(`/webhooks/${id}`, {
+      method: 'DELETE',
+    }),
+
+  testWebhook: (id: number) =>
+    fetchApi<WebhookTestResult>(`/webhooks/${id}/test`, {
+      method: 'POST',
+    }),
+
+  getWebhookDeliveries: (id: number, limit?: number) => {
+    const query = limit ? `?limit=${limit}` : '';
+    return fetchApi<WebhookDeliveryResponse[]>(`/webhooks/${id}/deliveries${query}`);
+  },
+
+  getWebhookEvents: () => fetchApi<WebhookEventInfo[]>('/webhooks/events'),
 };
 
 export default api;

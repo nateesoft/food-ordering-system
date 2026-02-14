@@ -17,6 +17,7 @@ import {
   Building2,
   Clock,
   Tag,
+  Webhook,
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -147,6 +148,15 @@ export default function AdminDashboard() {
       color: 'from-orange-500 to-amber-500',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600'
+    },
+    {
+      title: 'Webhooks',
+      description: 'จัดการ Webhook เชื่อมต่อกับระบบภายนอก',
+      icon: Webhook,
+      href: '/admin/webhooks',
+      color: 'from-indigo-500 to-blue-500',
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600'
     }
   ];
 
