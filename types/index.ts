@@ -211,6 +211,10 @@ export interface Payment {
   note: string | null;
   paidAt: string | null;
   createdAt: string;
+  promotionId: number | null;
+  promotionDiscount: number;
+  promotionName: string | null;
+  couponCode: string | null;
 }
 
 export interface PaymentSummary {

@@ -16,6 +16,7 @@ import {
   DollarSign,
   Building2,
   Clock,
+  Tag,
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -137,6 +138,15 @@ export default function AdminDashboard() {
       color: 'from-teal-500 to-cyan-500',
       iconBg: 'bg-teal-100',
       iconColor: 'text-teal-600'
+    },
+    {
+      title: 'Promotion Management',
+      description: 'จัดการโปรโมชัน คูปอง ส่วนลด Happy Hour',
+      icon: Tag,
+      href: '/admin/promotions',
+      color: 'from-orange-500 to-amber-500',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600'
     }
   ];
 

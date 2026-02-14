@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   DollarSign,
   CreditCard,
@@ -24,8 +24,13 @@ import {
   Square,
   AlertTriangle,
   RefreshCw,
+  Tag,
+  Ticket,
+  Layers,
+  Scissors,
+  CheckSquare,
 } from 'lucide-react';
-import { api, OrderResponse, ShiftResponse } from '@/lib/api';
+import { api, OrderResponse, ShiftResponse, PromotionResponse, CouponValidationResponse } from '@/lib/api';
 import { Payment, PaymentSummary, Member } from '@/types';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -139,9 +144,11 @@ function PinLogin({ onLogin }: { onLogin: (name: string) => void }) {
 // ===== Receipt Modal =====
 function ReceiptModal({
   payment,
+  mergedOrders,
   onClose,
 }: {
   payment: Payment;
+  mergedOrders?: any[] | null;
   onClose: () => void;
 }) {
   const handlePrint = () => {
@@ -178,7 +185,27 @@ function ReceiptModal({
           </div>
 
           {/* Order Items */}
-          {payment.order && (
+          {mergedOrders && mergedOrders.length > 0 ? (
+            <div className="border-b-2 border-dashed border-gray-300 pb-4 mb-4">
+              <p className="text-sm font-semibold mb-2 text-gray-600">
+                รวม {mergedOrders.length} ออเดอร์
+                {mergedOrders[0]?.tableNumber && ` | โต๊ะ ${mergedOrders[0].tableNumber}`}
+              </p>
+              {mergedOrders.map((order: any) => (
+                <div key={order.id} className="mb-2">
+                  <p className="text-xs text-gray-400 font-medium">{order.orderId}</p>
+                  <div className="space-y-1">
+                    {order.items?.map((item: any, idx: number) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span>{item.menuItem?.name || 'Unknown'} x{item.quantity}</span>
+                        <span>฿{(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : payment.order && (
             <div className="border-b-2 border-dashed border-gray-300 pb-4 mb-4">
               <p className="text-sm font-semibold mb-2 text-gray-600">
                 Order: {payment.order.orderId}
@@ -186,13 +213,8 @@ function ReceiptModal({
               </p>
               <div className="space-y-1">
                 {payment.order.items?.map((item: any, idx: number) => (
-                  <div
-                    key={idx}
-                    className="flex justify-between text-sm"
-                  >
-                    <span>
-                      {item.menuItem?.name || 'Unknown'} x{item.quantity}
-                    </span>
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span>{item.menuItem?.name || 'Unknown'} x{item.quantity}</span>
                     <span>฿{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
@@ -208,8 +230,14 @@ function ReceiptModal({
             </div>
             {payment.discountAmount > 0 && (
               <div className="flex justify-between text-sm text-green-600">
-                <span>ส่วนลด ({payment.discountPoints} แต้ม)</span>
+                <span>ส่วนลดแต้ม ({payment.discountPoints} แต้ม)</span>
                 <span>-฿{payment.discountAmount.toFixed(2)}</span>
+              </div>
+            )}
+            {payment.promotionDiscount > 0 && (
+              <div className="flex justify-between text-sm text-orange-600">
+                <span>โปรโมชัน: {payment.promotionName || 'ส่วนลด'}</span>
+                <span>-฿{payment.promotionDiscount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold">
@@ -705,6 +733,223 @@ function CloseShiftModal({
   );
 }
 
+// ===== Split Order Modal =====
+function SplitOrderModal({
+  order,
+  onClose,
+  onSplit,
+}: {
+  order: OrderResponse;
+  onClose: () => void;
+  onSplit: (groups: { itemIds: number[] }[]) => void;
+}) {
+  const [billCount, setBillCount] = useState(2);
+  const [itemBills, setItemBills] = useState<Record<number, number>>({});
+  const [processing, setProcessing] = useState(false);
+
+  useEffect(() => {
+    const assignments: Record<number, number> = {};
+    order.items?.forEach((item: any) => {
+      assignments[item.id] = 0;
+    });
+    setItemBills(assignments);
+  }, [order, billCount]);
+
+  const bills = Array.from({ length: billCount }, (_, i) => {
+    const items =
+      order.items?.filter((item: any) => itemBills[item.id] === i) || [];
+    const total = items.reduce(
+      (s: number, item: any) => s + item.price * item.quantity,
+      0,
+    );
+    return { index: i, items, total };
+  });
+
+  const canSplit = bills.every((b) => b.items.length > 0);
+
+  const handleSplit = () => {
+    if (!canSplit) return;
+    setProcessing(true);
+    const groups = Array.from({ length: billCount }, (_, i) => ({
+      itemIds:
+        order.items
+          ?.filter((item: any) => itemBills[item.id] === i)
+          .map((item: any) => item.id) || [],
+    })).filter((g) => g.itemIds.length > 0);
+    onSplit(groups);
+  };
+
+  const billColors = [
+    'bg-blue-500',
+    'bg-green-500',
+    'bg-purple-500',
+    'bg-orange-500',
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="p-6 border-b flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Scissors className="w-6 h-6 text-purple-600" />
+            <h2 className="text-xl font-bold text-gray-800">
+              แยกออเดอร์ - {order.orderId}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6">
+          {/* Bill count selector */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-gray-600 mb-2">
+              จำนวนบิล:
+            </p>
+            <div className="flex gap-2">
+              {[2, 3, 4].map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setBillCount(n)}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                    billCount === n
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {n} บิล
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Items with bill assignment */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-gray-600 mb-2">
+              เลือกบิลสำหรับแต่ละรายการ:
+            </p>
+            <div className="space-y-2">
+              {order.items?.map((item: any) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between bg-gray-50 rounded-xl p-3"
+                >
+                  <div className="flex-1">
+                    <span className="font-medium text-gray-800">
+                      {item.menuItem?.name || 'Unknown'}
+                    </span>
+                    <span className="text-gray-400 ml-2">
+                      x{item.quantity}
+                    </span>
+                    <span className="text-gray-500 ml-2">
+                      ฿{(item.price * item.quantity).toFixed(0)}
+                    </span>
+                  </div>
+                  <div className="flex gap-1">
+                    {Array.from({ length: billCount }, (_, i) => (
+                      <button
+                        key={i}
+                        onClick={() =>
+                          setItemBills((prev) => ({
+                            ...prev,
+                            [item.id]: i,
+                          }))
+                        }
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                          itemBills[item.id] === i
+                            ? `${billColors[i]} text-white`
+                            : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                        }`}
+                      >
+                        บิล {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bill previews */}
+          <div className="grid grid-cols-2 gap-4">
+            {bills.map((bill) => (
+              <div
+                key={bill.index}
+                className={`rounded-xl p-4 border-2 ${
+                  bill.items.length === 0
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className={`w-3 h-3 rounded-full ${billColors[bill.index]}`}
+                  />
+                  <h4 className="font-bold text-gray-800">
+                    บิล {bill.index + 1}
+                  </h4>
+                </div>
+                {bill.items.length === 0 ? (
+                  <p className="text-sm text-red-500">
+                    ยังไม่มีรายการ (ต้องมีอย่างน้อย 1)
+                  </p>
+                ) : (
+                  <>
+                    {bill.items.map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="text-sm text-gray-600 flex justify-between"
+                      >
+                        <span>
+                          {item.menuItem?.name} x{item.quantity}
+                        </span>
+                        <span>
+                          ฿{(item.price * item.quantity).toFixed(0)}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t mt-2 pt-2 flex justify-between font-bold text-gray-800">
+                      <span>รวม</span>
+                      <span>฿{bill.total.toFixed(0)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+          >
+            ยกเลิก
+          </button>
+          <button
+            onClick={handleSplit}
+            disabled={!canSplit || processing}
+            className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {processing ? (
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            ) : (
+              <Scissors className="w-5 h-5" />
+            )}
+            แยกเป็น {billCount} บิล
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== Main POS Page =====
 export default function POSPage() {
   // Auth state
@@ -740,11 +985,24 @@ export default function POSPage() {
   const [usePoints, setUsePoints] = useState(false);
   const [discountPoints, setDiscountPoints] = useState<string>('');
 
+  // Promotion state
+  const [availablePromotions, setAvailablePromotions] = useState<PromotionResponse[]>([]);
+  const [selectedPromotion, setSelectedPromotion] = useState<PromotionResponse | null>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponResult, setCouponResult] = useState<CouponValidationResponse | null>(null);
+  const [promotionDiscount, setPromotionDiscount] = useState(0);
+
   // UI state
   const [processing, setProcessing] = useState(false);
   const [receiptPayment, setReceiptPayment] = useState<Payment | null>(null);
+  const [receiptMergedOrders, setReceiptMergedOrders] = useState<any[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(true);
+
+  // Merge / Split state
+  const [posMode, setPosMode] = useState<'normal' | 'merge'>('normal');
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<number>>(new Set());
+  const [showSplitModal, setShowSplitModal] = useState(false);
 
   // Check active shift after login
   const checkActiveShift = useCallback(async () => {
@@ -857,7 +1115,7 @@ export default function POSPage() {
   }, [cashierName, loadOrders]);
 
   // Reset payment state when order changes
-  useEffect(() => {
+  const resetPaymentState = useCallback(() => {
     setPaymentMethod(null);
     setPaidAmount('');
     setMember(null);
@@ -865,7 +1123,35 @@ export default function POSPage() {
     setMemberError('');
     setUsePoints(false);
     setDiscountPoints('');
+    setSelectedPromotion(null);
+    setCouponCode('');
+    setCouponResult(null);
+    setPromotionDiscount(0);
+  }, []);
+
+  useEffect(() => {
+    resetPaymentState();
+
+    // Load available promotions for selected order
+    if (selectedOrder) {
+      api.getAvailablePromotions(selectedOrder.totalAmount)
+        .then(setAvailablePromotions)
+        .catch(() => setAvailablePromotions([]));
+    } else {
+      setAvailablePromotions([]);
+    }
   }, [selectedOrder?.id]);
+
+  // Reset payment state when merge selection changes
+  const mergeKey = Array.from(selectedOrderIds).sort().join(',');
+  useEffect(() => {
+    if (posMode === 'merge' && selectedMergeOrders.length >= 2) {
+      resetPaymentState();
+      api.getAvailablePromotions(mergedSubtotal)
+        .then(setAvailablePromotions)
+        .catch(() => setAvailablePromotions([]));
+    }
+  }, [mergeKey]);
 
   // Search member
   const handleMemberSearch = async () => {
@@ -900,23 +1186,117 @@ export default function POSPage() {
     }
   };
 
-  // Calculate amounts
-  const subtotal = selectedOrder?.totalAmount || 0;
+  // Group orders by table
+  const ordersByTable = useMemo(() => {
+    const grouped: Record<string, OrderResponse[]> = {};
+    for (const order of unpaidOrders) {
+      const key = order.tableNumber || 'Kiosk';
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(order);
+    }
+    return grouped;
+  }, [unpaidOrders]);
+
+  // Merge mode: selected orders and combined data
+  const selectedMergeOrders = useMemo(
+    () => unpaidOrders.filter((o) => selectedOrderIds.has(o.id)),
+    [unpaidOrders, selectedOrderIds],
+  );
+  const mergedSubtotal = selectedMergeOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const mergedItems = selectedMergeOrders.flatMap((o) => o.items || []);
+
+  // Handle merge mode order click
+  const handleMergeOrderClick = (order: OrderResponse) => {
+    setSelectedOrderIds((prev) => {
+      const next = new Set(prev);
+      // If selecting from a different table, clear and start new
+      if (next.size > 0) {
+        const existingTable = unpaidOrders.find((o) => next.has(o.id))?.tableNumber;
+        if (existingTable !== order.tableNumber) {
+          return new Set([order.id]);
+        }
+      }
+      if (next.has(order.id)) {
+        next.delete(order.id);
+      } else {
+        next.add(order.id);
+      }
+      return next;
+    });
+  };
+
+  // Handle split order
+  const handleSplitOrder = async (groups: { itemIds: number[] }[]) => {
+    if (!selectedOrder) return;
+    try {
+      await api.splitOrder(selectedOrder.id, groups);
+      setShowSplitModal(false);
+      setSelectedOrder(null);
+      loadOrders();
+    } catch (err: any) {
+      alert(err.message || 'ไม่สามารถแยกออเดอร์ได้');
+    }
+  };
+
+  // Calculate amounts (supports both normal and merge mode)
+  const subtotal = posMode === 'merge' && selectedMergeOrders.length >= 2
+    ? mergedSubtotal
+    : selectedOrder?.totalAmount || 0;
   const pointsToUse = usePoints && member
     ? Math.min(parseInt(discountPoints) || 0, member.points, Math.floor(subtotal))
     : 0;
   const discountAmount = pointsToUse;
-  const totalAmount = subtotal - discountAmount;
+  const totalAmount = Math.max(0, subtotal - discountAmount - promotionDiscount);
   const changeAmount =
     paymentMethod === 'CASH' ? Math.max(0, (parseFloat(paidAmount) || 0) - totalAmount) : 0;
   const pointsEarned = member ? Math.floor(totalAmount / 25) : 0;
 
+  // Helper: calculate promotion discount amount
+  const calcPromoDiscount = (promo: PromotionResponse, sub: number) => {
+    if (promo.type === 'PERCENTAGE' || promo.type === 'HAPPY_HOUR') {
+      const d = (sub * promo.discountValue) / 100;
+      return promo.maxDiscount ? Math.min(d, promo.maxDiscount) : Math.round(d * 100) / 100;
+    }
+    return Math.min(promo.discountValue, sub);
+  };
+
+  const handleSelectPromotion = (promo: PromotionResponse | null) => {
+    setCouponCode('');
+    setCouponResult(null);
+    if (promo) {
+      setSelectedPromotion(promo);
+      setPromotionDiscount(calcPromoDiscount(promo, subtotal));
+    } else {
+      setSelectedPromotion(null);
+      setPromotionDiscount(0);
+    }
+  };
+
+  const handleValidateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    try {
+      const result = await api.validateCoupon(couponCode, subtotal);
+      setCouponResult(result);
+      if (result.valid && result.promotion) {
+        setSelectedPromotion(result.promotion);
+        setPromotionDiscount(result.discountAmount || 0);
+      } else {
+        setSelectedPromotion(null);
+        setPromotionDiscount(0);
+      }
+    } catch {
+      setCouponResult({ valid: false, message: 'ไม่สามารถตรวจสอบคูปองได้' });
+      setSelectedPromotion(null);
+      setPromotionDiscount(0);
+    }
+  };
+
   // Quick amount buttons
   const quickAmounts = [20, 50, 100, 500, 1000];
 
-  // Handle payment
+  // Handle payment (supports both normal and merge mode)
   const handlePayment = async () => {
-    if (!selectedOrder || !paymentMethod) return;
+    if (!paymentMethod) return;
 
     const paid = parseFloat(paidAmount) || 0;
     if (paymentMethod === 'CASH' && paid < totalAmount) {
@@ -926,18 +1306,41 @@ export default function POSPage() {
 
     setProcessing(true);
     try {
-      const result = await api.createPayment({
-        orderId: selectedOrder.id,
-        paymentMethod,
-        paidAmount: paymentMethod === 'CASH' ? paid : totalAmount,
-        memberId: member?.memberId,
-        discountPoints: pointsToUse > 0 ? pointsToUse : undefined,
-        cashierName: cashierName || undefined,
-        shiftId: activeShift?.id,
-      });
-
-      setReceiptPayment(result);
-      setSelectedOrder(null);
+      if (posMode === 'merge' && selectedMergeOrders.length >= 2) {
+        // Merged payment
+        const result = await api.createMergedPayment({
+          orderIds: Array.from(selectedOrderIds),
+          paymentMethod,
+          paidAmount: paymentMethod === 'CASH' ? paid : totalAmount,
+          memberId: member?.memberId,
+          discountPoints: pointsToUse > 0 ? pointsToUse : undefined,
+          cashierName: cashierName || undefined,
+          shiftId: activeShift?.id,
+          promotionId: selectedPromotion?.id,
+          couponCode: couponResult?.valid ? couponCode.toUpperCase() : undefined,
+        });
+        setReceiptPayment(result.payment);
+        setReceiptMergedOrders(result.mergedOrders);
+        setSelectedOrderIds(new Set());
+        setPosMode('normal');
+      } else {
+        // Normal single-order payment
+        if (!selectedOrder) return;
+        const result = await api.createPayment({
+          orderId: selectedOrder.id,
+          paymentMethod,
+          paidAmount: paymentMethod === 'CASH' ? paid : totalAmount,
+          memberId: member?.memberId,
+          discountPoints: pointsToUse > 0 ? pointsToUse : undefined,
+          cashierName: cashierName || undefined,
+          shiftId: activeShift?.id,
+          promotionId: selectedPromotion?.id,
+          couponCode: couponResult?.valid ? couponCode.toUpperCase() : undefined,
+        });
+        setReceiptPayment(result);
+        setReceiptMergedOrders(null);
+        setSelectedOrder(null);
+      }
       loadOrders();
     } catch (err: any) {
       alert(err.message || 'เกิดข้อผิดพลาดในการชำระเงิน');
@@ -1034,132 +1437,240 @@ export default function POSPage() {
       {/* Main Content */}
       <div className="flex-1 flex print:hidden">
         {/* Left: Orders List */}
-        <div className="w-1/3 bg-white border-r overflow-y-auto">
+        <div className="w-1/3 bg-white border-r flex flex-col">
           <div className="p-4 border-b bg-gray-50">
-            <h2 className="font-bold text-gray-700 flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5" />
-              ออเดอร์รอชำระ ({unpaidOrders.length})
-            </h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="font-bold text-gray-700 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                ออเดอร์รอชำระ ({unpaidOrders.length})
+              </h2>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setPosMode('normal'); setSelectedOrderIds(new Set()); }}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  posMode === 'normal' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                ปกติ
+              </button>
+              <button
+                onClick={() => { setPosMode('merge'); setSelectedOrder(null); }}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 ${
+                  posMode === 'merge' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                รวมออเดอร์
+              </button>
+            </div>
           </div>
 
-          {loadingOrders ? (
-            <div className="p-8 text-center text-gray-400">กำลังโหลด...</div>
-          ) : unpaidOrders.length === 0 ? (
-            <div className="p-8 text-center text-gray-400">
-              <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>ไม่มีออเดอร์รอชำระ</p>
-            </div>
-          ) : (
-            <div className="divide-y">
-              {unpaidOrders.map((order) => (
-                <button
-                  key={order.id}
-                  onClick={() => setSelectedOrder(order)}
-                  className={`w-full text-left p-4 hover:bg-blue-50 transition-colors ${
-                    selectedOrder?.id === order.id
-                      ? 'bg-blue-50 border-l-4 border-blue-500'
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-mono font-semibold text-blue-600">
-                      {order.orderId}
-                    </span>
-                    <span className="text-lg font-bold">
-                      ฿{order.totalAmount.toFixed(0)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span className="flex items-center gap-1">
-                      {order.tableNumber ? (
-                        <>
-                          <Hash className="w-3 h-3" />
-                          โต๊ะ {order.tableNumber}
-                        </>
-                      ) : (
-                        'Kiosk'
-                      )}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {new Date(order.createdAt).toLocaleTimeString('th-TH', {
-                        hour: '2-digit',
-                        minute: '2-digit',
+          <div className="flex-1 overflow-y-auto">
+            {loadingOrders ? (
+              <div className="p-8 text-center text-gray-400">กำลังโหลด...</div>
+            ) : unpaidOrders.length === 0 ? (
+              <div className="p-8 text-center text-gray-400">
+                <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p>ไม่มีออเดอร์รอชำระ</p>
+              </div>
+            ) : (
+              <div>
+                {Object.entries(ordersByTable).map(([table, orders]) => (
+                  <div key={table}>
+                    {/* Table group header */}
+                    <div className="px-4 py-2 bg-gray-100 border-b flex items-center justify-between sticky top-0">
+                      <span className="text-sm font-semibold text-gray-600 flex items-center gap-1">
+                        <Hash className="w-3.5 h-3.5" />
+                        {table === 'Kiosk' ? 'Kiosk' : `โต๊ะ ${table}`}
+                        <span className="text-gray-400 font-normal ml-1">({orders.length})</span>
+                      </span>
+                      <span className="text-sm font-bold text-gray-700">
+                        ฿{orders.reduce((s, o) => s + o.totalAmount, 0).toFixed(0)}
+                      </span>
+                    </div>
+                    {/* Orders in table */}
+                    <div className="divide-y">
+                      {orders.map((order) => {
+                        const isSelected = posMode === 'merge'
+                          ? selectedOrderIds.has(order.id)
+                          : selectedOrder?.id === order.id;
+                        return (
+                          <button
+                            key={order.id}
+                            onClick={() => {
+                              if (posMode === 'merge') {
+                                handleMergeOrderClick(order);
+                              } else {
+                                setSelectedOrder(order);
+                              }
+                            }}
+                            className={`w-full text-left p-4 hover:bg-blue-50 transition-colors ${
+                              isSelected
+                                ? posMode === 'merge'
+                                  ? 'bg-indigo-50 border-l-4 border-indigo-500'
+                                  : 'bg-blue-50 border-l-4 border-blue-500'
+                                : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                {posMode === 'merge' && (
+                                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                    isSelected ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
+                                  }`}>
+                                    {isSelected && <CheckSquare className="w-3.5 h-3.5 text-white" />}
+                                  </div>
+                                )}
+                                <span className="font-mono font-semibold text-blue-600">
+                                  {order.orderId}
+                                </span>
+                              </div>
+                              <span className="text-lg font-bold">
+                                ฿{order.totalAmount.toFixed(0)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-sm text-gray-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {new Date(order.createdAt).toLocaleTimeString('th-TH', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-400">
+                              {order.items
+                                ?.slice(0, 3)
+                                .map((item: any) => `${item.menuItem?.name} x${item.quantity}`)
+                                .join(', ')}
+                              {order.items?.length > 3 && ` +${order.items.length - 3} รายการ`}
+                            </div>
+                          </button>
+                        );
                       })}
-                    </span>
+                    </div>
                   </div>
-                  <div className="mt-2 text-xs text-gray-400">
-                    {order.items
-                      ?.slice(0, 3)
-                      .map(
-                        (item: any) =>
-                          `${item.menuItem?.name} x${item.quantity}`
-                      )
-                      .join(', ')}
-                    {order.items?.length > 3 && ` +${order.items.length - 3} รายการ`}
-                  </div>
-                </button>
-              ))}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Merge mode info bar */}
+          {posMode === 'merge' && selectedOrderIds.size >= 2 && (
+            <div className="p-3 border-t bg-indigo-50">
+              <div className="text-center text-sm text-indigo-700 font-medium">
+                เลือก {selectedOrderIds.size} ออเดอร์ | รวม ฿{mergedSubtotal.toFixed(0)}
+              </div>
             </div>
           )}
         </div>
 
         {/* Right: Payment Panel */}
         <div className="flex-1 overflow-y-auto">
-          {!selectedOrder ? (
+          {!((posMode === 'merge' && selectedMergeOrders.length >= 2) || (posMode === 'normal' && selectedOrder)) ? (
             <div className="flex items-center justify-center h-full text-gray-400">
               <div className="text-center">
-                <ArrowLeft className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                <p className="text-xl">เลือกออเดอร์จากรายการด้านซ้าย</p>
+                {posMode === 'merge' ? (
+                  <>
+                    <Layers className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-xl">เลือกออเดอร์ 2 รายการขึ้นไป</p>
+                    <p className="text-sm mt-1">จากโต๊ะเดียวกัน เพื่อรวมชำระ</p>
+                  </>
+                ) : (
+                  <>
+                    <ArrowLeft className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <p className="text-xl">เลือกออเดอร์จากรายการด้านซ้าย</p>
+                  </>
+                )}
               </div>
             </div>
           ) : (
             <div className="p-6 max-w-2xl mx-auto">
               {/* Order Details */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-lg flex items-center gap-2">
-                    <Receipt className="w-5 h-5 text-blue-600" />
-                    {selectedOrder.orderId}
-                  </h3>
-                  <span className="text-sm text-gray-500">
-                    {selectedOrder.tableNumber
-                      ? `โต๊ะ ${selectedOrder.tableNumber}`
-                      : 'Kiosk'}
-                  </span>
-                </div>
-
-                <div className="divide-y">
-                  {selectedOrder.items?.map((item: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between py-2"
-                    >
-                      <div>
-                        <span className="font-medium">
-                          {item.menuItem?.name || 'Unknown'}
-                        </span>
-                        <span className="text-gray-400 ml-2">
-                          x{item.quantity}
-                        </span>
-                        {item.selectedAddOns &&
-                          JSON.parse(
-                            typeof item.selectedAddOns === 'string'
-                              ? item.selectedAddOns
-                              : JSON.stringify(item.selectedAddOns)
-                          )?.length > 0 && (
-                            <div className="text-xs text-gray-400 mt-0.5">
-                              + Add-ons
+              {posMode === 'merge' && selectedMergeOrders.length >= 2 ? (
+                <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <Layers className="w-5 h-5 text-indigo-600" />
+                      รวม {selectedMergeOrders.length} ออเดอร์
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      โต๊ะ {selectedMergeOrders[0]?.tableNumber || 'Kiosk'}
+                    </span>
+                  </div>
+                  {selectedMergeOrders.map((order) => (
+                    <div key={order.id} className="mb-3">
+                      <p className="text-xs font-semibold text-gray-400 mb-1">{order.orderId}</p>
+                      <div className="divide-y">
+                        {order.items?.map((item: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between py-1.5">
+                            <div>
+                              <span className="font-medium">{item.menuItem?.name || 'Unknown'}</span>
+                              <span className="text-gray-400 ml-2">x{item.quantity}</span>
                             </div>
-                          )}
+                            <span className="font-semibold">฿{(item.price * item.quantity).toFixed(0)}</span>
+                          </div>
+                        ))}
                       </div>
-                      <span className="font-semibold">
-                        ฿{(item.price * item.quantity).toFixed(0)}
-                      </span>
                     </div>
                   ))}
                 </div>
-              </div>
+              ) : selectedOrder && (
+                <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <Receipt className="w-5 h-5 text-blue-600" />
+                      {selectedOrder.orderId}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {selectedOrder.items && selectedOrder.items.length >= 2 && (
+                        <button
+                          onClick={() => setShowSplitModal(true)}
+                          className="flex items-center gap-1 text-sm text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg hover:bg-purple-100"
+                        >
+                          <Scissors className="w-4 h-4" />
+                          แยกออเดอร์
+                        </button>
+                      )}
+                      <span className="text-sm text-gray-500">
+                        {selectedOrder.tableNumber ? `โต๊ะ ${selectedOrder.tableNumber}` : 'Kiosk'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="divide-y">
+                    {selectedOrder.items?.map((item: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between py-2"
+                      >
+                        <div>
+                          <span className="font-medium">
+                            {item.menuItem?.name || 'Unknown'}
+                          </span>
+                          <span className="text-gray-400 ml-2">
+                            x{item.quantity}
+                          </span>
+                          {item.selectedAddOns &&
+                            JSON.parse(
+                              typeof item.selectedAddOns === 'string'
+                                ? item.selectedAddOns
+                                : JSON.stringify(item.selectedAddOns)
+                            )?.length > 0 && (
+                              <div className="text-xs text-gray-400 mt-0.5">
+                                + Add-ons
+                              </div>
+                            )}
+                        </div>
+                        <span className="font-semibold">
+                          ฿{(item.price * item.quantity).toFixed(0)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Member Section */}
               <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
@@ -1276,6 +1787,112 @@ export default function POSPage() {
                 )}
               </div>
 
+              {/* Promotion / Coupon Section */}
+              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                <h3 className="font-bold text-sm text-gray-600 mb-3 flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  โปรโมชัน / คูปอง
+                </h3>
+
+                {/* Available Promotions */}
+                {availablePromotions.length > 0 && (
+                  <div className="space-y-2 mb-3">
+                    <p className="text-xs text-gray-500">โปรโมชันที่ใช้ได้:</p>
+                    {availablePromotions.map((promo) => {
+                      const isSelected = selectedPromotion?.id === promo.id && !couponResult?.valid;
+                      const discountText = promo.type === 'PERCENTAGE' || promo.type === 'HAPPY_HOUR'
+                        ? `ลด ${promo.discountValue}%${promo.maxDiscount ? ` (สูงสุด ${promo.maxDiscount}฿)` : ''}`
+                        : `ลด ${promo.discountValue}฿`;
+                      return (
+                        <button
+                          key={promo.id}
+                          onClick={() => handleSelectPromotion(isSelected ? null : promo)}
+                          className={`w-full text-left px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                            isSelected
+                              ? 'border-orange-500 bg-orange-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Tag className={`w-3.5 h-3.5 ${isSelected ? 'text-orange-600' : 'text-gray-400'}`} />
+                              <span className="font-medium">{promo.name}</span>
+                            </div>
+                            <span className={`font-semibold ${isSelected ? 'text-orange-600' : 'text-gray-600'}`}>
+                              {discountText}
+                            </span>
+                          </div>
+                          {promo.type === 'HAPPY_HOUR' && promo.startTime && promo.endTime && (
+                            <p className="text-xs text-orange-500 mt-1 ml-5">
+                              <Clock className="w-3 h-3 inline mr-1" />
+                              {promo.startTime} - {promo.endTime}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Coupon Input */}
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">กรอกรหัสคูปอง:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        if (couponResult) setCouponResult(null);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleValidateCoupon()}
+                      placeholder="เช่น WELCOME50"
+                      className="flex-1 border rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                    <button
+                      onClick={handleValidateCoupon}
+                      disabled={!couponCode.trim()}
+                      className="bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 disabled:opacity-50 text-sm font-medium flex items-center gap-1"
+                    >
+                      <Ticket className="w-4 h-4" />
+                      ใช้
+                    </button>
+                    {(selectedPromotion || couponResult) && (
+                      <button
+                        onClick={() => {
+                          setSelectedPromotion(null);
+                          setCouponCode('');
+                          setCouponResult(null);
+                          setPromotionDiscount(0);
+                        }}
+                        className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  {couponResult && (
+                    <div className={`mt-2 px-3 py-2 rounded-lg text-sm ${
+                      couponResult.valid
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {couponResult.message}
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Promotion Summary */}
+                {selectedPromotion && promotionDiscount > 0 && (
+                  <div className="mt-3 bg-orange-50 rounded-lg p-3 flex items-center justify-between">
+                    <span className="text-sm text-orange-700 font-medium">
+                      {selectedPromotion.name}
+                    </span>
+                    <span className="text-orange-700 font-bold">-฿{promotionDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
               {/* Total Summary */}
               <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
                 <div className="space-y-2">
@@ -1287,6 +1904,12 @@ export default function POSPage() {
                     <div className="flex justify-between text-sm text-green-600">
                       <span>ส่วนลดแต้ม ({pointsToUse} แต้ม)</span>
                       <span>-฿{discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {promotionDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-orange-600">
+                      <span>ส่วนลดโปรโมชัน ({selectedPromotion?.name})</span>
+                      <span>-฿{promotionDiscount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-2xl font-bold border-t pt-2">
@@ -1487,7 +2110,17 @@ export default function POSPage() {
       {receiptPayment && (
         <ReceiptModal
           payment={receiptPayment}
-          onClose={() => setReceiptPayment(null)}
+          mergedOrders={receiptMergedOrders}
+          onClose={() => { setReceiptPayment(null); setReceiptMergedOrders(null); }}
+        />
+      )}
+
+      {/* Split Order Modal */}
+      {showSplitModal && selectedOrder && (
+        <SplitOrderModal
+          order={selectedOrder}
+          onClose={() => setShowSplitModal(false)}
+          onSplit={handleSplitOrder}
         />
       )}
 

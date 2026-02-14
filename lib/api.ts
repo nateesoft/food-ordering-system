@@ -227,6 +227,41 @@ export interface ShiftSummaryResponse extends ShiftResponse {
   payments: any[];
 }
 
+export interface PromotionResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'COUPON' | 'HAPPY_HOUR';
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+  discountValue: number;
+  maxDiscount: number | null;
+  couponCode: string | null;
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  minOrderAmount: number | null;
+  categories: string[];
+  maxUses: number | null;
+  currentUses: number;
+  branchId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromotionStatsResponse {
+  totalActive: number;
+  totalUsesToday: number;
+  totalDiscountToday: number;
+}
+
+export interface CouponValidationResponse {
+  valid: boolean;
+  message: string;
+  promotion?: PromotionResponse;
+  discountAmount?: number;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const branchHeaders: Record<string, string> = {};
   if (typeof window !== 'undefined') {
@@ -433,6 +468,8 @@ export const api = {
     cashierName?: string;
     note?: string;
     shiftId?: number;
+    promotionId?: number;
+    couponCode?: string;
   }) =>
     fetchApi<any>('/payments', {
       method: 'POST',
@@ -593,6 +630,82 @@ export const api = {
   getShift: (id: number) => fetchApi<ShiftResponse>(`/shifts/${id}`),
 
   getShiftSummary: (id: number) => fetchApi<ShiftSummaryResponse>(`/shifts/${id}/summary`),
+
+  // ===== Promotions =====
+  getPromotions: (status?: string) => {
+    const query = status ? `?status=${status}` : '';
+    return fetchApi<PromotionResponse[]>(`/promotions${query}`);
+  },
+
+  getAvailablePromotions: (subtotal?: number) => {
+    const query = subtotal ? `?subtotal=${subtotal}` : '';
+    return fetchApi<PromotionResponse[]>(`/promotions/available${query}`);
+  },
+
+  getPromotionStats: () => fetchApi<PromotionStatsResponse>('/promotions/stats'),
+
+  getPromotion: (id: number) => fetchApi<PromotionResponse>(`/promotions/${id}`),
+
+  createPromotion: (data: {
+    name: string;
+    type: string;
+    discountValue: number;
+    maxDiscount?: number;
+    couponCode?: string;
+    startDate: string;
+    endDate: string;
+    startTime?: string;
+    endTime?: string;
+    minOrderAmount?: number;
+    categories?: string[];
+    maxUses?: number;
+    description?: string;
+  }) =>
+    fetchApi<PromotionResponse>('/promotions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updatePromotion: (id: number, data: Record<string, any>) =>
+    fetchApi<PromotionResponse>(`/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deletePromotion: (id: number) =>
+    fetchApi<PromotionResponse>(`/promotions/${id}`, {
+      method: 'DELETE',
+    }),
+
+  validateCoupon: (couponCode: string, subtotal: number) =>
+    fetchApi<CouponValidationResponse>('/promotions/validate-coupon', {
+      method: 'POST',
+      body: JSON.stringify({ couponCode, subtotal }),
+    }),
+
+  // ===== Merge / Split Orders =====
+  createMergedPayment: (data: {
+    orderIds: number[];
+    paymentMethod: string;
+    paidAmount: number;
+    memberId?: string;
+    discountPoints?: number;
+    cashierName?: string;
+    note?: string;
+    shiftId?: number;
+    promotionId?: number;
+    couponCode?: string;
+  }) =>
+    fetchApi<any>('/payments/merge', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  splitOrder: (orderId: number, groups: { itemIds: number[] }[]) =>
+    fetchApi<any>(`/orders/${orderId}/split`, {
+      method: 'POST',
+      body: JSON.stringify({ groups }),
+    }),
 };
 
 export default api;

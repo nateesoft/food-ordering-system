@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ShoppingCart, Home, Utensils, Package, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShoppingCart, Home, Utensils, Package, ArrowLeft, Loader2, Tag, Ticket, Clock } from 'lucide-react';
 import { MenuItem, CartItem, QueueTicket, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { NestedMenuModal } from '@/components/NestedMenuModal';
-import { api, ApiMenuItem, ApiNestedMenuOption } from '@/lib/api';
+import { api, ApiMenuItem, ApiNestedMenuOption, PromotionResponse, CouponValidationResponse } from '@/lib/api';
 import BranchSelector from '@/components/BranchSelector';
 
 // Helper function to convert API nested option to frontend NestedMenuOption
@@ -86,6 +86,13 @@ export default function KioskPage() {
   // Payment info state
   const [memberId, setMemberId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'>('cash');
+
+  // Promotion state
+  const [availablePromotions, setAvailablePromotions] = useState<PromotionResponse[]>([]);
+  const [kioskCouponCode, setKioskCouponCode] = useState('');
+  const [kioskCouponResult, setKioskCouponResult] = useState<CouponValidationResponse | null>(null);
+  const [kioskSelectedPromo, setKioskSelectedPromo] = useState<PromotionResponse | null>(null);
+  const [kioskPromoDiscount, setKioskPromoDiscount] = useState(0);
 
   // Fetch menu items and stock availability from API
   useEffect(() => {
@@ -271,6 +278,48 @@ export default function KioskPage() {
   // Go to confirmation page
   const goToConfirmation = () => {
     setStep('confirm');
+    // Load available promotions
+    api.getAvailablePromotions(totalAmount)
+      .then(setAvailablePromotions)
+      .catch(() => setAvailablePromotions([]));
+  };
+
+  // Kiosk promotion helpers
+  const calcKioskPromoDiscount = (promo: PromotionResponse, sub: number) => {
+    if (promo.type === 'PERCENTAGE' || promo.type === 'HAPPY_HOUR') {
+      const d = (sub * promo.discountValue) / 100;
+      return promo.maxDiscount ? Math.min(d, promo.maxDiscount) : Math.round(d * 100) / 100;
+    }
+    return Math.min(promo.discountValue, sub);
+  };
+
+  const handleKioskSelectPromo = (promo: PromotionResponse | null) => {
+    setKioskCouponCode('');
+    setKioskCouponResult(null);
+    if (promo) {
+      setKioskSelectedPromo(promo);
+      setKioskPromoDiscount(calcKioskPromoDiscount(promo, totalAmount));
+    } else {
+      setKioskSelectedPromo(null);
+      setKioskPromoDiscount(0);
+    }
+  };
+
+  const handleKioskValidateCoupon = async () => {
+    if (!kioskCouponCode.trim()) return;
+    try {
+      const result = await api.validateCoupon(kioskCouponCode, totalAmount);
+      setKioskCouponResult(result);
+      if (result.valid && result.promotion) {
+        setKioskSelectedPromo(result.promotion);
+        setKioskPromoDiscount(result.discountAmount || 0);
+      } else {
+        setKioskSelectedPromo(null);
+        setKioskPromoDiscount(0);
+      }
+    } catch {
+      setKioskCouponResult({ valid: false, message: 'ไม่สามารถตรวจสอบคูปองได้' });
+    }
   };
 
   // Confirm order and generate queue
@@ -356,6 +405,11 @@ export default function KioskPage() {
     setCart([]);
     setSelectedCategory('ทั้งหมด');
     setCurrentQueue(null);
+    setAvailablePromotions([]);
+    setKioskCouponCode('');
+    setKioskCouponResult(null);
+    setKioskSelectedPromo(null);
+    setKioskPromoDiscount(0);
   };
 
   // Render main content
@@ -837,6 +891,102 @@ export default function KioskPage() {
                 </div>
               </div>
 
+              {/* Promotion / Coupon Section */}
+              {(availablePromotions.length > 0 || true) && (
+              <div className="bg-white rounded-2xl sm:rounded-3xl shadow-lg p-4 sm:p-5 md:p-6 lg:p-8">
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
+                  <span className="bg-orange-100 text-orange-600 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-base sm:text-lg md:text-xl lg:text-2xl flex-shrink-0">
+                    3
+                  </span>
+                  โปรโมชัน / คูปอง
+                </h3>
+
+                {/* Available Promotions */}
+                {availablePromotions.length > 0 && (
+                  <div className="ml-10 sm:ml-12 md:ml-14 lg:ml-16 space-y-2 mb-4">
+                    <p className="text-sm text-gray-500">โปรโมชันที่ใช้ได้:</p>
+                    {availablePromotions.map((promo) => {
+                      const isSelected = kioskSelectedPromo?.id === promo.id && !kioskCouponResult?.valid;
+                      const discountText = promo.type === 'PERCENTAGE' || promo.type === 'HAPPY_HOUR'
+                        ? `ลด ${promo.discountValue}%${promo.maxDiscount ? ` (สูงสุด ${promo.maxDiscount}฿)` : ''}`
+                        : `ลด ${promo.discountValue}฿`;
+                      return (
+                        <button
+                          key={promo.id}
+                          onClick={() => handleKioskSelectPromo(isSelected ? null : promo)}
+                          className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all ${
+                            isSelected
+                              ? 'border-orange-500 bg-orange-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Tag className={`w-4 h-4 ${isSelected ? 'text-orange-600' : 'text-gray-400'}`} />
+                              <span className="font-medium text-gray-800 text-sm sm:text-base md:text-lg">{promo.name}</span>
+                            </div>
+                            <span className={`font-bold text-sm sm:text-base md:text-lg ${isSelected ? 'text-orange-600' : 'text-gray-600'}`}>
+                              {discountText}
+                            </span>
+                          </div>
+                          {promo.type === 'HAPPY_HOUR' && promo.startTime && promo.endTime && (
+                            <p className="text-xs text-orange-500 mt-1 ml-6">
+                              <Clock className="w-3 h-3 inline mr-1" />
+                              {promo.startTime} - {promo.endTime}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Coupon Input */}
+                <div className="ml-10 sm:ml-12 md:ml-14 lg:ml-16">
+                  <p className="text-sm text-gray-500 mb-2">กรอกรหัสคูปอง:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={kioskCouponCode}
+                      onChange={(e) => {
+                        setKioskCouponCode(e.target.value.toUpperCase());
+                        if (kioskCouponResult) setKioskCouponResult(null);
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleKioskValidateCoupon()}
+                      placeholder="เช่น WELCOME50"
+                      className="flex-1 border-2 border-gray-300 rounded-xl px-4 py-3 text-base sm:text-lg font-mono uppercase focus:outline-none focus:border-orange-500"
+                    />
+                    <button
+                      onClick={handleKioskValidateCoupon}
+                      disabled={!kioskCouponCode.trim()}
+                      className="bg-orange-500 text-white px-5 py-3 rounded-xl hover:bg-orange-600 disabled:opacity-50 font-bold text-base sm:text-lg flex items-center gap-2"
+                    >
+                      <Ticket className="w-5 h-5" />
+                      ใช้
+                    </button>
+                  </div>
+                  {kioskCouponResult && (
+                    <div className={`mt-2 px-4 py-3 rounded-xl text-sm sm:text-base ${
+                      kioskCouponResult.valid
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-red-50 text-red-700'
+                    }`}>
+                      {kioskCouponResult.message}
+                    </div>
+                  )}
+                  {kioskSelectedPromo && kioskPromoDiscount > 0 && (
+                    <div className="mt-3 bg-orange-50 rounded-xl p-3 flex items-center justify-between">
+                      <span className="text-sm sm:text-base text-orange-700 font-medium">
+                        {kioskSelectedPromo.name}
+                      </span>
+                      <span className="text-orange-700 font-bold text-base sm:text-lg">-฿{kioskPromoDiscount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  <p className="mt-2 text-xs text-gray-400">* ส่วนลดจะถูกคำนวณเมื่อชำระเงินที่เคาน์เตอร์</p>
+                </div>
+              </div>
+              )}
+
               {/* Order Summary */}
               <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-5 md:p-6 lg:p-8">
                 <h3 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-4 sm:mb-5 md:mb-6">สรุปคำสั่งซื้อ</h3>
@@ -872,6 +1022,18 @@ export default function KioskPage() {
                     <span className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold">ยอดรวมทั้งหมด</span>
                     <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold">฿{totalAmount}</span>
                   </div>
+                  {kioskPromoDiscount > 0 && (
+                    <div className="mt-2 flex justify-between items-center text-orange-100">
+                      <span className="text-sm sm:text-base md:text-lg">ส่วนลดโดยประมาณ ({kioskSelectedPromo?.name})</span>
+                      <span className="text-base sm:text-lg md:text-xl font-bold">-฿{kioskPromoDiscount.toFixed(0)}</span>
+                    </div>
+                  )}
+                  {kioskPromoDiscount > 0 && (
+                    <div className="mt-1 flex justify-between items-center">
+                      <span className="text-base sm:text-lg md:text-xl font-bold">ยอดประมาณหลังส่วนลด</span>
+                      <span className="text-xl sm:text-2xl md:text-3xl font-bold">฿{Math.max(0, totalAmount - kioskPromoDiscount).toFixed(0)}</span>
+                    </div>
+                  )}
                 </div>
                 {error && (
                   <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4">
