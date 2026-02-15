@@ -134,6 +134,9 @@ export interface CreateOrderDto {
   tableNumber?: string;
   totalAmount: number;
   totalItems: number;
+  serviceCharge?: number;
+  vat?: number;
+  sessionId?: number;
   items: {
     menuItemId: number;
     quantity: number;
@@ -525,6 +528,8 @@ export const api = {
     shiftId?: number;
     promotionId?: number;
     couponCode?: string;
+    serviceCharge?: number;
+    vat?: number;
   }) =>
     fetchApi<any>('/payments', {
       method: 'POST',
@@ -761,6 +766,45 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ groups }),
     }),
+
+  // ===== Tables & Sessions =====
+  getTables: (params?: { status?: string; zone?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.zone) searchParams.append('zone', params.zone);
+    const query = searchParams.toString();
+    return fetchApi<any[]>(`/tables${query ? `?${query}` : ''}`);
+  },
+
+  getTableStats: () => fetchApi<{ available: number; occupied: number; reserved: number; total: number }>('/tables/stats'),
+
+  getTableZones: () => fetchApi<string[]>('/tables/zones'),
+
+  updateTableStatus: (id: number, status: string, currentGuests?: number) =>
+    fetchApi<any>(`/tables/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, currentGuests }),
+    }),
+
+  openTableSession: (tableId: number, data: {
+    openedBy: string;
+    customerCount?: number;
+    customerGender?: string;
+    customerNationality?: string;
+    orderType?: string;
+  }) =>
+    fetchApi<any>(`/tables/${tableId}/open-session`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  closeTableSession: (tableId: number) =>
+    fetchApi<any>(`/tables/${tableId}/close-session`, {
+      method: 'POST',
+    }),
+
+  getActiveTableSession: (tableId: number) =>
+    fetchApi<any>(`/tables/${tableId}/active-session`),
 
   // ===== Webhooks =====
   getWebhooks: () => fetchApi<WebhookEndpointResponse[]>('/webhooks'),

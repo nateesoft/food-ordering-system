@@ -41,7 +41,11 @@
       "Bash(node scripts/migrate-branch.js:*)",
       "Bash(./node_modules/.bin/tsc:*)",
       "Bash(npx --yes tsc:*)",
-      "Bash(/Users/nateelive/Documents/Projects/GithubProject/food-ordering-service/node_modules/.bin/tsc:*)"
+      "Bash(/Users/nateelive/Documents/Projects/GithubProject/food-ordering-service/node_modules/.bin/tsc:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
