@@ -36,17 +36,19 @@ export function OpenShiftModal({
   const cashCountTotal = DENOMINATIONS.reduce((sum, d) => sum + (openingCashCount[String(d)] || 0) * d, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200/50 animate-slide-up mx-4 md:mx-0">
         <div className="p-6 border-b flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Play className="w-6 h-6 text-green-600" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg shadow-green-500/20">
+              <Play className="w-5 h-5 text-white" />
+            </div>
             <h2 className="text-xl font-bold text-gray-800">เปิดกะ</h2>
           </div>
         </div>
         <div className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+            <div className="bg-gradient-to-r from-red-50 to-red-100/80 border border-red-200/50 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
               <AlertTriangle className="w-5 h-5" /> {error}
             </div>
           )}
@@ -57,7 +59,7 @@ export function OpenShiftModal({
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               maxLength={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-2xl tracking-widest text-gray-800"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-center text-2xl tracking-widest text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               placeholder="****"
             />
           </div>
@@ -67,7 +69,7 @@ export function OpenShiftModal({
               type="number"
               value={openingAmount || ''}
               onChange={(e) => onOpeningAmountChange(parseFloat(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               placeholder="0"
             />
           </div>
@@ -75,7 +77,7 @@ export function OpenShiftModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">นับธนบัตร/เหรียญ (ไม่บังคับ)</label>
             <div className="grid grid-cols-3 gap-2">
               {DENOMINATIONS.map((d) => (
-                <div key={d} className="flex items-center gap-1 bg-gray-50 rounded-lg p-2">
+                <div key={d} className="flex items-center gap-1 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 p-2">
                   <span className="text-xs font-medium w-10 text-right text-gray-700">{d}฿</span>
                   <input
                     type="number"
@@ -88,7 +90,7 @@ export function OpenShiftModal({
               ))}
             </div>
             {cashCountTotal > 0 && (
-              <div className="mt-2 text-center text-sm text-indigo-600 font-medium">
+              <div className="mt-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-2 border border-indigo-200/50 text-center text-sm text-indigo-600 font-medium">
                 รวม: {cashCountTotal.toLocaleString()}฿
               </div>
             )}
@@ -99,7 +101,7 @@ export function OpenShiftModal({
               type="text"
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-gray-800"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               placeholder="เช่น กะเช้า"
             />
           </div>
@@ -107,14 +109,14 @@ export function OpenShiftModal({
         <div className="p-6 border-t flex gap-3">
           <button
             onClick={onSkip}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+            className="flex-1 px-4 py-3 border border-gray-200/50 text-gray-700 rounded-xl font-medium hover:bg-gray-50 shadow-sm hover:shadow-md transition-shadow"
           >
             ข้าม
           </button>
           <button
             onClick={() => onOpenShift(pin)}
             disabled={processing || !pin}
-            className="flex-1 px-4 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold hover:from-green-700 hover:to-green-800 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-green-500/30 transition-shadow"
           >
             {processing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
             เปิดกะ
@@ -160,23 +162,25 @@ export function CloseShiftModal({
   const diff = actual - expected;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200/50 animate-slide-up mx-4 md:mx-0">
         <div className="p-6 border-b flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Square className="w-6 h-6 text-red-600" />
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/20">
+              <Square className="w-5 h-5 text-white" />
+            </div>
             <h2 className="text-xl font-bold text-gray-800">ปิดกะ - {shift.shiftNumber}</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
         </div>
         <div className="p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
+            <div className="bg-gradient-to-r from-red-50 to-red-100/80 border border-red-200/50 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 text-sm">
               <AlertTriangle className="w-5 h-5" /> {error}
             </div>
           )}
 
-          <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100/50 border border-gray-200/50 rounded-xl p-4 space-y-2 text-sm">
             <div className="flex justify-between"><span className="text-gray-500">เงินเปิดลิ้นชัก</span><span className="font-medium text-gray-800">{shift.openingAmount.toLocaleString()}฿</span></div>
             <div className="flex justify-between"><span className="text-gray-500">ยอดขายเงินสด</span><span className="font-medium text-gray-800">{(summary?.cashTotal || 0).toLocaleString()}฿</span></div>
             <div className="flex justify-between"><span className="text-gray-500">ยอดขายโอนเงิน</span><span className="font-medium text-gray-800">{(summary?.transferTotal || 0).toLocaleString()}฿</span></div>
@@ -191,7 +195,7 @@ export function CloseShiftModal({
               type="number"
               value={closingAmount || ''}
               onChange={(e) => onClosingAmountChange(parseFloat(e.target.value) || 0)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               placeholder="0"
             />
           </div>
@@ -200,7 +204,7 @@ export function CloseShiftModal({
             <label className="block text-sm font-medium text-gray-700 mb-2">นับธนบัตร/เหรียญ</label>
             <div className="grid grid-cols-3 gap-2">
               {DENOMINATIONS.map((d) => (
-                <div key={d} className="flex items-center gap-1 bg-gray-50 rounded-lg p-2">
+                <div key={d} className="flex items-center gap-1 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl border border-gray-200/50 p-2">
                   <span className="text-xs font-medium w-10 text-right text-gray-700">{d}฿</span>
                   <input
                     type="number"
@@ -213,14 +217,14 @@ export function CloseShiftModal({
               ))}
             </div>
             {cashCountTotal > 0 && (
-              <div className="mt-2 text-center text-sm text-indigo-600 font-medium">
+              <div className="mt-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-xl p-2 border border-indigo-200/50 text-center text-sm text-indigo-600 font-medium">
                 รวม: {cashCountTotal.toLocaleString()}฿
               </div>
             )}
           </div>
 
           {actual > 0 && (
-            <div className={`rounded-xl p-3 text-center ${diff === 0 ? 'bg-green-50' : diff > 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
+            <div className={`rounded-xl p-3 text-center border ${diff === 0 ? 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200/50' : diff > 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200/50' : 'bg-gradient-to-br from-red-50 to-red-100/50 border-red-200/50'}`}>
               <span className={`font-bold ${diff === 0 ? 'text-green-700' : diff > 0 ? 'text-blue-700' : 'text-red-700'}`}>
                 ส่วนต่าง: {diff > 0 ? '+' : ''}{diff.toLocaleString()}฿
                 {diff === 0 ? ' (ตรง)' : diff > 0 ? ' (เกิน)' : ' (ขาด)'}
@@ -234,17 +238,17 @@ export function CloseShiftModal({
               type="text"
               value={notes}
               onChange={(e) => onNotesChange(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-gray-800"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl text-gray-800 focus:ring-blue-500 focus:border-blue-500"
               placeholder="หมายเหตุ"
             />
           </div>
         </div>
         <div className="p-6 border-t flex gap-3">
-          <button onClick={onClose} className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50">ยกเลิก</button>
+          <button onClick={onClose} className="flex-1 px-4 py-3 border border-gray-200/50 text-gray-700 rounded-xl font-medium hover:bg-gray-50 shadow-sm hover:shadow-md transition-shadow">ยกเลิก</button>
           <button
             onClick={onCloseShift}
             disabled={processing}
-            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-bold hover:from-red-600 hover:to-red-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-500/30 transition-shadow"
           >
             {processing ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Square className="w-5 h-5" />}
             ปิดกะ & ออก

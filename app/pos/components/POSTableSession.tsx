@@ -48,11 +48,11 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
   };
 
   return (
-    <div className="h-full flex items-center justify-center bg-gray-50 p-6">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-md p-8">
+    <div className="h-full flex items-center justify-center bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 p-4 md:p-6">
+      <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 w-full max-w-md p-6 md:p-8 animate-scale-in">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-xl">
+          <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-300">
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </button>
           <div>
@@ -64,7 +64,7 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-4">{error}</div>
+          <div className="bg-gradient-to-r from-red-50 to-red-100/80 text-red-700 px-4 py-3 rounded-xl text-sm mb-4 border border-red-200/50 animate-fade-in">{error}</div>
         )}
 
         {/* Customer Count */}
@@ -76,16 +76,16 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
           <div className="flex items-center gap-4">
             <button
               onClick={() => setCustomerCount(Math.max(1, customerCount - 1))}
-              className="w-12 h-12 rounded-xl border-2 border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95"
+              className="w-12 h-12 rounded-xl border-2 border-gray-200 flex items-center justify-center hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-700 hover:text-white hover:border-blue-600 shadow-md hover:shadow-lg transition-all duration-300 active:scale-95"
             >
-              <Minus className="w-5 h-5 text-gray-600" />
+              <Minus className="w-5 h-5" />
             </button>
             <span className="text-3xl font-bold text-gray-800 w-16 text-center">{customerCount}</span>
             <button
               onClick={() => setCustomerCount(Math.min(table.capacity * 2, customerCount + 1))}
-              className="w-12 h-12 rounded-xl border-2 border-gray-200 flex items-center justify-center hover:bg-gray-50 active:scale-95"
+              className="w-12 h-12 rounded-xl border-2 border-gray-200 flex items-center justify-center hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-700 hover:text-white hover:border-blue-600 shadow-md hover:shadow-lg transition-all duration-300 active:scale-95"
             >
-              <Plus className="w-5 h-5 text-gray-600" />
+              <Plus className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -105,10 +105,10 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
               <button
                 key={opt.value}
                 onClick={() => setOrderType(opt.value)}
-                className={`py-3 rounded-xl text-sm font-medium transition-all ${
+                className={`py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
                   orderType === opt.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                 }`}
               >
                 {opt.label}
@@ -132,10 +132,10 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
               <button
                 key={opt.value}
                 onClick={() => setGender(gender === opt.value ? null : opt.value)}
-                className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                   gender === opt.value
-                    ? 'bg-pink-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg shadow-pink-500/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                 }`}
               >
                 {opt.label}
@@ -159,10 +159,10 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
               <button
                 key={opt.value}
                 onClick={() => setNationality(nationality === opt.value ? null : opt.value)}
-                className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
+                className={`py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
                   nationality === opt.value
-                    ? 'bg-teal-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                 }`}
               >
                 {opt.label}
@@ -175,7 +175,7 @@ export default function POSTableSession({ table, cashierName, onSessionOpened, o
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-lg hover:bg-blue-700 active:scale-[0.98] transition-all disabled:opacity-50"
+          className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-2xl font-bold text-lg active:scale-[0.98] transition-all duration-300 disabled:opacity-50 shadow-2xl shadow-blue-500/40"
         >
           {loading ? 'กำลังเปิดโต๊ะ...' : `เปิดโต๊ะ ${table.number}`}
         </button>

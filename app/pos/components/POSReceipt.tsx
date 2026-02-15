@@ -22,12 +22,12 @@ export default function POSReceipt({ payment, mergedOrders, onClose }: POSReceip
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-fade-in border border-gray-200/50 mx-4 md:mx-0">
         <div className="p-6 print:p-4" id="receipt-content">
           <div className="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
-            <h2 className="text-xl font-bold">ร้านอาหาร</h2>
-            <p className="text-sm text-gray-500">Food Ordering System</p>
+            <h2 className="text-2xl font-extrabold tracking-tight">ร้านอาหาร</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Food Ordering System</p>
             <div className="mt-2 text-sm text-gray-600">
               <p>เลขที่: {payment.receiptNumber}</p>
               <p>วันที่: {payment.paidAt ? new Date(payment.paidAt).toLocaleString('th-TH') : '-'}</p>
@@ -119,24 +119,26 @@ export default function POSReceipt({ payment, mergedOrders, onClose }: POSReceip
 
           {payment.memberId && (
             <div className="text-center text-sm text-gray-600 border-b-2 border-dashed border-gray-300 pb-4 mb-4">
-              <p>สมาชิก: {payment.memberName} ({payment.memberId})</p>
-              {payment.pointsEarned > 0 && (
-                <p className="text-green-600">ได้รับแต้ม: +{payment.pointsEarned} แต้ม</p>
-              )}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl p-3 border border-blue-200/50">
+                <p>สมาชิก: {payment.memberName} ({payment.memberId})</p>
+                {payment.pointsEarned > 0 && (
+                  <p className="text-green-600 mt-1">ได้รับแต้ม: +{payment.pointsEarned} แต้ม</p>
+                )}
+              </div>
             </div>
           )}
 
-          <div className="text-center text-sm text-gray-400">
-            <p>ขอบคุณที่ใช้บริการ</p>
-            <p>Thank you!</p>
+          <div className="text-center text-sm text-gray-500">
+            <p className="font-medium text-gray-600">ขอบคุณที่ใช้บริการ</p>
+            <p className="mt-0.5">Thank you!</p>
           </div>
         </div>
 
         <div className="flex gap-3 p-4 border-t print:hidden">
-          <button onClick={handlePrint} className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 flex items-center justify-center gap-2">
+          <button onClick={handlePrint} className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300">
             <Printer className="w-5 h-5" /> พิมพ์ใบเสร็จ
           </button>
-          <button onClick={onClose} className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 flex items-center justify-center gap-2">
+          <button onClick={onClose} className="flex-1 bg-gradient-to-br from-gray-100 to-gray-200/50 border border-gray-200/50 shadow-sm hover:shadow-md text-gray-700 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300">
             <X className="w-5 h-5" /> ปิด
           </button>
         </div>

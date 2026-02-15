@@ -40,9 +40,9 @@ interface POSPaymentProps {
 // ===== Tier Colors =====
 
 const tierColors: Record<string, string> = {
-  bronze: 'bg-orange-100 text-orange-700',
-  silver: 'bg-gray-100 text-gray-700',
-  gold: 'bg-yellow-100 text-yellow-700',
+  bronze: 'bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border border-orange-200/50',
+  silver: 'bg-gradient-to-r from-gray-100 to-slate-100 text-gray-700 border border-gray-200/50',
+  gold: 'bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-700 border border-yellow-200/50',
 };
 
 // ===== Quick Amounts =====
@@ -107,32 +107,41 @@ function SplitOrderModal({
   };
 
   const billColors = [
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-purple-500',
-    'bg-orange-500',
+    'bg-gradient-to-r from-blue-500 to-blue-600',
+    'bg-gradient-to-r from-green-500 to-green-600',
+    'bg-gradient-to-r from-purple-500 to-purple-600',
+    'bg-gradient-to-r from-orange-500 to-orange-600',
+  ];
+
+  const billBorderColors = [
+    'border-blue-400',
+    'border-green-400',
+    'border-purple-400',
+    'border-orange-400',
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+      <div className="bg-white/95 backdrop-blur-xl rounded-t-3xl md:rounded-2xl shadow-2xl w-full md:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200/50 animate-slide-up">
         {/* Header */}
-        <div className="p-6 border-b flex items-center justify-between">
+        <div className="p-5 md:p-6 border-b border-gray-200/50 flex items-center justify-between bg-gradient-to-r from-purple-50/50 to-white">
           <div className="flex items-center gap-3">
-            <Scissors className="w-6 h-6 text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-800">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-2.5 rounded-xl shadow-lg shadow-purple-500/30">
+              <Scissors className="w-5 h-5" />
+            </div>
+            <h2 className="text-lg md:text-xl font-bold text-gray-800">
               แยกออเดอร์ - {order.orderId}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-300"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5 md:p-6">
           {/* Bill count selector */}
           <div className="mb-6">
             <p className="text-sm font-medium text-gray-600 mb-2">
@@ -143,10 +152,10 @@ function SplitOrderModal({
                 <button
                   key={n}
                   onClick={() => setBillCount(n)}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                  className={`px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
                     billCount === n
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                   }`}
                 >
                   {n} บิล
@@ -164,9 +173,9 @@ function SplitOrderModal({
               {order.items?.map((item: any) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between bg-gray-50 rounded-xl p-3"
+                  className="flex items-center justify-between bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-3 border border-gray-200/50"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <span className="font-medium text-gray-800">
                       {item.menuItem?.name || 'Unknown'}
                     </span>
@@ -177,7 +186,7 @@ function SplitOrderModal({
                       ฿{(item.price * item.quantity).toFixed(0)}
                     </span>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 flex-shrink-0 ml-2">
                     {Array.from({ length: billCount }, (_, i) => (
                       <button
                         key={i}
@@ -187,9 +196,9 @@ function SplitOrderModal({
                             [item.id]: i,
                           }))
                         }
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
                           itemBills[item.id] === i
-                            ? `${billColors[i]} text-white`
+                            ? `${billColors[i]} text-white shadow-md`
                             : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
                         }`}
                       >
@@ -203,19 +212,19 @@ function SplitOrderModal({
           </div>
 
           {/* Bill previews */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {bills.map((bill) => (
               <div
                 key={bill.index}
-                className={`rounded-xl p-4 border-2 ${
+                className={`rounded-2xl p-4 border-2 transition-all duration-300 ${
                   bill.items.length === 0
-                    ? 'border-red-300 bg-red-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-red-300 bg-gradient-to-br from-red-50 to-red-100/50'
+                    : `${billBorderColors[bill.index]} bg-gradient-to-br from-gray-50 to-gray-100/50`
                 }`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
-                    className={`w-3 h-3 rounded-full ${billColors[bill.index]}`}
+                    className={`w-3 h-3 rounded-full ${billColors[bill.index]} shadow-sm`}
                   />
                   <h4 className="font-bold text-gray-800">
                     บิล {bill.index + 1}
@@ -240,7 +249,7 @@ function SplitOrderModal({
                         </span>
                       </div>
                     ))}
-                    <div className="border-t mt-2 pt-2 flex justify-between font-bold text-gray-800">
+                    <div className="border-t border-gray-200/50 mt-2 pt-2 flex justify-between font-bold text-gray-800">
                       <span>รวม</span>
                       <span>฿{bill.total.toFixed(0)}</span>
                     </div>
@@ -252,17 +261,17 @@ function SplitOrderModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t flex gap-3">
+        <div className="p-5 md:p-6 border-t border-gray-200/50 flex gap-3 bg-white/80">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50"
+            className="flex-1 px-4 py-3 border border-gray-200/50 text-gray-700 rounded-xl font-medium hover:bg-gray-50 shadow-sm hover:shadow-md transition-all duration-300"
           >
             ยกเลิก
           </button>
           <button
             onClick={handleSplit}
             disabled={!canSplit || processing}
-            className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl font-bold hover:from-purple-700 hover:to-purple-800 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 transition-all duration-300"
           >
             {processing ? (
               <RefreshCw className="w-5 h-5 animate-spin" />
@@ -573,22 +582,22 @@ export default function POSPayment({
   // ===== Render =====
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50 flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <header className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-gray-200/50 px-4 md:px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3 md:gap-4">
           <button
             onClick={onBack}
-            className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-300"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <div className="bg-blue-600 text-white p-2 rounded-xl">
-            <DollarSign className="w-6 h-6" />
+          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
+            <DollarSign className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">ชำระเงิน</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-lg md:text-xl font-bold text-gray-800">ชำระเงิน</h1>
+            <p className="text-xs md:text-sm text-gray-500">
               แคชเชียร์: {cashierName}
               {activeShift && (
                 <span className="ml-2 text-violet-600">| กะ: {activeShift.shiftNumber}</span>
@@ -601,15 +610,17 @@ export default function POSPayment({
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Left: Orders List (1/3) */}
-        <div className="w-1/3 bg-white border-r flex flex-col">
-          <div className="p-4 border-b bg-gray-50">
+      {/* Main Content - responsive: stack on mobile, side-by-side on lg+ */}
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Left: Orders List */}
+        <div className="w-full lg:w-[360px] xl:w-[400px] bg-white/90 backdrop-blur-xl border-b lg:border-b-0 lg:border-r border-gray-200/50 flex flex-col max-h-[45vh] lg:max-h-none">
+          <div className="p-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50/80 to-white">
             <div className="flex items-center justify-between mb-2">
               <h2 className="font-bold text-gray-700 flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
-                ออเดอร์รอชำระ ({unpaidOrders.length})
+                <span className="hidden sm:inline">ออเดอร์รอชำระ</span>
+                <span className="sm:hidden">ออเดอร์</span>
+                <span className="text-blue-600">({unpaidOrders.length})</span>
               </h2>
             </div>
             <div className="flex gap-2">
@@ -618,10 +629,10 @@ export default function POSPayment({
                   setPosMode('normal');
                   setSelectedOrderIds(new Set());
                 }}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   posMode === 'normal'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                 }`}
               >
                 ปกติ
@@ -631,10 +642,10 @@ export default function POSPayment({
                   setPosMode('merge');
                   setSelectedOrder(null);
                 }}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-1 ${
+                className={`flex-1 py-2 rounded-xl text-sm font-medium transition-all duration-300 flex items-center justify-center gap-1 ${
                   posMode === 'merge'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-500/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 shadow-sm'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -645,10 +656,13 @@ export default function POSPayment({
 
           <div className="flex-1 overflow-y-auto">
             {loadingOrders ? (
-              <div className="p-8 text-center text-gray-400">กำลังโหลด...</div>
-            ) : unpaidOrders.length === 0 ? (
               <div className="p-8 text-center text-gray-400">
-                <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-500" />
+                กำลังโหลด...
+              </div>
+            ) : unpaidOrders.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 animate-fade-in">
+                <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-20" />
                 <p>ไม่มีออเดอร์รอชำระ</p>
               </div>
             ) : (
@@ -656,7 +670,7 @@ export default function POSPayment({
                 {Object.entries(ordersByTable).map(([table, orders]) => (
                   <div key={table}>
                     {/* Table group header */}
-                    <div className="px-4 py-2 bg-gray-100 border-b flex items-center justify-between sticky top-0">
+                    <div className="px-4 py-2 bg-gradient-to-r from-gray-100/80 to-gray-50/80 border-b border-gray-200/50 flex items-center justify-between sticky top-0 backdrop-blur-sm z-10">
                       <span className="text-sm font-semibold text-gray-600 flex items-center gap-1">
                         <Hash className="w-3.5 h-3.5" />
                         {table === 'Kiosk' ? 'Kiosk' : `โต๊ะ ${table}`}
@@ -669,7 +683,7 @@ export default function POSPayment({
                       </span>
                     </div>
                     {/* Orders in table */}
-                    <div className="divide-y">
+                    <div className="divide-y divide-gray-100">
                       {orders.map((order) => {
                         const isSelected =
                           posMode === 'merge'
@@ -685,21 +699,21 @@ export default function POSPayment({
                                 setSelectedOrder(order);
                               }
                             }}
-                            className={`w-full text-left p-4 hover:bg-blue-50 transition-colors ${
+                            className={`w-full text-left p-4 transition-all duration-300 ${
                               isSelected
                                 ? posMode === 'merge'
-                                  ? 'bg-indigo-50 border-l-4 border-indigo-500'
-                                  : 'bg-blue-50 border-l-4 border-blue-500'
-                                : ''
+                                  ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/50 border-l-4 border-indigo-500'
+                                  : 'bg-gradient-to-r from-blue-50 to-blue-100/50 border-l-4 border-blue-500'
+                                : 'hover:bg-blue-50/50'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
                                 {posMode === 'merge' && (
                                   <div
-                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                    className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                                       isSelected
-                                        ? 'bg-indigo-600 border-indigo-600'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 border-indigo-600 shadow-md shadow-indigo-500/30'
                                         : 'border-gray-300'
                                     }`}
                                   >
@@ -712,7 +726,7 @@ export default function POSPayment({
                                   {order.orderId}
                                 </span>
                               </div>
-                              <span className="text-lg font-bold">
+                              <span className="text-lg font-bold text-gray-800">
                                 ฿{order.totalAmount.toFixed(0)}
                               </span>
                             </div>
@@ -748,7 +762,7 @@ export default function POSPayment({
 
           {/* Merge mode info bar */}
           {posMode === 'merge' && selectedOrderIds.size >= 2 && (
-            <div className="p-3 border-t bg-indigo-50">
+            <div className="p-3 border-t border-gray-200/50 bg-gradient-to-r from-indigo-50 to-indigo-100/50">
               <div className="text-center text-sm text-indigo-700 font-medium">
                 เลือก {selectedOrderIds.size} ออเดอร์ | รวม ฿
                 {mergedSubtotal.toFixed(0)}
@@ -757,38 +771,47 @@ export default function POSPayment({
           )}
         </div>
 
-        {/* Right: Payment Panel (2/3) */}
+        {/* Right: Payment Panel */}
         <div className="flex-1 overflow-y-auto">
           {!hasActiveSelection ? (
-            <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="flex items-center justify-center h-full min-h-[300px] text-gray-400 animate-fade-in">
               <div className="text-center">
                 {posMode === 'merge' ? (
                   <>
-                    <Layers className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-xl">เลือกออเดอร์ 2 รายการขึ้นไป</p>
-                    <p className="text-sm mt-1">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-indigo-100 to-indigo-200/50 rounded-3xl flex items-center justify-center">
+                      <Layers className="w-10 h-10 text-indigo-300" />
+                    </div>
+                    <p className="text-xl font-medium text-gray-500">เลือกออเดอร์ 2 รายการขึ้นไป</p>
+                    <p className="text-sm mt-1 text-gray-400">
                       จากโต๊ะเดียวกัน เพื่อรวมชำระ
                     </p>
                   </>
                 ) : (
                   <>
-                    <ArrowLeft className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p className="text-xl">เลือกออเดอร์จากรายการด้านซ้าย</p>
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-blue-200/50 rounded-3xl flex items-center justify-center">
+                      <ArrowLeft className="w-10 h-10 text-blue-300" />
+                    </div>
+                    <p className="text-xl font-medium text-gray-500">เลือกออเดอร์จากรายการ{' '}
+                      <span className="hidden lg:inline">ด้านซ้าย</span>
+                      <span className="lg:hidden">ด้านบน</span>
+                    </p>
                   </>
                 )}
               </div>
             </div>
           ) : (
-            <div className="p-6 max-w-2xl mx-auto">
+            <div className="p-4 md:p-6 max-w-2xl mx-auto animate-fade-in">
               {/* Order Details */}
               {posMode === 'merge' && selectedMergeOrders.length >= 2 ? (
-                <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-5 md:p-6 mb-4 border border-gray-200/50">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-indigo-600" />
+                      <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-1.5 rounded-lg">
+                        <Layers className="w-4 h-4" />
+                      </div>
                       รวม {selectedMergeOrders.length} ออเดอร์
                     </h3>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                       โต๊ะ {selectedMergeOrders[0]?.tableNumber || 'Kiosk'}
                     </span>
                   </div>
@@ -797,21 +820,21 @@ export default function POSPayment({
                       <p className="text-xs font-semibold text-gray-400 mb-1">
                         {order.orderId}
                       </p>
-                      <div className="divide-y">
+                      <div className="divide-y divide-gray-100">
                         {order.items?.map((item: any, idx: number) => (
                           <div
                             key={idx}
                             className="flex items-center justify-between py-1.5"
                           >
                             <div>
-                              <span className="font-medium">
+                              <span className="font-medium text-gray-800">
                                 {item.menuItem?.name || 'Unknown'}
                               </span>
                               <span className="text-gray-400 ml-2">
                                 x{item.quantity}
                               </span>
                             </div>
-                            <span className="font-semibold">
+                            <span className="font-semibold text-gray-700">
                               ฿{(item.price * item.quantity).toFixed(0)}
                             </span>
                           </div>
@@ -822,10 +845,12 @@ export default function POSPayment({
                 </div>
               ) : (
                 selectedOrder && (
-                  <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+                  <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 p-5 md:p-6 mb-4 border border-gray-200/50">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-bold text-lg flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-blue-600" />
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-1.5 rounded-lg">
+                          <Receipt className="w-4 h-4" />
+                        </div>
                         {selectedOrder.orderId}
                       </h3>
                       <div className="flex items-center gap-2">
@@ -833,13 +858,13 @@ export default function POSPayment({
                           selectedOrder.items.length >= 2 && (
                             <button
                               onClick={() => setShowSplitModal(true)}
-                              className="flex items-center gap-1 text-sm text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg hover:bg-purple-100"
+                              className="flex items-center gap-1 text-sm text-purple-600 bg-gradient-to-r from-purple-50 to-purple-100/50 px-3 py-1.5 rounded-lg hover:from-purple-100 hover:to-purple-200/50 border border-purple-200/50 transition-all duration-300"
                             >
                               <Scissors className="w-4 h-4" />
                               แยกออเดอร์
                             </button>
                           )}
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
                           {selectedOrder.tableNumber
                             ? `โต๊ะ ${selectedOrder.tableNumber}`
                             : 'Kiosk'}
@@ -847,14 +872,14 @@ export default function POSPayment({
                       </div>
                     </div>
 
-                    <div className="divide-y">
+                    <div className="divide-y divide-gray-100">
                       {selectedOrder.items?.map((item: any, idx: number) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between py-2"
+                          className="flex items-center justify-between py-2.5"
                         >
                           <div>
-                            <span className="font-medium">
+                            <span className="font-medium text-gray-800">
                               {item.menuItem?.name || 'Unknown'}
                             </span>
                             <span className="text-gray-400 ml-2">
@@ -871,7 +896,7 @@ export default function POSPayment({
                                 </div>
                               )}
                           </div>
-                          <span className="font-semibold">
+                          <span className="font-semibold text-gray-700">
                             ฿{(item.price * item.quantity).toFixed(0)}
                           </span>
                         </div>
@@ -882,7 +907,7 @@ export default function POSPayment({
               )}
 
               {/* Member Section */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-md p-5 md:p-6 mb-4 border border-gray-200/50">
                 <h3 className="font-bold text-sm text-gray-600 mb-3 flex items-center gap-2">
                   <User className="w-4 h-4" />
                   สมาชิก (ไม่บังคับ)
@@ -897,11 +922,11 @@ export default function POSPayment({
                       e.key === 'Enter' && handleMemberSearch()
                     }
                     placeholder="เบอร์โทร หรือ Member ID"
-                    className="flex-1 border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 border border-gray-200/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50/50"
                   />
                   <button
                     onClick={handleMemberSearch}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700"
+                    className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2.5 rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-500/20 transition-all duration-300"
                   >
                     <Search className="w-4 h-4" />
                   </button>
@@ -913,7 +938,7 @@ export default function POSPayment({
                         setUsePoints(false);
                         setDiscountPoints('');
                       }}
-                      className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200"
+                      className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200 transition-all duration-300"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -921,15 +946,15 @@ export default function POSPayment({
                 </div>
 
                 {memberError && (
-                  <p className="text-red-500 text-sm mb-2">{memberError}</p>
+                  <p className="text-red-500 text-sm mb-2 bg-red-50 px-3 py-2 rounded-lg border border-red-200/50">{memberError}</p>
                 )}
 
                 {member && (
-                  <div className="bg-blue-50 rounded-xl p-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-xl p-4 border border-blue-200/50 animate-fade-in">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <BadgeCheck className="w-5 h-5 text-blue-600" />
-                        <span className="font-semibold">{member.name}</span>
+                        <span className="font-semibold text-gray-800">{member.name}</span>
                         <span
                           className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                             tierColors[member.tier] ||
@@ -941,13 +966,13 @@ export default function POSPayment({
                       </div>
                       <div className="flex items-center gap-1 text-sm">
                         <Star className="w-4 h-4 text-yellow-500" />
-                        <span className="font-bold">{member.points}</span>
+                        <span className="font-bold text-gray-800">{member.points}</span>
                         <span className="text-gray-500">แต้ม</span>
                       </div>
                     </div>
 
                     {member.points > 0 && (
-                      <div className="mt-3 border-t border-blue-200 pt-3">
+                      <div className="mt-3 border-t border-blue-200/50 pt-3">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
@@ -981,7 +1006,7 @@ export default function POSPayment({
                                 member.points,
                                 Math.floor(subtotal),
                               )}`}
-                              className="w-32 border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="w-32 border border-gray-200/50 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                             <button
                               onClick={() =>
@@ -994,7 +1019,7 @@ export default function POSPayment({
                                   ),
                                 )
                               }
-                              className="text-xs bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200"
+                              className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-3 py-1.5 rounded-lg hover:from-green-200 hover:to-emerald-200 border border-green-200/50 transition-all duration-300"
                             >
                               ใช้สูงสุด
                             </button>
@@ -1004,7 +1029,7 @@ export default function POSPayment({
                     )}
 
                     {pointsEarned > 0 && (
-                      <div className="mt-2 text-xs text-green-600">
+                      <div className="mt-2 text-xs text-green-600 bg-green-50/50 px-2 py-1 rounded-lg inline-block">
                         จะได้รับ +{pointsEarned} แต้มจากรายการนี้
                       </div>
                     )}
@@ -1013,7 +1038,7 @@ export default function POSPayment({
               </div>
 
               {/* Promotion / Coupon Section */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-md p-5 md:p-6 mb-4 border border-gray-200/50">
                 <h3 className="font-bold text-sm text-gray-600 mb-3 flex items-center gap-2">
                   <Tag className="w-4 h-4" />
                   โปรโมชัน / คูปอง
@@ -1042,10 +1067,10 @@ export default function POSPayment({
                           onClick={() =>
                             handleSelectPromotion(isSelected ? null : promo)
                           }
-                          className={`w-full text-left px-3 py-2 rounded-lg border-2 transition-all text-sm ${
+                          className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all duration-300 text-sm ${
                             isSelected
-                              ? 'border-orange-500 bg-orange-50'
-                              : 'border-gray-200 hover:border-gray-300'
+                              ? 'border-orange-400 bg-gradient-to-r from-orange-50 to-amber-50 shadow-md shadow-orange-500/10'
+                              : 'border-gray-200/50 hover:border-gray-300 hover:bg-gray-50/50'
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -1098,12 +1123,12 @@ export default function POSPayment({
                         e.key === 'Enter' && handleValidateCoupon()
                       }
                       placeholder="เช่น WELCOME50"
-                      className="flex-1 border rounded-xl px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      className="flex-1 border border-gray-200/50 rounded-xl px-3 py-2.5 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-gray-50/50"
                     />
                     <button
                       onClick={handleValidateCoupon}
                       disabled={!couponCode.trim()}
-                      className="bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 disabled:opacity-50 text-sm font-medium flex items-center gap-1"
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-4 py-2.5 rounded-xl hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 text-sm font-medium flex items-center gap-1 shadow-md shadow-orange-500/20 transition-all duration-300"
                     >
                       <Ticket className="w-4 h-4" />
                       ใช้
@@ -1116,7 +1141,7 @@ export default function POSPayment({
                           setCouponResult(null);
                           setPromotionDiscount(0);
                         }}
-                        className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200"
+                        className="bg-gray-100 text-gray-600 px-3 py-2 rounded-xl hover:bg-gray-200 transition-all duration-300"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1124,10 +1149,10 @@ export default function POSPayment({
                   </div>
                   {couponResult && (
                     <div
-                      className={`mt-2 px-3 py-2 rounded-lg text-sm ${
+                      className={`mt-2 px-3 py-2 rounded-xl text-sm border animate-fade-in ${
                         couponResult.valid
-                          ? 'bg-green-50 text-green-700'
-                          : 'bg-red-50 text-red-700'
+                          ? 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200/50'
+                          : 'bg-gradient-to-r from-red-50 to-red-100/50 text-red-700 border-red-200/50'
                       }`}
                     >
                       {couponResult.message}
@@ -1137,7 +1162,7 @@ export default function POSPayment({
 
                 {/* Selected Promotion Summary */}
                 {selectedPromotion && promotionDiscount > 0 && (
-                  <div className="mt-3 bg-orange-50 rounded-lg p-3 flex items-center justify-between">
+                  <div className="mt-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3 flex items-center justify-between border border-orange-200/50 animate-fade-in">
                     <span className="text-sm text-orange-700 font-medium">
                       {selectedPromotion.name}
                     </span>
@@ -1149,8 +1174,8 @@ export default function POSPayment({
               </div>
 
               {/* Total Summary */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
-                <div className="space-y-2">
+              <div className="bg-gradient-to-br from-white to-blue-50/30 backdrop-blur-xl rounded-2xl shadow-md p-5 md:p-6 mb-4 border border-blue-200/30">
+                <div className="space-y-2.5">
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>ยอดรวม</span>
                     <span>฿{subtotal.toFixed(2)}</span>
@@ -1177,8 +1202,8 @@ export default function POSPayment({
                       <span>-฿{promotionDiscount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-2xl font-bold border-t pt-2">
-                    <span>ยอดสุทธิ</span>
+                  <div className="flex justify-between text-2xl font-bold border-t border-blue-200/30 pt-3">
+                    <span className="text-gray-800">ยอดสุทธิ</span>
                     <span className="text-blue-600">
                       ฿{totalAmount.toFixed(2)}
                     </span>
@@ -1187,7 +1212,7 @@ export default function POSPayment({
               </div>
 
               {/* Payment Method */}
-              <div className="bg-white rounded-2xl shadow-sm p-6 mb-4">
+              <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-md p-5 md:p-6 mb-4 border border-gray-200/50">
                 <h3 className="font-bold text-sm text-gray-600 mb-3">
                   เลือกวิธีชำระเงิน
                 </h3>
@@ -1197,19 +1222,19 @@ export default function POSPayment({
                       setPaymentMethod('CASH');
                       setPaidAmount('');
                     }}
-                    className={`p-4 rounded-xl border-2 text-center transition-all ${
+                    className={`p-4 rounded-xl border-2 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 ${
                       paymentMethod === 'CASH'
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-green-400 bg-gradient-to-br from-green-50 to-emerald-100/50 shadow-lg shadow-green-500/20'
+                        : 'border-gray-200/50 hover:border-gray-300 hover:shadow-md'
                     }`}
                   >
-                    <Banknote
-                      className={`w-8 h-8 mx-auto mb-2 ${
-                        paymentMethod === 'CASH'
-                          ? 'text-green-600'
-                          : 'text-gray-400'
-                      }`}
-                    />
+                    <div className={`w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center ${
+                      paymentMethod === 'CASH'
+                        ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-md shadow-green-500/30'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      <Banknote className="w-6 h-6" />
+                    </div>
                     <span
                       className={`text-sm font-semibold ${
                         paymentMethod === 'CASH'
@@ -1225,19 +1250,19 @@ export default function POSPayment({
                       setPaymentMethod('TRANSFER');
                       setPaidAmount(String(totalAmount));
                     }}
-                    className={`p-4 rounded-xl border-2 text-center transition-all ${
+                    className={`p-4 rounded-xl border-2 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 ${
                       paymentMethod === 'TRANSFER'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-indigo-100/50 shadow-lg shadow-blue-500/20'
+                        : 'border-gray-200/50 hover:border-gray-300 hover:shadow-md'
                     }`}
                   >
-                    <Building2
-                      className={`w-8 h-8 mx-auto mb-2 ${
-                        paymentMethod === 'TRANSFER'
-                          ? 'text-blue-600'
-                          : 'text-gray-400'
-                      }`}
-                    />
+                    <div className={`w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center ${
+                      paymentMethod === 'TRANSFER'
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-md shadow-blue-500/30'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      <Building2 className="w-6 h-6" />
+                    </div>
                     <span
                       className={`text-sm font-semibold ${
                         paymentMethod === 'TRANSFER'
@@ -1253,19 +1278,19 @@ export default function POSPayment({
                       setPaymentMethod('CREDIT_CARD');
                       setPaidAmount(String(totalAmount));
                     }}
-                    className={`p-4 rounded-xl border-2 text-center transition-all ${
+                    className={`p-4 rounded-xl border-2 text-center transition-all duration-300 hover:scale-[1.03] hover:-translate-y-0.5 ${
                       paymentMethod === 'CREDIT_CARD'
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-violet-100/50 shadow-lg shadow-purple-500/20'
+                        : 'border-gray-200/50 hover:border-gray-300 hover:shadow-md'
                     }`}
                   >
-                    <CreditCard
-                      className={`w-8 h-8 mx-auto mb-2 ${
-                        paymentMethod === 'CREDIT_CARD'
-                          ? 'text-purple-600'
-                          : 'text-gray-400'
-                      }`}
-                    />
+                    <div className={`w-12 h-12 mx-auto mb-2 rounded-xl flex items-center justify-center ${
+                      paymentMethod === 'CREDIT_CARD'
+                        ? 'bg-gradient-to-br from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/30'
+                        : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      <CreditCard className="w-6 h-6" />
+                    </div>
                     <span
                       className={`text-sm font-semibold ${
                         paymentMethod === 'CREDIT_CARD'
@@ -1280,7 +1305,7 @@ export default function POSPayment({
 
                 {/* Cash Input */}
                 {paymentMethod === 'CASH' && (
-                  <div className="mt-4">
+                  <div className="mt-4 animate-fade-in">
                     <label className="text-sm text-gray-600 mb-2 block">
                       จำนวนเงินที่รับ
                     </label>
@@ -1289,7 +1314,7 @@ export default function POSPayment({
                       value={paidAmount}
                       onChange={(e) => setPaidAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full text-2xl font-bold text-center border-2 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      className="w-full text-2xl font-bold text-center border-2 border-gray-200/50 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-gray-50/30"
                     />
 
                     {/* Quick Amount Buttons */}
@@ -1298,7 +1323,7 @@ export default function POSPayment({
                         <button
                           key={amount}
                           onClick={() => setPaidAmount(String(amount))}
-                          className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 rounded-lg text-sm font-semibold transition-colors"
+                          className="flex-1 bg-gradient-to-br from-gray-100 to-gray-150 hover:from-gray-200 hover:to-gray-250 text-gray-700 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md active:scale-95"
                         >
                           ฿{amount}
                         </button>
@@ -1309,7 +1334,7 @@ export default function POSPayment({
                             String(Math.ceil(totalAmount / 100) * 100),
                           )
                         }
-                        className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 py-2 rounded-lg text-sm font-semibold transition-colors"
+                        className="flex-1 bg-gradient-to-r from-green-100 to-emerald-100 hover:from-green-200 hover:to-emerald-200 text-green-700 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 shadow-sm hover:shadow-md border border-green-200/50 active:scale-95"
                       >
                         พอดี
                       </button>
@@ -1317,7 +1342,7 @@ export default function POSPayment({
 
                     {/* Change Display */}
                     {parseFloat(paidAmount) >= totalAmount && (
-                      <div className="mt-3 bg-green-50 rounded-xl p-4 text-center">
+                      <div className="mt-3 bg-gradient-to-br from-green-50 to-emerald-100/50 rounded-xl p-4 text-center border border-green-200/50 animate-scale-in">
                         <p className="text-sm text-green-600">เงินทอน</p>
                         <p className="text-3xl font-bold text-green-700">
                           ฿{changeAmount.toFixed(2)}
@@ -1330,7 +1355,7 @@ export default function POSPayment({
                 {/* Transfer/Credit Card Confirmation */}
                 {(paymentMethod === 'TRANSFER' ||
                   paymentMethod === 'CREDIT_CARD') && (
-                  <div className="mt-4 bg-gray-50 rounded-xl p-4 text-center">
+                  <div className="mt-4 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-4 text-center border border-gray-200/50 animate-fade-in">
                     <p className="text-sm text-gray-600">
                       {paymentMethod === 'TRANSFER'
                         ? 'ยืนยันว่าได้รับเงินโอนแล้ว'
@@ -1352,17 +1377,20 @@ export default function POSPayment({
                   (paymentMethod === 'CASH' &&
                     (parseFloat(paidAmount) || 0) < totalAmount)
                 }
-                className={`w-full py-4 rounded-2xl text-xl font-bold transition-all flex items-center justify-center gap-3 ${
+                className={`w-full py-4 rounded-2xl text-xl font-bold transition-all duration-300 flex items-center justify-center gap-3 ${
                   !paymentMethod ||
                   processing ||
                   (paymentMethod === 'CASH' &&
                     (parseFloat(paidAmount) || 0) < totalAmount)
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700 active:scale-[0.98] shadow-lg'
+                    ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-500 cursor-not-allowed shadow-none'
+                    : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 active:scale-[0.98] shadow-2xl shadow-green-500/40'
                 }`}
               >
                 {processing ? (
-                  'กำลังดำเนินการ...'
+                  <>
+                    <RefreshCw className="w-6 h-6 animate-spin" />
+                    กำลังดำเนินการ...
+                  </>
                 ) : (
                   <>
                     <DollarSign className="w-6 h-6" />
