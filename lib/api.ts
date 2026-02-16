@@ -806,6 +806,41 @@ export const api = {
   getActiveTableSession: (tableId: number) =>
     fetchApi<any>(`/tables/${tableId}/active-session`),
 
+  // Table CRUD (Admin)
+  createTable: (data: {
+    number: string;
+    capacity: number;
+    size: string;
+    shape?: string;
+    positionX: number;
+    positionY: number;
+    zone?: string;
+    status?: string;
+  }) =>
+    fetchApi<any>('/tables', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTable: (id: number, data: Record<string, any>) =>
+    fetchApi<any>(`/tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTable: (id: number) =>
+    fetchApi<any>(`/tables/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getTable: (id: number) => fetchApi<any>(`/tables/${id}`),
+
+  bulkUpdateTablePositions: (updates: { id: number; positionX: number; positionY: number }[]) =>
+    fetchApi<any>('/tables/bulk-positions', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }),
+
   // ===== Webhooks =====
   getWebhooks: () => fetchApi<WebhookEndpointResponse[]>('/webhooks'),
 
@@ -846,6 +881,30 @@ export const api = {
   },
 
   getWebhookEvents: () => fetchApi<WebhookEventInfo[]>('/webhooks/events'),
+
+  // Upload / Image Management
+  uploadImage: async (file: File): Promise<{ url: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/upload/image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `Upload failed: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  getUploadedImages: () =>
+    fetchApi<{ images: { url: string; filename: string; size: number; uploadedAt: string }[] }>('/upload/images'),
+
+  deleteUploadedImage: (filename: string) =>
+    fetchApi<{ message: string }>(`/upload/images/${filename}`, { method: 'DELETE' }),
 };
 
 export default api;

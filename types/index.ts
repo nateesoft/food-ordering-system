@@ -116,6 +116,7 @@ export interface Table {
   status: 'available' | 'occupied' | 'reserved' | 'billing' | 'cleaning';
   position: { x: number; y: number };
   size: 'small' | 'medium' | 'large';
+  shape: 'square' | 'circle' | 'rectangle' | 'counter';
   currentGuests?: number;
   mergedWith?: number[];
   zone?: string;

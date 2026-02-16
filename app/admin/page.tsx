@@ -18,6 +18,7 @@ import {
   Clock,
   Tag,
   Webhook,
+  Armchair,
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -85,6 +86,15 @@ export default function AdminDashboard() {
       color: 'from-yellow-500 to-orange-500',
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600'
+    },
+    {
+      title: 'Table Management',
+      description: 'จัดการโต๊ะ แผนผังร้าน ลากวางตำแหน่ง',
+      icon: Armchair,
+      href: '/admin/tables',
+      color: 'from-sky-500 to-blue-500',
+      iconBg: 'bg-sky-100',
+      iconColor: 'text-sky-600'
     },
     {
       title: 'POS System',
