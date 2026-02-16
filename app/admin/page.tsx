@@ -14,7 +14,13 @@ import {
   Users,
   Package,
   DollarSign,
+  Building2,
+  Clock,
+  Tag,
+  Webhook,
+  Armchair,
 } from 'lucide-react';
+import BranchSelector from '@/components/BranchSelector';
 
 export default function AdminDashboard() {
   const adminSections = [
@@ -82,6 +88,15 @@ export default function AdminDashboard() {
       iconColor: 'text-yellow-600'
     },
     {
+      title: 'Table Management',
+      description: 'จัดการโต๊ะ แผนผังร้าน ลากวางตำแหน่ง',
+      icon: Armchair,
+      href: '/admin/tables',
+      color: 'from-sky-500 to-blue-500',
+      iconBg: 'bg-sky-100',
+      iconColor: 'text-sky-600'
+    },
+    {
       title: 'POS System',
       description: 'ระบบรับชำระเงิน สำหรับแคชเชียร์',
       icon: DollarSign,
@@ -107,6 +122,51 @@ export default function AdminDashboard() {
       color: 'from-amber-500 to-yellow-500',
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600'
+    },
+    {
+      title: 'Reports & Analytics',
+      description: 'รายงานและวิเคราะห์ข้อมูลร้านอาหาร',
+      icon: BarChart3,
+      href: '/admin/reports',
+      color: 'from-cyan-500 to-blue-500',
+      iconBg: 'bg-cyan-100',
+      iconColor: 'text-cyan-600'
+    },
+    {
+      title: 'Shift Management',
+      description: 'จัดการกะ เปิด/ปิดกะ นับเงินลิ้นชัก สรุปยอด',
+      icon: Clock,
+      href: '/admin/shifts',
+      color: 'from-violet-500 to-purple-500',
+      iconBg: 'bg-violet-100',
+      iconColor: 'text-violet-600'
+    },
+    {
+      title: 'Branch Management',
+      description: 'จัดการสาขา เพิ่ม/แก้ไข/ลบสาขา',
+      icon: Building2,
+      href: '/admin/branches',
+      color: 'from-teal-500 to-cyan-500',
+      iconBg: 'bg-teal-100',
+      iconColor: 'text-teal-600'
+    },
+    {
+      title: 'Promotion Management',
+      description: 'จัดการโปรโมชัน คูปอง ส่วนลด Happy Hour',
+      icon: Tag,
+      href: '/admin/promotions',
+      color: 'from-orange-500 to-amber-500',
+      iconBg: 'bg-orange-100',
+      iconColor: 'text-orange-600'
+    },
+    {
+      title: 'Webhooks',
+      description: 'จัดการ Webhook เชื่อมต่อกับระบบภายนอก',
+      icon: Webhook,
+      href: '/admin/webhooks',
+      color: 'from-indigo-500 to-blue-500',
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600'
     }
   ];
 
@@ -114,9 +174,12 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 shadow-xl">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-5xl font-bold mb-3">🎛️ Admin Dashboard</h1>
-          <p className="text-2xl text-indigo-100">ระบบจัดการร้านอาหาร</p>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-5xl font-bold mb-3">🎛️ Admin Dashboard</h1>
+            <p className="text-2xl text-indigo-100">ระบบจัดการร้านอาหาร</p>
+          </div>
+          <BranchSelector />
         </div>
       </div>
 

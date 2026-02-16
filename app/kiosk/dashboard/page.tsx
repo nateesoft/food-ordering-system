@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Clock, ChefHat, CheckCircle2, Users, TrendingUp, Package, Home, RefreshCw, Eye } from 'lucide-react';
-import { QueueTicket } from '@/types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Clock, ChefHat, CheckCircle2, TrendingUp, Package, Home, RefreshCw, Eye } from 'lucide-react';
+import { api, QueueTicketResponse } from '@/lib/api';
+
+type QueueStatus = 'WAITING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
 
 export default function KioskDashboard() {
-  const [queues, setQueues] = useState<QueueTicket[]>([]);
+  const [queues, setQueues] = useState<QueueTicketResponse[]>([]);
+  const [menuNames, setMenuNames] = useState<Record<number, string>>({});
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [stats, setStats] = useState({
     totalToday: 0,
@@ -21,102 +24,80 @@ export default function KioskDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Load queues from localStorage
-  useEffect(() => {
-    loadQueues();
-
-    // Listen for storage events from other tabs/windows
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'queueTickets') {
-        loadQueues();
-      }
-    };
-
-    // Listen for custom events from same tab
-    const handleQueueUpdate = (e: Event) => {
-      loadQueues();
-    };
-
-    // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('queueUpdated', handleQueueUpdate);
-
-    // Fallback polling every 2 seconds
-    const interval = setInterval(loadQueues, 2000);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('queueUpdated', handleQueueUpdate);
-    };
+  const loadMenuNames = useCallback(async () => {
+    try {
+      const items = await api.getMenuItems();
+      const map: Record<number, string> = {};
+      items.forEach(item => { map[item.id] = item.name; });
+      setMenuNames(map);
+    } catch (err) {
+      console.error('Failed to load menu items:', err);
+    }
   }, []);
 
-  const loadQueues = () => {
-    const stored = localStorage.getItem('queueTickets');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      const queuesWithDates = parsed.map((q: any) => ({
-        ...q,
-        createdAt: new Date(q.createdAt),
-        calledAt: q.calledAt ? new Date(q.calledAt) : undefined,
-        completedAt: q.completedAt ? new Date(q.completedAt) : undefined,
-      }));
-      setQueues(queuesWithDates);
+  const loadQueues = useCallback(async () => {
+    try {
+      const data = await api.getTodayQueues();
+      setQueues(data);
 
-      // Calculate stats
-      const today = new Date().setHours(0, 0, 0, 0);
-      const todayQueues = queuesWithDates.filter((q: QueueTicket) =>
-        new Date(q.createdAt).setHours(0, 0, 0, 0) === today
-      );
-
-      const completedQueues = todayQueues.filter((q: QueueTicket) => q.status === 'completed');
+      // Calculate stats from API data
+      const completedQueues = data.filter(q => q.status === 'COMPLETED');
       const avgTime = completedQueues.length > 0
-        ? completedQueues.reduce((sum: number, q: QueueTicket) => {
-            if (q.completedAt && q.createdAt) {
-              return sum + (q.completedAt.getTime() - q.createdAt.getTime());
-            }
-            return sum;
-          }, 0) / completedQueues.length / 60000 // Convert to minutes
+        ? completedQueues.reduce((sum, q) => {
+            const created = new Date(q.createdAt).getTime();
+            // Approximate completion time — use current time as fallback
+            return sum + (Date.now() - created);
+          }, 0) / completedQueues.length / 60000
         : 0;
 
       setStats({
-        totalToday: todayQueues.length,
+        totalToday: data.length,
         avgWaitTime: Math.round(avgTime),
-        dineInCount: todayQueues.filter((q: QueueTicket) => q.orderType === 'dine-in').length,
-        takeawayCount: todayQueues.filter((q: QueueTicket) => q.orderType === 'takeaway').length,
+        dineInCount: data.filter(q => q.orderType === 'dine-in').length,
+        takeawayCount: data.filter(q => q.orderType !== 'dine-in').length,
       });
+    } catch (err) {
+      console.error('Failed to load queues:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadQueues();
+    loadMenuNames();
+    const interval = setInterval(loadQueues, 5000);
+    return () => clearInterval(interval);
+  }, [loadQueues, loadMenuNames]);
+
+  const updateQueueStatus = async (id: number, newStatus: QueueStatus) => {
+    try {
+      await api.updateQueueStatus(id, newStatus);
+      loadQueues();
+    } catch (err) {
+      console.error('Failed to update queue status:', err);
     }
   };
 
-  const updateQueueStatus = (queueId: string, newStatus: QueueTicket['status']) => {
-    const updatedQueues = queues.map(q => {
-      if (q.queueId === queueId) {
-        const updated = { ...q, status: newStatus };
-        if (newStatus === 'ready') {
-          updated.calledAt = new Date();
-        } else if (newStatus === 'completed') {
-          updated.completedAt = new Date();
-        }
-        return updated;
-      }
-      return q;
-    });
+  const parseItems = (items: any): any[] => {
+    if (Array.isArray(items)) return items;
+    if (typeof items === 'string') {
+      try { return JSON.parse(items); } catch { return []; }
+    }
+    return [];
+  };
 
-    setQueues(updatedQueues);
-    localStorage.setItem('queueTickets', JSON.stringify(updatedQueues));
-
-    // Dispatch custom event for same-tab listening
-    window.dispatchEvent(new CustomEvent('queueUpdated', { detail: updatedQueues }));
+  const getItemName = (item: any) => {
+    if (item.name) return item.name;
+    return menuNames[item.menuItemId] || `Item #${item.menuItemId}`;
   };
 
   // Group queues by status
-  const waitingQueues = queues.filter(q => q.status === 'waiting');
-  const preparingQueues = queues.filter(q => q.status === 'preparing');
-  const readyQueues = queues.filter(q => q.status === 'ready');
+  const waitingQueues = queues.filter(q => q.status === 'WAITING');
+  const preparingQueues = queues.filter(q => q.status === 'PREPARING');
+  const readyQueues = queues.filter(q => q.status === 'READY');
 
-  const getTimeSinceCreated = (createdAt: Date) => {
+  const getTimeSinceCreated = (createdAt: string) => {
     const now = new Date();
-    const diff = Math.floor((now.getTime() - createdAt.getTime()) / 60000); // minutes
+    const diff = Math.floor((now.getTime() - new Date(createdAt).getTime()) / 60000);
     if (diff < 1) return 'เพิ่งสั่ง';
     if (diff < 60) return `${diff} นาที`;
     const hours = Math.floor(diff / 60);
@@ -230,54 +211,57 @@ export default function KioskDashboard() {
                   <p className="text-lg md:text-xl text-yellow-600">ไม่มีคิวรอ</p>
                 </div>
               ) : (
-                waitingQueues.map(queue => (
-                  <div
-                    key={queue.queueId}
-                    className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-yellow-500 p-4"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            queue.orderType === 'dine-in'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-purple-100 text-purple-700'
-                          }`}>
-                            {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          {getTimeSinceCreated(queue.createdAt)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">จำนวน</p>
-                        <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto">
-                      {queue.items.slice(0, 3).map((item, idx) => (
-                        <div key={item.cartItemId} className="text-sm text-gray-700 flex justify-between">
-                          <span>• {item.name} x{item.quantity}</span>
-                        </div>
-                      ))}
-                      {queue.items.length > 3 && (
-                        <p className="text-xs text-gray-500 mt-1">+{queue.items.length - 3} รายการ</p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => updateQueueStatus(queue.queueId, 'preparing')}
-                      className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                waitingQueues.map(queue => {
+                  const items = parseItems(queue.items);
+                  return (
+                    <div
+                      key={queue.id}
+                      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-yellow-500 p-4"
                     >
-                      <ChefHat className="w-5 h-5" />
-                      เริ่มทำอาหาร
-                    </button>
-                  </div>
-                ))
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              queue.orderType === 'dine-in'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {getTimeSinceCreated(queue.createdAt)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">จำนวน</p>
+                          <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto">
+                        {items.slice(0, 3).map((item: any, idx: number) => (
+                          <div key={idx} className="text-sm text-gray-700 flex justify-between">
+                            <span>• {getItemName(item)} x{item.quantity}</span>
+                          </div>
+                        ))}
+                        {items.length > 3 && (
+                          <p className="text-xs text-gray-500 mt-1">+{items.length - 3} รายการ</p>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => updateQueueStatus(queue.id, 'PREPARING')}
+                        className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                      >
+                        <ChefHat className="w-5 h-5" />
+                        เริ่มทำอาหาร
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
@@ -305,61 +289,64 @@ export default function KioskDashboard() {
                   <p className="text-lg md:text-xl text-blue-600">ไม่มีคิวกำลังทำ</p>
                 </div>
               ) : (
-                preparingQueues.map(queue => (
-                  <div
-                    key={queue.queueId}
-                    className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-blue-500 p-4"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            queue.orderType === 'dine-in'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-purple-100 text-purple-700'
-                          }`}>
-                            {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          {getTimeSinceCreated(queue.createdAt)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">จำนวน</p>
-                        <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto">
-                      {queue.items.slice(0, 3).map((item, idx) => (
-                        <div key={item.cartItemId} className="text-sm text-gray-700 flex justify-between">
-                          <span>• {item.name} x{item.quantity}</span>
-                        </div>
-                      ))}
-                      {queue.items.length > 3 && (
-                        <p className="text-xs text-gray-500 mt-1">+{queue.items.length - 3} รายการ</p>
-                      )}
-                    </div>
-
-                    {/* Progress bar */}
-                    <div className="mb-3">
-                      <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
-                        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full animate-progress"></div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => updateQueueStatus(queue.queueId, 'ready')}
-                      className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                preparingQueues.map(queue => {
+                  const items = parseItems(queue.items);
+                  return (
+                    <div
+                      key={queue.id}
+                      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-blue-500 p-4"
                     >
-                      <CheckCircle2 className="w-5 h-5" />
-                      เสร็จแล้ว - เรียกคิว
-                    </button>
-                  </div>
-                ))
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              queue.orderType === 'dine-in'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-500 flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            {getTimeSinceCreated(queue.createdAt)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">จำนวน</p>
+                          <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto">
+                        {items.slice(0, 3).map((item: any, idx: number) => (
+                          <div key={idx} className="text-sm text-gray-700 flex justify-between">
+                            <span>• {getItemName(item)} x{item.quantity}</span>
+                          </div>
+                        ))}
+                        {items.length > 3 && (
+                          <p className="text-xs text-gray-500 mt-1">+{items.length - 3} รายการ</p>
+                        )}
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="mb-3">
+                        <div className="bg-gray-200 rounded-full h-2 overflow-hidden">
+                          <div className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full animate-progress"></div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => updateQueueStatus(queue.id, 'READY')}
+                        className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle2 className="w-5 h-5" />
+                        เสร็จแล้ว - เรียกคิว
+                      </button>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
@@ -387,64 +374,67 @@ export default function KioskDashboard() {
                   <p className="text-lg md:text-xl text-green-600">ไม่มีคิวพร้อมเสิร์ฟ</p>
                 </div>
               ) : (
-                readyQueues.map(queue => (
-                  <div
-                    key={queue.queueId}
-                    className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-green-500 p-4 animate-pulse-slow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                            queue.orderType === 'dine-in'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-purple-100 text-purple-700'
-                          }`}>
-                            {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
-                          </span>
+                readyQueues.map(queue => {
+                  const items = parseItems(queue.items);
+                  return (
+                    <div
+                      key={queue.id}
+                      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all border-l-4 border-green-500 p-4 animate-pulse-slow"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="text-2xl md:text-3xl font-bold text-gray-800">{queue.queueId}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                              queue.orderType === 'dine-in'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {queue.orderType === 'dine-in' ? '🏠 ทานที่ร้าน' : '📦 กลับบ้าน'}
+                            </span>
+                          </div>
+                          <p className="text-sm text-green-600 flex items-center gap-2 font-bold">
+                            <CheckCircle2 className="w-4 h-4" />
+                            พร้อมเสิร์ฟ!
+                          </p>
                         </div>
-                        <p className="text-sm text-green-600 flex items-center gap-2 font-bold">
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">จำนวน</p>
+                          <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-green-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto border-2 border-green-200">
+                        {items.slice(0, 3).map((item: any, idx: number) => (
+                          <div key={idx} className="text-sm text-gray-700 flex justify-between">
+                            <span>✓ {getItemName(item)} x{item.quantity}</span>
+                          </div>
+                        ))}
+                        {items.length > 3 && (
+                          <p className="text-xs text-gray-500 mt-1">+{items.length - 3} รายการ</p>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => updateQueueStatus(queue.id, 'COMPLETED')}
+                          className="bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                        >
                           <CheckCircle2 className="w-4 h-4" />
-                          พร้อมเสิร์ฟ!
-                        </p>
+                          เสร็จสิ้น
+                        </button>
+                        <a
+                          href="/kiosk/display"
+                          target="_blank"
+                          className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          ดูจอแสดงผล
+                        </a>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500">จำนวน</p>
-                        <p className="text-xl font-bold text-gray-800">{queue.totalItems} รายการ</p>
-                      </div>
                     </div>
-
-                    <div className="bg-green-50 rounded-lg p-3 mb-3 max-h-24 overflow-y-auto border-2 border-green-200">
-                      {queue.items.slice(0, 3).map((item, idx) => (
-                        <div key={item.cartItemId} className="text-sm text-gray-700 flex justify-between">
-                          <span>✓ {item.name} x{item.quantity}</span>
-                        </div>
-                      ))}
-                      {queue.items.length > 3 && (
-                        <p className="text-xs text-gray-500 mt-1">+{queue.items.length - 3} รายการ</p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => updateQueueStatus(queue.queueId, 'completed')}
-                        className="bg-gradient-to-r from-gray-600 to-gray-700 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        เสร็จสิ้น
-                      </button>
-                      <a
-                        href="/kiosk/display"
-                        target="_blank"
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-bold hover:scale-105 transition-all flex items-center justify-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        ดูจอแสดงผล
-                      </a>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   Ingredient, IngredientUnit, MenuItemIngredient, InventoryTransaction,
   TransactionType, MenuAvailability
 } from '@/types';
+import BranchSelector from '@/components/BranchSelector';
 
 const UNITS: { value: IngredientUnit; label: string }[] = [
   { value: 'GRAM', label: 'กรัม (g)' },
@@ -319,7 +320,8 @@ export default function InventoryManagementPage() {
                 <p className="text-emerald-100 text-sm">Inventory Management</p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <BranchSelector />
               <button
                 onClick={() => router.push('/orders')}
                 className="flex items-center gap-2 px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-all"

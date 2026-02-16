@@ -113,11 +113,26 @@ export interface Table {
   id: number;
   number: string;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied' | 'reserved' | 'billing' | 'cleaning';
   position: { x: number; y: number };
   size: 'small' | 'medium' | 'large';
+  shape: 'square' | 'circle' | 'rectangle' | 'counter';
   currentGuests?: number;
   mergedWith?: number[];
+  zone?: string;
+}
+
+export interface TableSession {
+  id: number;
+  tableId: number;
+  openedBy: string;
+  customerCount: number;
+  customerGender: string | null;
+  customerNationality: string | null;
+  orderType: string;
+  status: string;
+  openedAt: string;
+  closedAt: string | null;
 }
 
 export type Category = string;
@@ -199,6 +214,8 @@ export interface Payment {
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentStatus;
   subtotal: number;
+  serviceCharge: number;
+  vat: number;
   discountAmount: number;
   discountPoints: number;
   totalAmount: number;
@@ -211,6 +228,10 @@ export interface Payment {
   note: string | null;
   paidAt: string | null;
   createdAt: string;
+  promotionId: number | null;
+  promotionDiscount: number;
+  promotionName: string | null;
+  couponCode: string | null;
 }
 
 export interface PaymentSummary {

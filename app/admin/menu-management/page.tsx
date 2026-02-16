@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Edit, Trash2, Home, Settings, X, Save } from 'lucide-react';
+import { Plus, Edit, Trash2, Home, Settings, X, Save, Upload, Image as ImageIcon, Link, FolderOpen, Search, RefreshCw, CheckCircle } from 'lucide-react';
 import { MenuItem, AddOn, SetComponent } from '@/types';
 import { menuItems as initialMenuItems } from '@/data/menuItems';
 import { addOns as initialAddOns } from '@/data/addOns';
+import { api } from '@/lib/api';
+import BranchSelector from '@/components/BranchSelector';
 
 export default function MenuManagementPage() {
   const router = useRouter();
@@ -19,6 +21,82 @@ export default function MenuManagementPage() {
   const [editingAddOn, setEditingAddOn] = useState<AddOn | null>(null);
   const [newCategory, setNewCategory] = useState('');
   const [activeTab, setActiveTab] = useState<'menu' | 'addons' | 'categories'>('menu');
+
+  // Image upload state
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload');
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image gallery state
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<{ url: string; filename: string; size: number; uploadedAt: string }[]>([]);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [gallerySearch, setGallerySearch] = useState('');
+
+  const loadGalleryImages = useCallback(async () => {
+    setGalleryLoading(true);
+    try {
+      const data = await api.getUploadedImages();
+      setGalleryImages(data.images);
+    } catch (err) {
+      console.error('Failed to load gallery:', err);
+    } finally {
+      setGalleryLoading(false);
+    }
+  }, []);
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('กรุณาเลือกไฟล์รูปภาพเท่านั้น');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('ไฟล์ต้องมีขนาดไม่เกิน 5MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      const result = await api.uploadImage(file);
+      setFormData(prev => ({ ...prev, image: result.url }));
+    } catch (err: any) {
+      alert(err.message || 'อัพโหลดไม่สำเร็จ');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleImageUpload(file);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleImageUpload(file);
+    e.target.value = '';
+  };
+
+  const handleDeleteGalleryImage = async (filename: string) => {
+    if (!confirm('คุณแน่ใจหรือไม่ที่จะลบรูปภาพนี้?')) return;
+    try {
+      await api.deleteUploadedImage(filename);
+      setGalleryImages(prev => prev.filter(img => img.filename !== filename));
+    } catch (err) {
+      alert('ลบรูปภาพไม่สำเร็จ');
+    }
+  };
+
+  const handleSelectGalleryImage = (url: string) => {
+    setFormData(prev => ({ ...prev, image: url }));
+    setShowImageGallery(false);
+  };
+
+  const filteredGalleryImages = galleryImages.filter(img =>
+    img.filename.toLowerCase().includes(gallerySearch.toLowerCase())
+  );
 
   useEffect(() => {
     // Extract unique categories from menu items
@@ -202,6 +280,7 @@ export default function MenuManagementPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <BranchSelector />
               <button
                 onClick={() => router.push('/orders')}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
@@ -475,16 +554,114 @@ export default function MenuManagementPage() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL รูปภาพ</label>
-                <input
-                  type="text"
-                  value={formData.image || ''}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="https://..."
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">รูปภาพ</label>
+
+                {/* Image Preview */}
+                {formData.image && (
+                  <div className="mb-3 relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="w-full h-48 object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Image+Error'; }}
+                    />
+                    <button
+                      onClick={() => setFormData({ ...formData, image: '' })}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Mode Toggle */}
+                <div className="flex gap-1 mb-3 bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setImageInputMode('upload')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      imageInputMode === 'upload'
+                        ? 'bg-white text-orange-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <Upload className="w-4 h-4" />
+                    อัพโหลดรูป
+                  </button>
+                  <button
+                    onClick={() => setImageInputMode('url')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all ${
+                      imageInputMode === 'url'
+                        ? 'bg-white text-orange-600 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <Link className="w-4 h-4" />
+                    ใส่ URL
+                  </button>
+                </div>
+
+                {imageInputMode === 'upload' ? (
+                  <div>
+                    {/* Drag & Drop Zone */}
+                    <div
+                      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                      onDragLeave={() => setDragOver(false)}
+                      onDrop={handleDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                        dragOver
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
+                      } ${uploading ? 'opacity-60 pointer-events-none' : ''}`}
+                    >
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      {uploading ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
+                          <p className="text-sm text-orange-600 font-medium">กำลังอัพโหลด...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                            <Upload className="w-6 h-6 text-orange-500" />
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-semibold text-orange-600">คลิกเพื่อเลือกไฟล์</span> หรือลากไฟล์มาวางที่นี่
+                          </p>
+                          <p className="text-xs text-gray-400">JPG, PNG, WebP, GIF (ไม่เกิน 5MB)</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Gallery Button */}
+                    <button
+                      onClick={() => { loadGalleryImages(); setShowImageGallery(true); }}
+                      className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50 hover:border-orange-300 transition-all"
+                    >
+                      <FolderOpen className="w-4 h-4" />
+                      เลือกจากคลังรูปภาพ
+                    </button>
+                  </div>
+                ) : (
+                  <div>
+                    <input
+                      type="text"
+                      value={formData.image || ''}
+                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="https://..."
+                    />
+                    <p className="mt-1 text-xs text-gray-400">วาง URL รูปภาพจากเว็บไซต์ภายนอก</p>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
@@ -683,6 +860,147 @@ export default function MenuManagementPage() {
                 <Save className="w-5 h-5" />
                 บันทึก
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Gallery Modal */}
+      {showImageGallery && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowImageGallery(false)}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Gallery Header */}
+            <div className="p-5 border-b flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <ImageIcon className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-800">คลังรูปภาพ</h3>
+                  <p className="text-xs text-gray-500">{galleryImages.length} รูปภาพ</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowImageGallery(false)}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search & Upload */}
+            <div className="p-4 border-b flex gap-3 shrink-0">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={gallerySearch}
+                  onChange={(e) => setGallerySearch(e.target.value)}
+                  placeholder="ค้นหาชื่อไฟล์..."
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/jpeg,image/png,image/webp,image/gif';
+                  input.onchange = async (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      setUploading(true);
+                      try {
+                        const result = await api.uploadImage(file);
+                        setGalleryImages(prev => [{ url: result.url, filename: result.filename, size: file.size, uploadedAt: new Date().toISOString() }, ...prev]);
+                      } catch (err: any) {
+                        alert(err.message || 'อัพโหลดไม่สำเร็จ');
+                      } finally {
+                        setUploading(false);
+                      }
+                    }
+                  };
+                  input.click();
+                }}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all text-sm font-medium disabled:opacity-50"
+              >
+                {uploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                อัพโหลด
+              </button>
+              <button
+                onClick={loadGalleryImages}
+                disabled={galleryLoading}
+                className="p-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-all"
+              >
+                <RefreshCw className={`w-4 h-4 text-gray-500 ${galleryLoading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
+            {/* Gallery Grid */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {galleryLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-8 h-8 text-orange-500 animate-spin" />
+                </div>
+              ) : filteredGalleryImages.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="text-sm">{gallerySearch ? 'ไม่พบรูปภาพที่ค้นหา' : 'ยังไม่มีรูปภาพในคลัง'}</p>
+                  <p className="text-xs mt-1">อัพโหลดรูปภาพใหม่เพื่อเริ่มต้น</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {filteredGalleryImages.map((img) => (
+                    <div
+                      key={img.filename}
+                      className={`group relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer hover:shadow-lg ${
+                        formData.image === img.url ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200 hover:border-orange-300'
+                      }`}
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.filename}
+                        className="w-full h-32 object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200x128?text=Error'; }}
+                      />
+
+                      {/* Selected indicator */}
+                      {formData.image === img.url && (
+                        <div className="absolute top-2 left-2">
+                          <CheckCircle className="w-6 h-6 text-orange-500 bg-white rounded-full" />
+                        </div>
+                      )}
+
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                        <button
+                          onClick={() => handleSelectGalleryImage(img.url)}
+                          className="px-3 py-1.5 bg-orange-500 text-white rounded-lg text-xs font-medium hover:bg-orange-600 transition-all shadow-lg"
+                        >
+                          เลือก
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteGalleryImage(img.filename); }}
+                          className="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-medium hover:bg-red-600 transition-all shadow-lg"
+                        >
+                          ลบ
+                        </button>
+                      </div>
+
+                      {/* File info */}
+                      <div className="p-2 bg-white">
+                        <p className="text-xs text-gray-600 truncate font-medium">{img.filename}</p>
+                        <p className="text-xs text-gray-400">
+                          {(img.size / 1024).toFixed(0)} KB
+                          {' · '}
+                          {new Date(img.uploadedAt).toLocaleDateString('th-TH')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import BranchSelector from '@/components/BranchSelector';
 
 interface StaffUser {
   id: number;
@@ -210,22 +211,25 @@ export default function StaffManagementPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 shadow-xl">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-2">
-            <Link
-              href="/admin"
-              className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3">
-                <Users className="w-8 h-8" />
-                จัดการพนักงาน
-              </h1>
-              <p className="text-indigo-200 mt-1">
-                Staff Management - เพิ่ม/แก้ไข/ลบ พนักงาน
-              </p>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/admin"
+                className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div>
+                <h1 className="text-3xl font-bold flex items-center gap-3">
+                  <Users className="w-8 h-8" />
+                  จัดการพนักงาน
+                </h1>
+                <p className="text-indigo-200 mt-1">
+                  Staff Management - เพิ่ม/แก้ไข/ลบ พนักงาน
+                </p>
+              </div>
             </div>
+            <BranchSelector />
           </div>
         </div>
       </div>

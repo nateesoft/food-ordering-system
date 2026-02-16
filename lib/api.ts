@@ -134,6 +134,9 @@ export interface CreateOrderDto {
   tableNumber?: string;
   totalAmount: number;
   totalItems: number;
+  serviceCharge?: number;
+  vat?: number;
+  sessionId?: number;
   items: {
     menuItemId: number;
     quantity: number;
@@ -199,10 +202,137 @@ export interface StaffCheckInResponse {
   };
 }
 
+export interface ShiftResponse {
+  id: number;
+  shiftNumber: string;
+  status: 'OPEN' | 'CLOSED';
+  userId: number;
+  cashierName: string;
+  branchId: number | null;
+  openedAt: string;
+  closedAt: string | null;
+  openingAmount: number;
+  closingAmount: number | null;
+  expectedCashAmount: number | null;
+  cashDifference: number | null;
+  totalRevenue: number | null;
+  totalOrders: number | null;
+  cashTotal: number | null;
+  transferTotal: number | null;
+  creditCardTotal: number | null;
+  openingCashCount: Record<string, number> | null;
+  closingCashCount: Record<string, number> | null;
+  notes: string | null;
+  closingNotes: string | null;
+}
+
+export interface ShiftSummaryResponse extends ShiftResponse {
+  payments: any[];
+}
+
+export interface PromotionResponse {
+  id: number;
+  name: string;
+  description: string | null;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'COUPON' | 'HAPPY_HOUR';
+  status: 'ACTIVE' | 'INACTIVE' | 'EXPIRED';
+  discountValue: number;
+  maxDiscount: number | null;
+  couponCode: string | null;
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  minOrderAmount: number | null;
+  categories: string[];
+  maxUses: number | null;
+  currentUses: number;
+  branchId: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PromotionStatsResponse {
+  totalActive: number;
+  totalUsesToday: number;
+  totalDiscountToday: number;
+}
+
+export interface CouponValidationResponse {
+  valid: boolean;
+  message: string;
+  promotion?: PromotionResponse;
+  discountAmount?: number;
+}
+
+export type WebhookEvent =
+  | 'ORDER_CREATED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_CANCELLED'
+  | 'PAYMENT_COMPLETED'
+  | 'PAYMENT_REFUNDED'
+  | 'QUEUE_CREATED'
+  | 'QUEUE_STATUS_CHANGED'
+  | 'MEMBER_REGISTERED'
+  | 'SHIFT_OPENED'
+  | 'SHIFT_CLOSED'
+  | 'LOW_STOCK_ALERT';
+
+export interface WebhookEndpointResponse {
+  id: number;
+  name: string;
+  url: string;
+  secret: string;
+  events: WebhookEvent[];
+  isActive: boolean;
+  branchId: number | null;
+  headers: Record<string, string> | null;
+  description: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookDeliveryResponse {
+  id: number;
+  webhookId: number;
+  event: WebhookEvent;
+  payload: any;
+  responseStatus: number | null;
+  responseBody: string | null;
+  success: boolean;
+  attempts: number;
+  error: string | null;
+  duration: number | null;
+  createdAt: string;
+}
+
+export interface WebhookEventInfo {
+  value: WebhookEvent;
+  label: string;
+}
+
+export interface WebhookTestResult {
+  success: boolean;
+  responseStatus: number | null;
+  responseBody: string | null;
+  error: string | null;
+  duration: number | null;
+  delivery: WebhookDeliveryResponse;
+}
+
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const branchHeaders: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const branchId = localStorage.getItem('selectedBranchId');
+    if (branchId) {
+      branchHeaders['x-branch-id'] = branchId;
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      ...branchHeaders,
       ...options?.headers,
     },
     ...options,
@@ -246,6 +376,26 @@ export const api = {
   getWaitingQueues: () => fetchApi<QueueTicketResponse[]>('/queue/waiting'),
 
   getReadyQueues: () => fetchApi<QueueTicketResponse[]>('/queue/ready'),
+
+  getTodayQueues: () => fetchApi<QueueTicketResponse[]>('/queue/today'),
+
+  getAllQueues: (status?: string) => {
+    const query = status ? `?status=${status}` : '';
+    return fetchApi<QueueTicketResponse[]>(`/queue${query}`);
+  },
+
+  getQueueStats: () => fetchApi<any>('/queue/stats'),
+
+  updateQueueStatus: (id: number, status: string) =>
+    fetchApi<QueueTicketResponse>(`/queue/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  callQueue: (id: number) =>
+    fetchApi<QueueTicketResponse>(`/queue/${id}/call`, {
+      method: 'POST',
+    }),
 
   // Members
   getMemberByMemberId: (memberId: string) => fetchApi<any>(`/members/member-id/${memberId}`),
@@ -375,6 +525,11 @@ export const api = {
     discountPoints?: number;
     cashierName?: string;
     note?: string;
+    shiftId?: number;
+    promotionId?: number;
+    couponCode?: string;
+    serviceCharge?: number;
+    vat?: number;
   }) =>
     fetchApi<any>('/payments', {
       method: 'POST',
@@ -469,6 +624,287 @@ export const api = {
     const query = searchParams.toString();
     return fetchApi<any[]>(`/inventory/transactions${query ? `?${query}` : ''}`);
   },
+
+  // ===== Reports =====
+  getRevenueReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/revenue?startDate=${startDate}&endDate=${endDate}`),
+
+  getOrdersReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/orders?startDate=${startDate}&endDate=${endDate}`),
+
+  getMenuPerformanceReport: (startDate: string, endDate: string) =>
+    fetchApi<any>(`/dashboard/reports/menu-performance?startDate=${startDate}&endDate=${endDate}`),
+
+  getMemberAnalytics: () =>
+    fetchApi<any>('/dashboard/reports/member-analytics'),
+
+  getDailySummary: (startDate: string, endDate: string) =>
+    fetchApi<any[]>(`/dashboard/reports/daily-summary?startDate=${startDate}&endDate=${endDate}`),
+
+  // ===== Branches =====
+  getBranches: () => fetchApi<any[]>('/branches'),
+
+  getBranch: (id: number) => fetchApi<any>(`/branches/${id}`),
+
+  createBranch: (data: { name: string; code: string; address?: string; phone?: string }) =>
+    fetchApi<any>('/branches', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateBranch: (id: number, data: { name?: string; code?: string; address?: string; phone?: string; isActive?: boolean }) =>
+    fetchApi<any>(`/branches/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteBranch: (id: number) =>
+    fetchApi<any>(`/branches/${id}`, {
+      method: 'DELETE',
+    }),
+
+  // ===== Shifts =====
+  openShift: (data: { pin: string; openingAmount: number; openingCashCount?: Record<string, number>; notes?: string }) =>
+    fetchApi<ShiftResponse>('/shifts/open', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  closeShift: (id: number, data: { closingAmount: number; closingCashCount?: Record<string, number>; notes?: string }) =>
+    fetchApi<ShiftResponse>(`/shifts/${id}/close`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getActiveShift: () => fetchApi<ShiftResponse | null>('/shifts/active'),
+
+  getShifts: (params?: { status?: string; startDate?: string; endDate?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.startDate) searchParams.append('startDate', params.startDate);
+    if (params?.endDate) searchParams.append('endDate', params.endDate);
+    const query = searchParams.toString();
+    return fetchApi<ShiftResponse[]>(`/shifts${query ? `?${query}` : ''}`);
+  },
+
+  getShift: (id: number) => fetchApi<ShiftResponse>(`/shifts/${id}`),
+
+  getShiftSummary: (id: number) => fetchApi<ShiftSummaryResponse>(`/shifts/${id}/summary`),
+
+  // ===== Promotions =====
+  getPromotions: (status?: string) => {
+    const query = status ? `?status=${status}` : '';
+    return fetchApi<PromotionResponse[]>(`/promotions${query}`);
+  },
+
+  getAvailablePromotions: (subtotal?: number) => {
+    const query = subtotal ? `?subtotal=${subtotal}` : '';
+    return fetchApi<PromotionResponse[]>(`/promotions/available${query}`);
+  },
+
+  getPromotionStats: () => fetchApi<PromotionStatsResponse>('/promotions/stats'),
+
+  getPromotion: (id: number) => fetchApi<PromotionResponse>(`/promotions/${id}`),
+
+  createPromotion: (data: {
+    name: string;
+    type: string;
+    discountValue: number;
+    maxDiscount?: number;
+    couponCode?: string;
+    startDate: string;
+    endDate: string;
+    startTime?: string;
+    endTime?: string;
+    minOrderAmount?: number;
+    categories?: string[];
+    maxUses?: number;
+    description?: string;
+  }) =>
+    fetchApi<PromotionResponse>('/promotions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updatePromotion: (id: number, data: Record<string, any>) =>
+    fetchApi<PromotionResponse>(`/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deletePromotion: (id: number) =>
+    fetchApi<PromotionResponse>(`/promotions/${id}`, {
+      method: 'DELETE',
+    }),
+
+  validateCoupon: (couponCode: string, subtotal: number) =>
+    fetchApi<CouponValidationResponse>('/promotions/validate-coupon', {
+      method: 'POST',
+      body: JSON.stringify({ couponCode, subtotal }),
+    }),
+
+  // ===== Merge / Split Orders =====
+  createMergedPayment: (data: {
+    orderIds: number[];
+    paymentMethod: string;
+    paidAmount: number;
+    memberId?: string;
+    discountPoints?: number;
+    cashierName?: string;
+    note?: string;
+    shiftId?: number;
+    promotionId?: number;
+    couponCode?: string;
+  }) =>
+    fetchApi<any>('/payments/merge', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  splitOrder: (orderId: number, groups: { itemIds: number[] }[]) =>
+    fetchApi<any>(`/orders/${orderId}/split`, {
+      method: 'POST',
+      body: JSON.stringify({ groups }),
+    }),
+
+  // ===== Tables & Sessions =====
+  getTables: (params?: { status?: string; zone?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append('status', params.status);
+    if (params?.zone) searchParams.append('zone', params.zone);
+    const query = searchParams.toString();
+    return fetchApi<any[]>(`/tables${query ? `?${query}` : ''}`);
+  },
+
+  getTableStats: () => fetchApi<{ available: number; occupied: number; reserved: number; total: number }>('/tables/stats'),
+
+  getTableZones: () => fetchApi<string[]>('/tables/zones'),
+
+  updateTableStatus: (id: number, status: string, currentGuests?: number) =>
+    fetchApi<any>(`/tables/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, currentGuests }),
+    }),
+
+  openTableSession: (tableId: number, data: {
+    openedBy: string;
+    customerCount?: number;
+    customerGender?: string;
+    customerNationality?: string;
+    orderType?: string;
+  }) =>
+    fetchApi<any>(`/tables/${tableId}/open-session`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  closeTableSession: (tableId: number) =>
+    fetchApi<any>(`/tables/${tableId}/close-session`, {
+      method: 'POST',
+    }),
+
+  getActiveTableSession: (tableId: number) =>
+    fetchApi<any>(`/tables/${tableId}/active-session`),
+
+  // Table CRUD (Admin)
+  createTable: (data: {
+    number: string;
+    capacity: number;
+    size: string;
+    shape?: string;
+    positionX: number;
+    positionY: number;
+    zone?: string;
+    status?: string;
+  }) =>
+    fetchApi<any>('/tables', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateTable: (id: number, data: Record<string, any>) =>
+    fetchApi<any>(`/tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteTable: (id: number) =>
+    fetchApi<any>(`/tables/${id}`, {
+      method: 'DELETE',
+    }),
+
+  getTable: (id: number) => fetchApi<any>(`/tables/${id}`),
+
+  bulkUpdateTablePositions: (updates: { id: number; positionX: number; positionY: number }[]) =>
+    fetchApi<any>('/tables/bulk-positions', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    }),
+
+  // ===== Webhooks =====
+  getWebhooks: () => fetchApi<WebhookEndpointResponse[]>('/webhooks'),
+
+  getWebhook: (id: number) => fetchApi<WebhookEndpointResponse>(`/webhooks/${id}`),
+
+  createWebhook: (data: {
+    name: string;
+    url: string;
+    events: WebhookEvent[];
+    isActive?: boolean;
+    headers?: Record<string, string>;
+    description?: string;
+  }) =>
+    fetchApi<WebhookEndpointResponse>('/webhooks', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateWebhook: (id: number, data: Record<string, any>) =>
+    fetchApi<WebhookEndpointResponse>(`/webhooks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  deleteWebhook: (id: number) =>
+    fetchApi<{ message: string }>(`/webhooks/${id}`, {
+      method: 'DELETE',
+    }),
+
+  testWebhook: (id: number) =>
+    fetchApi<WebhookTestResult>(`/webhooks/${id}/test`, {
+      method: 'POST',
+    }),
+
+  getWebhookDeliveries: (id: number, limit?: number) => {
+    const query = limit ? `?limit=${limit}` : '';
+    return fetchApi<WebhookDeliveryResponse[]>(`/webhooks/${id}/deliveries${query}`);
+  },
+
+  getWebhookEvents: () => fetchApi<WebhookEventInfo[]>('/webhooks/events'),
+
+  // Upload / Image Management
+  uploadImage: async (file: File): Promise<{ url: string; filename: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/upload/image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || `Upload failed: ${response.status}`);
+    }
+
+    return response.json();
+  },
+
+  getUploadedImages: () =>
+    fetchApi<{ images: { url: string; filename: string; size: number; uploadedAt: string }[] }>('/upload/images'),
+
+  deleteUploadedImage: (filename: string) =>
+    fetchApi<{ message: string }>(`/upload/images/${filename}`, { method: 'DELETE' }),
 };
 
 export default api;
