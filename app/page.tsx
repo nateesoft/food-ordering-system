@@ -48,21 +48,21 @@ export default function Home() {
 
   const [tables] = useState<Table[]>([
     // ด้านหน้าร้าน
-    { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
-    { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small' },
-    { id: 3, number: 'A3', capacity: 4, status: 'available', position: { x: 50, y: 10 }, size: 'medium' },
-    { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium' },
+    { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small', shape: 'square' },
+    { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small', shape: 'square' },
+    { id: 3, number: 'A3', capacity: 4, status: 'available', position: { x: 50, y: 10 }, size: 'medium', shape: 'square' },
+    { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium', shape: 'square' },
 
     // กลางร้าน
-    { id: 5, number: 'B1', capacity: 4, status: 'available', position: { x: 10, y: 40 }, size: 'medium' },
-    { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium' },
-    { id: 7, number: 'B3', capacity: 6, status: 'available', position: { x: 60, y: 40 }, size: 'large' },
+    { id: 5, number: 'B1', capacity: 4, status: 'available', position: { x: 10, y: 40 }, size: 'medium', shape: 'circle' },
+    { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium', shape: 'circle' },
+    { id: 7, number: 'B3', capacity: 6, status: 'available', position: { x: 60, y: 40 }, size: 'large', shape: 'rectangle' },
 
     // ด้านหลัง
-    { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small' },
-    { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small' },
-    { id: 10, number: 'C3', capacity: 4, status: 'available', position: { x: 50, y: 70 }, size: 'medium' },
-    { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large' },
+    { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small', shape: 'square' },
+    { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small', shape: 'square' },
+    { id: 10, number: 'C3', capacity: 4, status: 'available', position: { x: 50, y: 70 }, size: 'medium', shape: 'circle' },
+    { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large', shape: 'rectangle' },
   ]);
 
   const handleSelectTable = (tableNumber: string) => {

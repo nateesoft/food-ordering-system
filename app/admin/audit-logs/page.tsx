@@ -13,6 +13,7 @@ const ACTION_LABELS: Record<string, string> = {
   ORDER_CANCELLED: 'ยกเลิกออเดอร์',
   ORDER_ITEM_STATUS_CHANGED: 'เปลี่ยนสถานะรายการ',
   ORDER_SPLIT: 'แยกออเดอร์',
+  ORDER_TABLE_TRANSFERRED: 'ย้ายโต๊ะ',
   PAYMENT_CREATED: 'ชำระเงิน',
   PAYMENT_MERGED: 'รวมชำระเงิน',
   PAYMENT_REFUNDED: 'คืนเงิน',
@@ -24,6 +25,7 @@ const ACTION_COLORS: Record<string, string> = {
   ORDER_CANCELLED: 'bg-red-100 text-red-800',
   ORDER_ITEM_STATUS_CHANGED: 'bg-blue-100 text-blue-800',
   ORDER_SPLIT: 'bg-amber-100 text-amber-800',
+  ORDER_TABLE_TRANSFERRED: 'bg-cyan-100 text-cyan-800',
   PAYMENT_CREATED: 'bg-green-100 text-green-800',
   PAYMENT_MERGED: 'bg-amber-100 text-amber-800',
   PAYMENT_REFUNDED: 'bg-red-100 text-red-800',
@@ -62,6 +64,9 @@ function getSummary(log: AuditLogEntry): string {
   }
   if (log.action === 'ORDER_SPLIT' && newVal?.splitInto) {
     return `แยกเป็น ${newVal.splitInto.length} ออเดอร์`;
+  }
+  if (log.action === 'ORDER_TABLE_TRANSFERRED' && oldVal && newVal) {
+    return `โต๊ะ ${oldVal.tableNumber} → ${newVal.tableNumber}`;
   }
   if (log.action === 'PAYMENT_CREATED' && newVal) {
     return `${newVal.receiptNumber} - ฿${newVal.totalAmount?.toLocaleString()} (${newVal.paymentMethod})`;

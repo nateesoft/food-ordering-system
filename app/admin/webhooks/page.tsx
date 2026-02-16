@@ -217,7 +217,7 @@ export default function WebhooksPage() {
             <h1 className="text-xl font-bold text-gray-800">Webhooks</h1>
           </div>
           <div className="flex items-center gap-3">
-            <BranchSelector onBranchChange={loadData} />
+            <BranchSelector />
             <button onClick={loadData} className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
               <RefreshCw className="w-5 h-5" />
             </button>

@@ -544,6 +544,7 @@ export const api = {
     couponCode?: string;
     serviceCharge?: number;
     vat?: number;
+    splitPayments?: { method: string; amount: number }[];
   }) =>
     fetchApi<any>('/payments', {
       method: 'POST',
@@ -769,6 +770,7 @@ export const api = {
     shiftId?: number;
     promotionId?: number;
     couponCode?: string;
+    splitPayments?: { method: string; amount: number }[];
   }) =>
     fetchApi<any>('/payments/merge', {
       method: 'POST',
@@ -853,6 +855,17 @@ export const api = {
     fetchApi<any>('/tables/bulk-positions', {
       method: 'PATCH',
       body: JSON.stringify(updates),
+    }),
+
+  transferTable: (fromTableId: number, data: { toTableId: number; performedBy?: string }) =>
+    fetchApi<{
+      fromTable: any;
+      toTable: any;
+      transferredOrders: { id: number; orderId: string; totalAmount: number; totalItems: number }[];
+      newSession: any;
+    }>(`/tables/${fromTableId}/transfer`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     }),
 
   // ===== Webhooks =====
