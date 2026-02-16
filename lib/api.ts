@@ -345,6 +345,20 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return response.json();
 }
 
+export interface AuditLogEntry {
+  id: number;
+  action: string;
+  entityType: string;
+  entityId: number;
+  entityRef: string | null;
+  performedBy: string | null;
+  branchId: number | null;
+  oldValues: Record<string, any> | null;
+  newValues: Record<string, any> | null;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+}
+
 export const api = {
   // Menu
   getMenuItems: (params?: { category?: string; isActive?: boolean }) => {
@@ -905,6 +919,49 @@ export const api = {
 
   deleteUploadedImage: (filename: string) =>
     fetchApi<{ message: string }>(`/upload/images/${filename}`, { method: 'DELETE' }),
+
+  // Audit Logs
+  getAuditLogs: (filters?: {
+    entityType?: string;
+    entityId?: number;
+    action?: string;
+    performedBy?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const params = new URLSearchParams();
+    if (filters?.entityType) params.append('entityType', filters.entityType);
+    if (filters?.entityId) params.append('entityId', String(filters.entityId));
+    if (filters?.action) params.append('action', filters.action);
+    if (filters?.performedBy) params.append('performedBy', filters.performedBy);
+    if (filters?.startDate) params.append('startDate', filters.startDate);
+    if (filters?.endDate) params.append('endDate', filters.endDate);
+    if (filters?.page) params.append('page', String(filters.page));
+    if (filters?.limit) params.append('limit', String(filters.limit));
+    const qs = params.toString();
+    return fetchApi<{
+      data: AuditLogEntry[];
+      pagination: { page: number; limit: number; total: number; totalPages: number };
+    }>(`/audit-logs${qs ? `?${qs}` : ''}`);
+  },
+
+  getAuditLog: (id: number) => fetchApi<AuditLogEntry>(`/audit-logs/${id}`),
+
+  getAuditLogsByEntity: (entityType: string, entityId: number) =>
+    fetchApi<AuditLogEntry[]>(`/audit-logs/entity/${entityType}/${entityId}`),
+
+  getAuditStats: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const qs = params.toString();
+    return fetchApi<{
+      total: number;
+      byAction: { action: string; count: number }[];
+    }>(`/audit-logs/stats${qs ? `?${qs}` : ''}`);
+  },
 };
 
 export default api;

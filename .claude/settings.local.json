@@ -48,7 +48,8 @@
       "Bash(ls:*)",
       "Bash(node:*)",
       "Bash(PGPASSWORD=postgres psql:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

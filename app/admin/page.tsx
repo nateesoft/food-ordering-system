@@ -19,6 +19,7 @@ import {
   Tag,
   Webhook,
   Armchair,
+  FileText,
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
@@ -167,6 +168,15 @@ export default function AdminDashboard() {
       color: 'from-indigo-500 to-blue-500',
       iconBg: 'bg-indigo-100',
       iconColor: 'text-indigo-600'
+    },
+    {
+      title: 'Audit Logs',
+      description: 'ติดตามประวัติการดำเนินการ ออเดอร์ และการชำระเงิน',
+      icon: FileText,
+      href: '/admin/audit-logs',
+      color: 'from-gray-500 to-slate-600',
+      iconBg: 'bg-gray-100',
+      iconColor: 'text-gray-600'
     }
   ];
 
