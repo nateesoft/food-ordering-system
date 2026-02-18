@@ -49,7 +49,10 @@
       "Bash(node:*)",
       "Bash(PGPASSWORD=postgres psql:*)",
       "Bash(python3:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(xargs:*)",
+      "Bash(done)",
+      "Bash(npx jest:*)"
     ],
     "deny": [],
     "ask": []
