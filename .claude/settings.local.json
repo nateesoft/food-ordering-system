@@ -52,7 +52,8 @@
       "Bash(grep:*)",
       "Bash(xargs:*)",
       "Bash(done)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []
