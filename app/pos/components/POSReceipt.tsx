@@ -105,10 +105,26 @@ export default function POSReceipt({ payment, mergedOrders, onClose }: POSReceip
               <span>ยอดสุทธิ</span>
               <span>฿{payment.totalAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span>ชำระด้วย: {paymentMethodLabel[payment.paymentMethod]}</span>
-              <span>฿{payment.paidAmount.toFixed(2)}</span>
-            </div>
+            {payment.splitPayments && payment.splitPayments.length > 1 ? (
+              <>
+                <p className="text-xs text-gray-500 mt-1">ชำระด้วย:</p>
+                {payment.splitPayments.map((sp: any, idx: number) => (
+                  <div key={idx} className="flex justify-between text-sm pl-2">
+                    <span>{paymentMethodLabel[sp.method] || sp.method}</span>
+                    <span>฿{Number(sp.amount).toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between text-sm font-medium border-t border-gray-200 pt-1 mt-1">
+                  <span>รวมรับ</span>
+                  <span>฿{payment.paidAmount.toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span>ชำระด้วย: {paymentMethodLabel[payment.paymentMethod]}</span>
+                <span>฿{payment.paidAmount.toFixed(2)}</span>
+              </div>
+            )}
             {payment.changeAmount > 0 && (
               <div className="flex justify-between text-sm font-semibold text-blue-600">
                 <span>เงินทอน</span>

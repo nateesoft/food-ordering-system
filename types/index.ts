@@ -232,6 +232,7 @@ export interface Payment {
   promotionDiscount: number;
   promotionName: string | null;
   couponCode: string | null;
+  splitPayments?: { method: PaymentMethod; amount: number }[] | null;
 }
 
 export interface PaymentSummary {

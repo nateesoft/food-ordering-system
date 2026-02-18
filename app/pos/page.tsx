@@ -214,6 +214,17 @@ export default function POSPage() {
     loadSummary();
   };
 
+  const handleTransferTable = async (toTableId: number) => {
+    if (!selectedTable) return;
+    await api.transferTable(selectedTable.id, {
+      toTableId,
+      performedBy: cashierName ?? undefined,
+    });
+    setSelectedTable(null);
+    setCurrentSession(null);
+    setCurrentView('floor-plan');
+  };
+
   const handleBackToFloorPlan = () => {
     setSelectedTable(null);
     setCurrentSession(null);
@@ -287,6 +298,7 @@ export default function POSPage() {
             session={currentSession}
             onAddMore={() => setCurrentView('menu-order')}
             onPayment={handleGoToPayment}
+            onTransferTable={handleTransferTable}
           />
         ) : null;
 
