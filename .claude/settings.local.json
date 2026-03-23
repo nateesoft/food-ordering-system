@@ -53,7 +53,12 @@
       "Bash(xargs:*)",
       "Bash(done)",
       "Bash(npx jest:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(npx electron:*)",
+      "Bash(./node_modules/.bin/electron:*)",
+      "Bash(/Users/nateelive/Documents/Projects/GithubProject/import-xlsx-tranout/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(env:*)"
     ],
     "deny": [],
     "ask": []

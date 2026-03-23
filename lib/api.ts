@@ -975,6 +975,64 @@ export const api = {
       byAction: { action: string; count: number }[];
     }>(`/audit-logs/stats${qs ? `?${qs}` : ''}`);
   },
+
+  // ==========================================
+  // Tax Invoice
+  // ==========================================
+  createTaxInvoice: (data: { paymentId: number; buyerName: string; buyerTaxId: string; buyerAddress: string; buyerBranch?: string }) =>
+    fetchApi<any>('/tax-invoices', { method: 'POST', body: JSON.stringify(data) }),
+
+  getTaxInvoices: (startDate?: string, endDate?: string) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    const qs = params.toString();
+    return fetchApi<any[]>(`/tax-invoices${qs ? `?${qs}` : ''}`);
+  },
+
+  getTaxInvoice: (id: number) => fetchApi<any>(`/tax-invoices/${id}`),
+
+  voidTaxInvoice: (id: number, reason: string) =>
+    fetchApi<any>(`/tax-invoices/${id}/void`, { method: 'POST', body: JSON.stringify({ reason }) }),
+
+  getCompanyTaxInfo: () => fetchApi<any>('/tax-invoices/company/info'),
+
+  updateCompanyTaxInfo: (data: { companyName: string; taxId: string; address: string; phone?: string; companyNameEn?: string; branchNumber?: string; branchName?: string; isHeadOffice?: boolean }) =>
+    fetchApi<any>('/tax-invoices/company/info', { method: 'POST', body: JSON.stringify(data) }),
+
+  // ==========================================
+  // Payment Gateway
+  // ==========================================
+  initiateGatewayPayment: (data: { amount: number; paymentMethod: string }) =>
+    fetchApi<any>('/payment-gateway', { method: 'POST', body: JSON.stringify(data) }),
+
+  checkGatewayStatus: (transactionId: string) =>
+    fetchApi<any>(`/payment-gateway/${transactionId}/status`),
+
+  simulateGatewayComplete: (transactionId: string) =>
+    fetchApi<any>(`/payment-gateway/${transactionId}/simulate-complete`, { method: 'POST' }),
+
+  // ==========================================
+  // KDS (Kitchen Display System)
+  // ==========================================
+  getKDSOrders: (stationId?: number) => {
+    const qs = stationId ? `?stationId=${stationId}` : '';
+    return fetchApi<any[]>(`/kds/orders${qs}`);
+  },
+
+  getKDSStations: () => fetchApi<any[]>('/kds/stations'),
+
+  createKDSStation: (data: { name: string; categories: string[]; color?: string; alertTimeout?: number }) =>
+    fetchApi<any>('/kds/stations', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateKDSStation: (id: number, data: any) =>
+    fetchApi<any>(`/kds/stations/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+
+  deleteKDSStation: (id: number) =>
+    fetchApi<any>(`/kds/stations/${id}`, { method: 'DELETE' }),
+
+  bumpKDSItem: (orderId: number, itemId: number, status: string) =>
+    fetchApi<any>(`/kds/orders/${orderId}/items/${itemId}/bump`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 };
 
 export default api;
