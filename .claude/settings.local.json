@@ -58,7 +58,8 @@
       "Bash(./node_modules/.bin/electron:*)",
       "Bash(/Users/nateelive/Documents/Projects/GithubProject/import-xlsx-tranout/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron:*)",
       "Bash(npm uninstall:*)",
-      "Bash(env:*)"
+      "Bash(env:*)",
+      "Bash(docker ps:*)"
     ],
     "deny": [],
     "ask": []
