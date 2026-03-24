@@ -27,7 +27,14 @@ interface SelectedTable {
   currentGuests: number | null;
 }
 
-export default function POSPage() {
+export default function POSPage({ params }: { params: { branchId: string } }) {
+  // Sync branchId from URL into localStorage so fetchApi sends the correct x-branch-id header
+  useEffect(() => {
+    if (params.branchId) {
+      localStorage.setItem('selectedBranchId', params.branchId);
+    }
+  }, [params.branchId]);
+
   // Auth
   const [cashierName, setCashierName] = useState<string | null>(null);
 
@@ -293,6 +300,7 @@ export default function POSPage() {
       case 'order-status':
         return selectedTable ? (
           <POSOrderStatus
+            branchId={params.branchId}
             tableId={selectedTable.id}
             tableNumber={selectedTable.number}
             session={currentSession}
@@ -305,6 +313,7 @@ export default function POSPage() {
       case 'payment':
         return (
           <POSPayment
+            branchId={params.branchId}
             tableNumber={selectedTable?.number}
             cashierName={cashierName}
             activeShift={activeShift}

@@ -31,6 +31,7 @@ import { Payment, PaymentSummary, Member } from '@/types';
 // ===== Props =====
 
 interface POSPaymentProps {
+  branchId?: string;
   tableNumber?: string;
   cashierName: string;
   activeShift: ShiftResponse | null;

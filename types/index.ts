@@ -96,6 +96,7 @@ export interface Order {
   totalItems: number;
   orderDate: Date;
   status: 'completed' | 'preparing' | 'delivered';
+  branchId: string;
   tableNumber?: string;
 }
 
@@ -106,6 +107,7 @@ export interface ServiceRequest {
   details?: string;
   items?: string[];
   status: 'pending' | 'completed';
+  branchId: string;
   tableNumber?: string;
 }
 

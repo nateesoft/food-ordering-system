@@ -6,6 +6,7 @@ import { api, OrderResponse } from '@/lib/api';
 import { TableSession } from '@/types';
 
 interface POSOrderStatusProps {
+  branchId: string;
   tableId: number;
   tableNumber: string;
   session: TableSession | null;
@@ -23,7 +24,7 @@ const statusLabels: Record<string, { label: string; color: string; borderColor: 
   CANCELLED: { label: 'ยกเลิก', color: 'bg-red-100 text-red-700', borderColor: 'border-l-red-500' },
 };
 
-export default function POSOrderStatus({ tableId, tableNumber, session, onAddMore, onPayment, onTransferTable }: POSOrderStatusProps) {
+export default function POSOrderStatus({ branchId, tableId, tableNumber, session, onAddMore, onPayment, onTransferTable }: POSOrderStatusProps) {
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTransferModal, setShowTransferModal] = useState(false);
@@ -40,7 +41,7 @@ export default function POSOrderStatus({ tableId, tableNumber, session, onAddMor
     } finally {
       setLoading(false);
     }
-  }, [tableNumber]);
+  }, [tableNumber, branchId]);
 
   useEffect(() => {
     loadOrders();

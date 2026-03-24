@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import BranchSelector from '@/components/BranchSelector';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ params }: { params: { branchId: string } }) {
   const adminSections = [
     {
       title: 'QR Code Management',

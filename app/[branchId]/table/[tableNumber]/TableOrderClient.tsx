@@ -70,12 +70,20 @@ const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
 };
 
 interface TableOrderClientProps {
+  branchId: string;
   tableNumber: string;
 }
 
-export default function TableOrderClient({ tableNumber }: TableOrderClientProps) {
+export default function TableOrderClient({ branchId, tableNumber }: TableOrderClientProps) {
   const router = useRouter();
   const { t } = useLanguage();
+
+  // Sync branchId from URL into localStorage so fetchApi sends the correct x-branch-id header
+  useEffect(() => {
+    if (branchId) {
+      localStorage.setItem('selectedBranchId', branchId);
+    }
+  }, [branchId]);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(t.categories.all);
@@ -94,7 +102,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
 
   const handleShowQr = async () => {
     try {
-      const url = `${window.location.origin}/table/${tableNumber}`;
+      const url = `${window.location.origin}/${branchId}/table/${tableNumber}`;
       const dataUrl = await QRCode.toDataURL(url, {
         width: 300, margin: 2,
         color: { dark: '#000000', light: '#ffffff' },
@@ -150,7 +158,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   useEffect(() => {
     const fetchTableStaff = async () => {
       try {
-        const response = await api.getTableStaff(tableNumber);
+        const response = await api.getTableStaff(branchId, tableNumber);
         if (response.staff && response.staff.length > 0) {
           setCurrentStaff(response.staff[0]);
         }
@@ -161,18 +169,18 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
     };
 
     fetchTableStaff();
-  }, [tableNumber]);
+  }, [branchId, tableNumber]);
 
   // Heartbeat to update lastSeenAt when staff is checked in
   useEffect(() => {
     if (!currentStaff) return;
 
-    const storedPin = sessionStorage.getItem(`staff_pin_${tableNumber}`);
+    const storedPin = sessionStorage.getItem(`staff_pin_${branchId}_${tableNumber}`);
     if (!storedPin) return;
 
     const heartbeatInterval = setInterval(async () => {
       try {
-        await api.staffHeartbeat({ pin: storedPin, tableNumber });
+        await api.staffHeartbeat({ pin: storedPin, tableNumber, branchId });
       } catch (err) {
         console.error('Heartbeat failed:', err);
       }
@@ -184,12 +192,12 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
   const handleStaffCheckInSuccess = (staffInfo: StaffInfo, pin: string) => {
     setCurrentStaff(staffInfo);
     // Store PIN in session for heartbeat
-    sessionStorage.setItem(`staff_pin_${tableNumber}`, pin);
+    sessionStorage.setItem(`staff_pin_${branchId}_${tableNumber}`, pin);
   };
 
   const handleStaffCheckOutSuccess = () => {
     setCurrentStaff(null);
-    sessionStorage.removeItem(`staff_pin_${tableNumber}`);
+    sessionStorage.removeItem(`staff_pin_${branchId}_${tableNumber}`);
   };
 
   // Poll API for order status updates (syncs with staff updates from /orders)
@@ -207,6 +215,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
             totalItems: apiOrder.totalItems,
             orderDate: new Date(apiOrder.createdAt),
             status: (apiOrder.status?.toLowerCase() || 'preparing') as Order['status'],
+            branchId: branchId,
             tableNumber: apiOrder.tableNumber,
             items: items.map((item: any, index: number) => ({
               id: item.menuItemId || item.id || index,
@@ -393,6 +402,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
         orderDate: new Date(response.createdAt),
         status: 'preparing',
         tableNumber: tableNumber,
+        branchId: branchId,
       };
 
       const updatedHistory = [newOrder, ...orderHistory];
@@ -620,6 +630,7 @@ export default function TableOrderClient({ tableNumber }: TableOrderClientProps)
       <StaffCheckInModal
         isOpen={showStaffModal}
         onClose={() => setShowStaffModal(false)}
+        branchId={branchId}
         tableNumber={tableNumber}
         onCheckInSuccess={handleStaffCheckInSuccess}
         onCheckOutSuccess={handleStaffCheckOutSuccess}

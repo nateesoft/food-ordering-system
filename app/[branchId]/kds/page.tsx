@@ -5,9 +5,8 @@ import api from '@/lib/api';
 import { useSocket } from '@/lib/hooks/useSocket';
 import { useKDSUpdates } from '@/lib/hooks/useKDSUpdates';
 import KDSOrderCard from './components/KDSOrderCard';
-import KDSTimer from './components/KDSTimer';
 
-export default function KDSPage() {
+export default function KDSPage({ params }: { params: { branchId: string } }) {
   const [orders, setOrders] = useState<any[]>([]);
   const [stations, setStations] = useState<any[]>([]);
   const [selectedStation, setSelectedStation] = useState<number | null>(null);

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChefHat, Users, MapPin, UserCheck, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useBranch } from '@/contexts/BranchContext';
 import { Table } from '@/types';
 import { api } from '@/lib/api';
 
@@ -27,6 +28,7 @@ const formatTime = (dateString: string) => {
 export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { selectedBranch } = useBranch();
   const [staffAssignments, setStaffAssignments] = useState<Record<string, StaffAssignment[]>>({});
 
   // Fetch staff assignments
@@ -66,7 +68,9 @@ export default function Home() {
   ]);
 
   const handleSelectTable = (tableNumber: string) => {
-    router.push(`/table/${tableNumber}`);
+    const branchId = selectedBranch?.id;
+    if (!branchId) return;
+    router.push(`/${branchId}/table/${tableNumber}`);
   };
 
   const getTableColor = (status: string) => {
@@ -274,7 +278,7 @@ export default function Home() {
         <div className="mt-8 text-center">
           <p className="text-gray-500 mb-4">หรือสั่งอาหารแบบ Self-Service</p>
           <button
-            onClick={() => router.push('/kiosk')}
+            onClick={() => selectedBranch && router.push(`/${selectedBranch.id}/kiosk`)}
             className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-orange-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
           >
             🥡 สั่งผ่าน Kiosk (ไม่ต้องเลือกโต๊ะ)

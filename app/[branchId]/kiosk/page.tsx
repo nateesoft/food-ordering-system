@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { ShoppingCart, Home, Utensils, Package, ArrowLeft, Loader2, Tag, Ticket, Clock } from 'lucide-react';
 import { MenuItem, CartItem, QueueTicket, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMenuOptions';
@@ -60,7 +61,16 @@ const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
 };
 
 export default function KioskPage() {
+  const params = useParams();
   const { t, language } = useLanguage();
+
+  // Sync branchId from URL into localStorage so fetchApi sends the correct x-branch-id header
+  useEffect(() => {
+    const branchId = params?.branchId as string;
+    if (branchId) {
+      localStorage.setItem('selectedBranchId', branchId);
+    }
+  }, [params?.branchId]);
   const [step, setStep] = useState<'welcome' | 'order-type' | 'menu' | 'cart' | 'confirm' | 'queue'>('welcome');
   const [orderType, setOrderType] = useState<'dine-in' | 'takeaway'>('dine-in');
   const [cart, setCart] = useState<CartItem[]>([]);

@@ -122,6 +122,7 @@ export interface ServiceRequestResponse {
   id: number;
   requestId: string;
   type: string;
+  branchId: string | null;
   tableNumber: string | null;
   details: string | null;
   items: string[];
@@ -131,7 +132,7 @@ export interface ServiceRequestResponse {
 }
 
 export interface CreateOrderDto {
-  tableNumber?: string;
+  tableNumber: string;
   totalAmount: number;
   totalItems: number;
   serviceCharge?: number;
@@ -152,6 +153,7 @@ export interface CreateOrderDto {
 export interface OrderResponse {
   id: number;
   orderId: string;
+  branchId: string;
   tableNumber: string;
   totalAmount: number;
   totalItems: number;
@@ -164,23 +166,18 @@ export interface OrderResponse {
 // Staff Check-in Types
 export interface StaffCheckInDto {
   pin: string;
+  branchId: string;
   tableNumber: string;
 }
 
 export interface StaffCheckOutDto {
   pin: string;
+  branchId: string;
   tableNumber: string;
 }
 
-export interface StaffInfo {
-  id: number;
-  name: string;
-  role: string;
-  checkedInAt: string;
-  lastSeenAt: string;
-}
-
 export interface TableStaffResponse {
+  branchId: string;
   tableNumber: string;
   staff: StaffInfo[];
 }
@@ -189,6 +186,7 @@ export interface StaffCheckInResponse {
   message: string;
   assignment: {
     id: number;
+    branchId: string;
     tableNumber: string;
     userId: number;
     checkedInAt: string;
@@ -339,7 +337,8 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody?.message || `API Error: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
@@ -424,9 +423,9 @@ export const api = {
   getOrdersByTable: (tableNumber: string) =>
     fetchApi<OrderResponse[]>(`/orders/table/${tableNumber}`),
 
-  getTodayOrders: () => fetchApi<OrderResponse[]>('/orders/today'),
+  getTodayOrders: () => fetchApi<OrderResponse[]>(`/orders/today`),
 
-  getAllOrders: () => fetchApi<OrderResponse[]>('/orders'),
+  getAllOrders: () => fetchApi<OrderResponse[]>(`/orders`),
 
   getTableOrdersAll: (tableNumber: string) =>
     fetchApi<OrderResponse[]>(`/orders?tableNumber=${tableNumber}`),
@@ -487,8 +486,8 @@ export const api = {
       body: JSON.stringify({ pin }),
     }),
 
-  getTableStaff: (tableNumber: string) =>
-    fetchApi<TableStaffResponse>(`/tables/number/${tableNumber}/staff`),
+  getTableStaff: (branchId: string, tableNumber: string) =>
+    fetchApi<TableStaffResponse>(`/${branchId}/tables/number/${tableNumber}/staff`),
 
   // Get all staff assignments grouped by table (for floor plan)
   getAllStaffAssignments: () =>

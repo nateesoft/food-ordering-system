@@ -32,6 +32,7 @@ interface Order {
   totalItems: number;
   orderDate: Date;
   status: 'preparing' | 'completed' | 'delivered';
+  branchId?: string;
   tableNumber?: string;
 }
 
@@ -42,6 +43,7 @@ interface ServiceRequest {
   details?: string;
   items?: string[];
   status: 'pending' | 'completed';
+  branchId?: string;
   tableNumber?: string;
 }
 
@@ -52,7 +54,7 @@ const MOCK_USERS: StaffUser[] = [
   { pin: '9999', name: 'Admin', role: 'admin' },
 ];
 
-export default function OrdersPage() {
+export default function OrdersPage({ params }: { params: { branchId: string } }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<StaffUser | null>(null);
@@ -112,6 +114,7 @@ export default function OrdersPage() {
         return {
           dbId: apiOrder.id,
           orderId: apiOrder.orderId,
+          branchId: apiOrder.branchId,
           tableNumber: apiOrder.tableNumber,
           totalAmount: apiOrder.totalAmount,
           totalItems: apiOrder.totalItems,
@@ -147,6 +150,7 @@ export default function OrdersPage() {
         details: req.details || undefined,
         items: req.items?.length ? req.items : undefined,
         status: req.status === 'PENDING' ? 'pending' as const : 'completed' as const,
+        branchId: req.branchId || undefined,
         tableNumber: req.tableNumber || undefined,
       }));
       setServiceRequests(transformed);
@@ -375,8 +379,8 @@ export default function OrdersPage() {
     setUnreadCount(updatedRequests.filter(req => req.status === 'pending').length);
 
     // If this is a payment request, clear all orders for that table
-    if (request && request.type === 'payment' && request.tableNumber) {
-      const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber);
+    if (request && request.type === 'payment' && request.tableNumber && request.branchId) {
+      const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber && order.branchId !== request.branchId);
       setOrders(updatedOrders);
     }
   };
@@ -642,7 +646,7 @@ export default function OrdersPage() {
                             <div>
                               <h3 className="font-bold text-gray-800">{getRequestLabel(request.type)}</h3>
                               <p className="text-sm text-gray-600">
-                                โต๊ะ {request.tableNumber || 'N/A'}
+                                สาขา {request.branchId || 'N/A'} - โต๊ะ {request.tableNumber || 'N/A'}
                               </p>
                             </div>
                           </div>
@@ -745,7 +749,7 @@ export default function OrdersPage() {
                         <div>
                           <h3 className="font-bold text-xl text-gray-800">#{order.orderId.slice(-6)}</h3>
                           <p className="text-sm text-gray-600">
-                            โต๊ะ {order.tableNumber || 'N/A'} • {new Date(order.orderDate).toLocaleTimeString('th-TH')}
+                            สาขา {order.branchId || 'N/A'} - โต๊ะ {order.tableNumber || 'N/A'} • {new Date(order.orderDate).toLocaleTimeString('th-TH')}
                           </p>
                         </div>
                         <div className={`px-4 py-2 rounded-full border-2 ${getStatusColor(order.status)} flex items-center gap-2 text-sm font-semibold`}>

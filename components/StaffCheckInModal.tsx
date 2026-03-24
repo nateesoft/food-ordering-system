@@ -7,6 +7,7 @@ import { api, StaffInfo } from '../lib/api';
 interface StaffCheckInModalProps {
   isOpen: boolean;
   onClose: () => void;
+  branchId: string;
   tableNumber: string;
   onCheckInSuccess: (staffInfo: StaffInfo, pin: string) => void;
   onCheckOutSuccess: () => void;
@@ -16,6 +17,7 @@ interface StaffCheckInModalProps {
 export default function StaffCheckInModal({
   isOpen,
   onClose,
+  branchId,
   tableNumber,
   onCheckInSuccess,
   onCheckOutSuccess,
@@ -53,7 +55,7 @@ export default function StaffCheckInModal({
     setError(null);
 
     try {
-      const response = await api.staffCheckIn({ pin, tableNumber });
+      const response = await api.staffCheckIn({ pin, tableNumber, branchId });
       const staffInfo: StaffInfo = {
         id: response.assignment.user.id,
         name: response.assignment.user.name,
@@ -80,7 +82,7 @@ export default function StaffCheckInModal({
     setError(null);
 
     try {
-      await api.staffCheckOut({ pin, tableNumber });
+      await api.staffCheckOut({ pin, tableNumber, branchId });
       onCheckOutSuccess();
       onClose();
     } catch (err) {
