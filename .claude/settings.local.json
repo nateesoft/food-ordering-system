@@ -59,7 +59,13 @@
       "Bash(/Users/nateelive/Documents/Projects/GithubProject/import-xlsx-tranout/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron:*)",
       "Bash(npm uninstall:*)",
       "Bash(env:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(xxd \"/Users/nateelive/Library/Application Support/NetBeans/28/config/J2EE/InstalledServers/instance\")",
+      "Read(//Users/nateelive/Documents/Projects/GithubProject/**)",
+      "Bash(npx create-next-app@latest pda-takeorder-next --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --no-git --skip-install)",
+      "Bash(npx create-next-app@latest pda-takeorder-next --typescript --tailwind --eslint --app --no-src-dir --import-alias \"@/*\" --no-git --skip-install --no-turbopack)",
+      "Bash(/tmp/analysis.txt:*)",
+      "Read(//tmp/**)"
     ],
     "deny": [],
     "ask": []
