@@ -374,7 +374,7 @@ export default function OrdersPage() {
     setServiceRequests(updatedRequests);
     setUnreadCount(updatedRequests.filter(req => req.status === 'pending').length);
 
-    // If this is a payment request, clear all orders for that table
+    // If this is a payment request, clear those table orders from local state
     if (request && request.type === 'payment' && request.tableNumber) {
       const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber);
       setOrders(updatedOrders);

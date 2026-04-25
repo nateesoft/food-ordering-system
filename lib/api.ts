@@ -34,6 +34,7 @@ export interface ApiNestedMenuConfig {
 
 export interface ApiMenuItem {
   id: number;
+  code: string;
   name: string;
   category: string;
   price: number;
@@ -434,6 +435,11 @@ export const api = {
     fetchApi<OrderResponse>(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    }),
+
+  completeOrdersByTable: (tableNumber: string) =>
+    fetchApi<{ count: number }>(`/orders/complete-by-table/${tableNumber}`, {
+      method: 'PATCH',
     }),
 
   updateOrderItemStatus: (orderId: number, itemId: number, status: string) =>
@@ -849,6 +855,8 @@ export const api = {
     }),
 
   getTable: (id: number) => fetchApi<any>(`/tables/${id}`),
+
+  getTableByNumber: (number: string) => fetchApi<any>(`/tables/number/${number}`),
 
   bulkUpdateTablePositions: (updates: { id: number; positionX: number; positionY: number }[]) =>
     fetchApi<any>('/tables/bulk-positions', {

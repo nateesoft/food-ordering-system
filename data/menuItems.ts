@@ -3,6 +3,7 @@ import { MenuItem } from '@/types';
 export const menuItems: MenuItem[] = [
   {
     id: 1,
+    code: '',
     name: 'ผัดไทย',
     category: 'อาหารจานเดียว',
     price: 60,
@@ -17,6 +18,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 2,
+    code: '',
     name: 'ข้าวผัดกุ้ง',
     category: 'อาหารจานเดียว',
     price: 70,
@@ -30,6 +32,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 3,
+    code: '',
     name: 'ต้มยำกุ้ง',
     category: 'ต้ม/แกง',
     price: 120,
@@ -43,6 +46,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 4,
+    code: '',
     name: 'ส้มตำไทย',
     category: 'ยำ/สลัด',
     price: 50,
@@ -56,6 +60,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 5,
+    code: '',
     name: 'แกงเขียวหวานไก่',
     category: 'ต้ม/แกง',
     price: 80,
@@ -69,6 +74,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 6,
+    code: '',
     name: 'ปลาทอดน้ำปลา',
     category: 'อาหารจานหลัก',
     price: 150,
@@ -82,6 +88,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 7,
+    code: '',
     name: 'ไอศกรีมกะทิ',
     category: 'ของหวาน',
     price: 40,
@@ -95,6 +102,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 8,
+    code: '',
     name: 'น้ำมะนาว',
     category: 'เครื่องดื่ม',
     price: 30,
@@ -108,6 +116,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 9,
+    code: '',
     name: 'กะเพราหมูกรอบ',
     category: 'อาหารจานเดียว',
     price: 65,
@@ -122,6 +131,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 10,
+    code: '',
     name: 'ข้าวมันไก่',
     category: 'อาหารจานเดียว',
     price: 55,
@@ -135,6 +145,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 11,
+    code: '',
     name: 'ชาไทย',
     category: 'เครื่องดื่ม',
     price: 25,
@@ -148,6 +159,7 @@ export const menuItems: MenuItem[] = [
   },
   {
     id: 12,
+    code: '',
     name: 'ข้าวเหนียวมะม่วง',
     category: 'ของหวาน',
     price: 50,
@@ -162,6 +174,7 @@ export const menuItems: MenuItem[] = [
   // Example Set Meal
   {
     id: 13,
+    code: '',
     name: 'เซ็ตอาหารกลางวัน A',
     category: 'อาหารจานเดียว',
     price: 99,
@@ -181,6 +194,7 @@ export const menuItems: MenuItem[] = [
   // Example Group Menu
   {
     id: 14,
+    code: '',
     name: 'เซ็ตปาร์ตี้ 4-6 คน',
     category: 'อาหารจานหลัก',
     price: 599,
@@ -206,6 +220,7 @@ export const menuItems: MenuItem[] = [
   // Nested Menu Example 1: Steak with multi-level selection
   {
     id: 15,
+    code: '',
     name: 'สเต็กพรีเมี่ยม',
     category: 'อาหารจานหลัก',
     price: 0, // ราคาขึ้นอยู่กับการเลือก
@@ -229,6 +244,7 @@ export const menuItems: MenuItem[] = [
   // Nested Menu Example 2: Pasta with multi-level selection
   {
     id: 16,
+    code: '',
     name: 'พาสต้าสไตล์อิตาเลียน',
     category: 'อาหารจานหลัก',
     price: 0, // ราคาขึ้นอยู่กับการเลือก
@@ -252,6 +268,7 @@ export const menuItems: MenuItem[] = [
   // Nested Menu Example 3: Premium Pizza with group selection
   {
     id: 17,
+    code: '',
     name: 'พิซซ่าพรีเมี่ยมหน้าพิเศษ',
     category: 'อาหารจานหลัก',
     price: 100, // ราคาฐาน

@@ -99,6 +99,28 @@ export default function MenuManagementPage() {
   );
 
   useEffect(() => {
+    api.getMenuItems().then(items => {
+      setMenuItems(items.map(item => ({
+        id: item.id,
+        code: item.code,
+        name: item.name,
+        category: item.category,
+        price: item.price,
+        image: item.image ?? '',
+        description: item.description ?? '',
+        rating: item.rating ?? undefined,
+        reviewCount: item.reviewCount,
+        type: item.type.toLowerCase() as 'single' | 'set' | 'group',
+        isActive: item.isActive,
+        setComponents: item.setComponents,
+        availableAddOns: item.availableAddOns.map((a: any) => a.addOnId ?? a),
+        availableAddOnGroups: item.availableAddOnGroups.map((a: any) => a.addOnGroupId ?? a),
+        nestedMenuConfig: item.nestedMenuConfig ?? undefined,
+      })) as MenuItem[]);
+    }).catch(err => console.error('Failed to load menu items:', err));
+  }, []);
+
+  useEffect(() => {
     // Extract unique categories from menu items
     const uniqueCategories = Array.from(new Set(menuItems.map(item => item.category)));
     setCategories(uniqueCategories);
@@ -106,6 +128,7 @@ export default function MenuManagementPage() {
 
   // Menu Item Form State
   const [formData, setFormData] = useState<Partial<MenuItem>>({
+    code: '',
     name: '',
     category: '',
     price: 0,
@@ -133,6 +156,7 @@ export default function MenuManagementPage() {
   const handleCreateItem = () => {
     setEditingItem(null);
     setFormData({
+      code: '',
       name: '',
       category: categories[0] || 'อาหารจานเดียว',
       price: 0,
@@ -516,6 +540,18 @@ export default function MenuManagementPage() {
             </h3>
 
             <div className="space-y-4">
+              {/* Code */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">รหัสเมนู (Code)</label>
+                <input
+                  type="text"
+                  value={formData.code || ''}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  placeholder="เช่น PT001"
+                />
+              </div>
+
               {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">ชื่อเมนู *</label>

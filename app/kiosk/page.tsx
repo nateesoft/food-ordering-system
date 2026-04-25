@@ -43,6 +43,7 @@ const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
 
   return {
     id: apiItem.id,
+    code: apiItem.code,
     name: apiItem.name,
     category: apiItem.category,
     price: apiItem.price,

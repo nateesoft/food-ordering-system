@@ -60,6 +60,7 @@ export interface SelectedNestedOption {
 
 export interface MenuItem {
   id: number;
+  code: string;
   name: string;
   category: string;
   price: number;

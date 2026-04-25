@@ -378,9 +378,9 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
     setServiceRequests(updatedRequests);
     setUnreadCount(updatedRequests.filter(req => req.status === 'pending').length);
 
-    // If this is a payment request, clear all orders for that table
-    if (request && request.type === 'payment' && request.tableNumber && request.branchId) {
-      const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber && order.branchId !== request.branchId);
+    // If this is a payment request, clear those table orders from local state
+    if (request && request.type === 'payment' && request.tableNumber) {
+      const updatedOrders = orders.filter(order => order.tableNumber !== request.tableNumber);
       setOrders(updatedOrders);
     }
   };

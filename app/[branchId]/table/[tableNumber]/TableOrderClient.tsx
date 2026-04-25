@@ -53,6 +53,7 @@ const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
 
   return {
     id: apiItem.id,
+    code: apiItem.code,
     name: apiItem.name,
     category: apiItem.category,
     price: apiItem.price,
@@ -230,6 +231,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
               image: item.menuItem?.image || '',
               description: item.menuItem?.description || '',
               reviewCount: 0,
+              code: item.menuItem?.code || item.code || '',
               type: 'single' as const,
               setComponents: [],
               availableAddOns: [],
