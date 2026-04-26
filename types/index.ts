@@ -60,6 +60,7 @@ export interface SelectedNestedOption {
 
 export interface MenuItem {
   id: number;
+  code: string;
   name: string;
   category: string;
   price: number;
@@ -74,6 +75,8 @@ export interface MenuItem {
   availableAddOnGroups?: number[]; // IDs of add-on groups available for this item
   nestedMenuConfig?: NestedMenuConfig; // Configuration for nested menu
   isActive?: boolean; // Whether this item is currently available
+  isOutOfStock?: boolean; // Whether this item is out of stock due to ingredients
+  insufficientIngredients?: string[]; // List of insufficient ingredient names
 }
 
 export interface CartItem extends MenuItem {
@@ -94,6 +97,7 @@ export interface Order {
   totalItems: number;
   orderDate: Date;
   status: 'completed' | 'preparing' | 'delivered';
+  branchId: string;
   tableNumber?: string;
 }
 
@@ -104,6 +108,7 @@ export interface ServiceRequest {
   details?: string;
   items?: string[];
   status: 'pending' | 'completed';
+  branchId: string;
   tableNumber?: string;
 }
 
@@ -111,11 +116,26 @@ export interface Table {
   id: number;
   number: string;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied' | 'reserved' | 'billing' | 'cleaning';
   position: { x: number; y: number };
   size: 'small' | 'medium' | 'large';
+  shape: 'square' | 'circle' | 'rectangle' | 'counter';
   currentGuests?: number;
   mergedWith?: number[];
+  zone?: string;
+}
+
+export interface TableSession {
+  id: number;
+  tableId: number;
+  openedBy: string;
+  customerCount: number;
+  customerGender: string | null;
+  customerNationality: string | null;
+  orderType: string;
+  status: string;
+  openedAt: string;
+  closedAt: string | null;
 }
 
 export type Category = string;
@@ -136,4 +156,107 @@ export interface QueueTicket {
   customerName?: string; // ชื่อลูกค้า (optional)
   memberId?: string; // รหัสสมาชิก (optional)
   paymentMethod?: 'cash' | 'credit-card' | 'qr-code' | 'mobile-banking'; // วิธีการชำระเงิน
+}
+
+// ===== Inventory / Stock Management =====
+
+export type IngredientUnit = 'GRAM' | 'KILOGRAM' | 'MILLILITER' | 'LITER' | 'PIECE' | 'TABLESPOON' | 'TEASPOON' | 'CUP';
+
+export type TransactionType = 'STOCK_IN' | 'STOCK_OUT' | 'ORDER_DEDUCTION' | 'ADJUSTMENT';
+
+export interface Ingredient {
+  id: number;
+  name: string;
+  unit: IngredientUnit;
+  currentStock: number;
+  minStock: number;
+  costPerUnit: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MenuItemIngredient {
+  id: number;
+  menuItemId: number;
+  ingredientId: number;
+  quantityUsed: number;
+  ingredient: Ingredient;
+}
+
+export interface InventoryTransaction {
+  id: number;
+  ingredientId: number;
+  type: TransactionType;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  orderId: string | null;
+  notes: string | null;
+  performedBy: string | null;
+  createdAt: string;
+  ingredient: Ingredient;
+}
+
+export interface MenuAvailability {
+  menuItemId: number;
+  available: boolean;
+  insufficientIngredients: string[];
+}
+
+// ===== POS / Payment =====
+
+export type PaymentMethod = 'CASH' | 'TRANSFER' | 'CREDIT_CARD';
+export type PaymentStatus = 'PENDING' | 'PAID' | 'REFUNDED';
+
+export interface Payment {
+  id: number;
+  receiptNumber: string;
+  orderId: number;
+  order?: any;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  subtotal: number;
+  serviceCharge: number;
+  vat: number;
+  discountAmount: number;
+  discountPoints: number;
+  totalAmount: number;
+  paidAmount: number;
+  changeAmount: number;
+  memberId: string | null;
+  memberName: string | null;
+  pointsEarned: number;
+  cashierName: string | null;
+  note: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  promotionId: number | null;
+  promotionDiscount: number;
+  promotionName: string | null;
+  couponCode: string | null;
+  splitPayments?: { method: PaymentMethod; amount: number }[] | null;
+}
+
+export interface PaymentSummary {
+  totalRevenue: number;
+  totalTransactions: number;
+  byMethod: {
+    CASH: { count: number; amount: number };
+    TRANSFER: { count: number; amount: number };
+    CREDIT_CARD: { count: number; amount: number };
+  };
+  totalDiscount: number;
+  totalPointsEarned: number;
+  totalPointsRedeemed: number;
+}
+
+export interface Member {
+  id: number;
+  memberId: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  points: number;
+  tier: string;
 }

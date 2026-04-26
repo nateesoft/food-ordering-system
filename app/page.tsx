@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChefHat, Users, MapPin, UserCheck, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useBranch } from '@/contexts/BranchContext';
 import { Table } from '@/types';
 import { api } from '@/lib/api';
 
@@ -27,6 +28,7 @@ const formatTime = (dateString: string) => {
 export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
+  const { selectedBranch } = useBranch();
   const [staffAssignments, setStaffAssignments] = useState<Record<string, StaffAssignment[]>>({});
 
   // Fetch staff assignments
@@ -48,25 +50,27 @@ export default function Home() {
 
   const [tables] = useState<Table[]>([
     // ด้านหน้าร้าน
-    { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small' },
-    { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small' },
-    { id: 3, number: 'A3', capacity: 4, status: 'available', position: { x: 50, y: 10 }, size: 'medium' },
-    { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium' },
+    { id: 1, number: 'A1', capacity: 2, status: 'available', position: { x: 10, y: 10 }, size: 'small', shape: 'square' },
+    { id: 2, number: 'A2', capacity: 2, status: 'occupied', position: { x: 30, y: 10 }, size: 'small', shape: 'square' },
+    { id: 3, number: 'A3', capacity: 4, status: 'available', position: { x: 50, y: 10 }, size: 'medium', shape: 'square' },
+    { id: 4, number: 'A4', capacity: 4, status: 'reserved', position: { x: 70, y: 10 }, size: 'medium', shape: 'square' },
 
     // กลางร้าน
-    { id: 5, number: 'B1', capacity: 4, status: 'available', position: { x: 10, y: 40 }, size: 'medium' },
-    { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium' },
-    { id: 7, number: 'B3', capacity: 6, status: 'available', position: { x: 60, y: 40 }, size: 'large' },
+    { id: 5, number: 'B1', capacity: 4, status: 'available', position: { x: 10, y: 40 }, size: 'medium', shape: 'circle' },
+    { id: 6, number: 'B2', capacity: 4, status: 'available', position: { x: 35, y: 40 }, size: 'medium', shape: 'circle' },
+    { id: 7, number: 'B3', capacity: 6, status: 'available', position: { x: 60, y: 40 }, size: 'large', shape: 'rectangle' },
 
     // ด้านหลัง
-    { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small' },
-    { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small' },
-    { id: 10, number: 'C3', capacity: 4, status: 'available', position: { x: 50, y: 70 }, size: 'medium' },
-    { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large' },
+    { id: 8, number: 'C1', capacity: 2, status: 'available', position: { x: 10, y: 70 }, size: 'small', shape: 'square' },
+    { id: 9, number: 'C2', capacity: 2, status: 'available', position: { x: 30, y: 70 }, size: 'small', shape: 'square' },
+    { id: 10, number: 'C3', capacity: 4, status: 'available', position: { x: 50, y: 70 }, size: 'medium', shape: 'circle' },
+    { id: 11, number: 'C4', capacity: 8, status: 'available', position: { x: 70, y: 70 }, size: 'large', shape: 'rectangle' },
   ]);
 
   const handleSelectTable = (tableNumber: string) => {
-    router.push(`/table/${tableNumber}`);
+    const branchId = selectedBranch?.id;
+    if (!branchId) return;
+    router.push(`/${branchId}/table/${tableNumber}`);
   };
 
   const getTableColor = (status: string) => {
@@ -274,7 +278,7 @@ export default function Home() {
         <div className="mt-8 text-center">
           <p className="text-gray-500 mb-4">หรือสั่งอาหารแบบ Self-Service</p>
           <button
-            onClick={() => router.push('/kiosk')}
+            onClick={() => selectedBranch && router.push(`/${selectedBranch.id}/kiosk`)}
             className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-orange-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
           >
             🥡 สั่งผ่าน Kiosk (ไม่ต้องเลือกโต๊ะ)
