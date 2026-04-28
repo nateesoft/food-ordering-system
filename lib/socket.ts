@@ -5,8 +5,8 @@ let socket: Socket | null = null;
 export function getSocket(): Socket {
   if (!socket) {
     const url = typeof window !== 'undefined'
-      ? `${window.location.protocol}//${window.location.hostname}:3001/events`
-      : 'http://localhost:3001/events';
+      ? `${window.location.protocol}//${window.location.hostname}:5000/events`
+      : 'http://localhost:5000/events';
 
     socket = io(url, {
       transports: ['websocket', 'polling'],

@@ -213,3 +213,6 @@ const confirmOrder = async () => {
 ## 📄 License
 
 MIT License - ใช้งานได้ตามต้องการ
+
+### SETUP ###
+docker build -t food-ordering-system:test .
