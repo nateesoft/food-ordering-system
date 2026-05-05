@@ -1,9 +1,14 @@
 const getApiBaseUrl = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555/api';
   if (typeof window !== 'undefined') {
-    // In browser: use the same hostname the user is accessing, with port 3001
-    return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+    try {
+      const { port, pathname } = new URL(apiUrl);
+      return `${window.location.protocol}//${window.location.hostname}:${port}${pathname}`;
+    } catch {
+      return apiUrl;
+    }
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  return apiUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();
