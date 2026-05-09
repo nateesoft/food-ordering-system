@@ -23,9 +23,9 @@ const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:5555/api`;
+    return `${window.location.protocol}//${window.location.hostname}/api`;
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555/api';
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
 };
 
 export function BranchProvider({ children }: { children: ReactNode }) {

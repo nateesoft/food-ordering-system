@@ -8,9 +8,9 @@ import {
 
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:5555/api`;
+    return `${window.location.protocol}//${window.location.hostname}/api`;
   }
-  return 'http://localhost:5555/api';
+  return 'http://localhost/api';
 };
 
 function getBranchId(): string | null {

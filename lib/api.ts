@@ -1,5 +1,5 @@
 const getApiBaseUrl = () => {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5555/api';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
   if (typeof window !== 'undefined') {
     try {
       const { port, pathname } = new URL(apiUrl);
