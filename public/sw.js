@@ -3,10 +3,10 @@ const API_CACHE_NAME = 'pos-api-cache-v1';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
-  '/',
-  '/pos/',
-  '/kds/',
-  '/kiosk/',
+  '/food-ordering/',
+  '/food-ordering/pos/',
+  '/food-ordering/kds/',
+  '/food-ordering/kiosk/',
 ];
 
 // Install: cache static assets
@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Return offline page for navigation requests
         if (request.mode === 'navigate') {
-          return caches.match('/');
+          return caches.match('/food-ordering/');
         }
         return new Response('Offline', { status: 503 });
       });

@@ -2,7 +2,7 @@
   "name": "POS Food Ordering System",
   "short_name": "POS",
   "description": "ระบบสั่งอาหารและ POS สำหรับร้านอาหาร",
-  "start_url": "/pos/",
+  "start_url": "/food-ordering/pos/",
   "display": "minimal-ui",
   "background_color": "#1F2937",
   "theme_color": "#2563EB",
