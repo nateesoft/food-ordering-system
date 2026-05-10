@@ -22,10 +22,16 @@ interface BranchContextType {
 const BranchContext = createContext<BranchContextType | undefined>(undefined);
 
 const getApiBaseUrl = () => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
   if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}/api`;
+    try {
+      const { port, pathname } = new URL(apiUrl);
+      return `${window.location.protocol}//${window.location.hostname}:${port}${pathname}`;
+    } catch {
+      return apiUrl;
+    }
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost/api';
+  return apiUrl;
 };
 
 export function BranchProvider({ children }: { children: ReactNode }) {
