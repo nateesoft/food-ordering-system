@@ -8,6 +8,7 @@ import { calculateNestedMenuPrice, findNestedOptionById } from '@/data/nestedMen
 import { useLanguage } from '@/contexts/LanguageContext';
 import { NestedMenuModal } from '@/components/NestedMenuModal';
 import { api, ApiMenuItem, ApiNestedMenuOption, PromotionResponse, CouponValidationResponse } from '@/lib/api';
+import { getImageUrl } from '@/lib/imageUrl';
 import BranchSelector from '@/components/BranchSelector';
 
 // Helper function to convert API nested option to frontend NestedMenuOption
@@ -601,7 +602,7 @@ export default function KioskPage() {
                     <div className="relative h-40 sm:h-48 md:h-56 lg:h-64 bg-gray-200">
                       {item.image && (
                         <img
-                          src={item.image}
+                          src={getImageUrl(item.image)}
                           alt={item.name}
                           className="w-full h-full object-cover"
                         />
@@ -658,7 +659,7 @@ export default function KioskPage() {
                           <div className="relative w-full sm:w-20 md:w-24 h-32 sm:h-20 md:h-24 bg-gray-200 rounded-lg sm:rounded-xl overflow-hidden flex-shrink-0">
                             {item.image && (
                               <img
-                                src={item.image}
+                                src={getImageUrl(item.image)}
                                 alt={item.name}
                                 className="w-full h-full object-cover"
                               />

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, Check, ArrowLeft } from 'lucide-react';
 import { NestedMenuOption, SelectedNestedOption } from '@/types';
+import { getImageUrl } from '@/lib/imageUrl';
 
 interface NestedMenuModalProps {
   isOpen: boolean;
@@ -374,7 +375,7 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
 
                           {option.image && (
                             <img
-                              src={option.image}
+                              src={getImageUrl(option.image)}
                               alt={option.name}
                               className="w-full h-32 object-cover rounded-lg mt-2"
                             />

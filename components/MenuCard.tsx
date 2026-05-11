@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronDown } from 'lucide-react';
 import { MenuItem, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
+import { getImageUrl } from '@/lib/imageUrl';
 import StarRating from './StarRating';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { addOns as availableAddOns } from '@/data/addOns';
@@ -154,7 +155,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group">
         <div className="relative overflow-hidden">
           <img
-            src={item.image}
+            src={getImageUrl(item.image)}
             alt={item.name}
             className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
           />

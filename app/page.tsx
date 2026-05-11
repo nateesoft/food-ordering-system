@@ -273,17 +273,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Kiosk Option */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-500 mb-4">หรือสั่งอาหารแบบ Self-Service</p>
-          <button
-            onClick={() => selectedBranch && router.push(`/${selectedBranch.id}/kiosk`)}
-            className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-orange-600 hover:scale-105 transform transition-all duration-300 hover:shadow-2xl"
-          >
-            🥡 สั่งผ่าน Kiosk (ไม่ต้องเลือกโต๊ะ)
-          </button>
-        </div>
       </div>
     </div>
   );

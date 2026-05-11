@@ -7,6 +7,7 @@ import { MenuItem, AddOn, SetComponent } from '@/types';
 import { menuItems as initialMenuItems } from '@/data/menuItems';
 import { addOns as initialAddOns } from '@/data/addOns';
 import { api } from '@/lib/api';
+import { getImageUrl } from '@/lib/imageUrl';
 import BranchSelector from '@/components/BranchSelector';
 
 export default function MenuManagementPage() {
@@ -378,7 +379,7 @@ export default function MenuManagementPage() {
               {menuItems.map((item) => (
                 <div key={item.id} className="bg-white rounded-xl shadow-lg overflow-hidden">
                   <div className="relative">
-                    <img src={item.image} alt={item.name} className="w-full h-40 object-cover" />
+                    <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-40 object-cover" />
                     <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold">
                       ฿{item.price}
                     </div>
@@ -598,7 +599,7 @@ export default function MenuManagementPage() {
                 {formData.image && (
                   <div className="mb-3 relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                     <img
-                      src={formData.image}
+                      src={getImageUrl(formData.image)}
                       alt="Preview"
                       className="w-full h-48 object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Image+Error'; }}

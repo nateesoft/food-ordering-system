@@ -7,7 +7,7 @@ import PWAProvider from "./PWAProvider";
 export const metadata: Metadata = {
   title: "ระบบสั่งอาหารออนไลน์ - ร้านอาหารไทย",
   description: "สั่งอาหารออนไลน์ได้ง่ายๆ จากร้านอาหารไทย",
-  manifest: "/manifest.json",
+  manifest: "/food-ordering/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { api, ApiMenuItem, ApiNestedMenuOption } from '@/lib/api';
+import { getImageUrl } from '@/lib/imageUrl';
 import { AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { addOns as availableAddOnsData } from '@/data/addOns';
 import { addOnGroups as availableAddOnGroupsData } from '@/data/addOnGroups';
@@ -490,7 +491,7 @@ export default function POSMenuOrder({
                 >
                   <div className="aspect-square bg-gray-100 relative">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                         <ImageOff className="w-8 h-8 text-gray-300" />
