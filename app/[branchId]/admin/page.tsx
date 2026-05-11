@@ -29,7 +29,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'QR Code Management',
       description: 'จัดการ QR Code สำหรับโต๊ะต่างๆ',
       icon: QrCode,
-      href: '/admin/qr-codes',
+      href: 'admin/qr-codes',
       color: 'from-blue-500 to-cyan-500',
       iconBg: 'bg-blue-100',
       iconColor: 'text-blue-600'
@@ -38,7 +38,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Menu Management',
       description: 'จัดการเมนูอาหารและราคา',
       icon: Menu,
-      href: '/admin/menu-management',
+      href: 'admin/menu-management',
       color: 'from-orange-500 to-red-500',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600'
@@ -47,7 +47,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Kiosk System',
       description: 'ระบบสั่งอาหารแบบ Self-Service',
       icon: LayoutGrid,
-      href: '/kiosk',
+      href: 'kiosk',
       color: 'from-purple-500 to-pink-500',
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-600'
@@ -56,7 +56,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Kitchen Dashboard',
       description: 'Dashboard แสดงคิวแบบ Kanban Board',
       icon: BarChart3,
-      href: '/kiosk/dashboard',
+      href: 'kiosk/dashboard',
       color: 'from-slate-600 to-slate-800',
       iconBg: 'bg-slate-100',
       iconColor: 'text-slate-600'
@@ -65,7 +65,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Queue Management',
       description: 'จัดการคิวและออเดอร์จาก Kiosk',
       icon: ClipboardList,
-      href: '/kiosk/queue-management',
+      href: 'kiosk/queue-management',
       color: 'from-indigo-500 to-purple-500',
       iconBg: 'bg-indigo-100',
       iconColor: 'text-indigo-600'
@@ -74,7 +74,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Display Board',
       description: 'หน้าจอแสดงผลคิวสำหรับลูกค้า',
       icon: Monitor,
-      href: '/kiosk/display',
+      href: 'kiosk/display',
       color: 'from-green-500 to-emerald-500',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-600'
@@ -83,7 +83,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Kitchen Orders',
       description: 'จัดการออเดอร์ในครัว',
       icon: Settings,
-      href: '/orders',
+      href: 'orders',
       color: 'from-yellow-500 to-orange-500',
       iconBg: 'bg-yellow-100',
       iconColor: 'text-yellow-600'
@@ -92,7 +92,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Table Management',
       description: 'จัดการโต๊ะ แผนผังร้าน ลากวางตำแหน่ง',
       icon: Armchair,
-      href: '/admin/tables',
+      href: 'admin/tables',
       color: 'from-sky-500 to-blue-500',
       iconBg: 'bg-sky-100',
       iconColor: 'text-sky-600'
@@ -101,7 +101,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'POS System',
       description: 'ระบบรับชำระเงิน สำหรับแคชเชียร์',
       icon: DollarSign,
-      href: '/pos',
+      href: 'pos',
       color: 'from-emerald-500 to-teal-500',
       iconBg: 'bg-emerald-100',
       iconColor: 'text-emerald-600'
@@ -110,7 +110,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Staff Management',
       description: 'จัดการข้อมูลพนักงาน เพิ่ม/แก้ไข/ลบ',
       icon: Users,
-      href: '/admin/staff',
+      href: 'admin/staff',
       color: 'from-rose-500 to-pink-500',
       iconBg: 'bg-rose-100',
       iconColor: 'text-rose-600'
@@ -119,7 +119,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Inventory Management',
       description: 'จัดการวัตถุดิบและสต็อกสินค้า',
       icon: Package,
-      href: '/admin/inventory',
+      href: 'admin/inventory',
       color: 'from-amber-500 to-yellow-500',
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600'
@@ -128,7 +128,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Reports & Analytics',
       description: 'รายงานและวิเคราะห์ข้อมูลร้านอาหาร',
       icon: BarChart3,
-      href: '/admin/reports',
+      href: 'admin/reports',
       color: 'from-cyan-500 to-blue-500',
       iconBg: 'bg-cyan-100',
       iconColor: 'text-cyan-600'
@@ -137,7 +137,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Shift Management',
       description: 'จัดการกะ เปิด/ปิดกะ นับเงินลิ้นชัก สรุปยอด',
       icon: Clock,
-      href: '/admin/shifts',
+      href: 'admin/shifts',
       color: 'from-violet-500 to-purple-500',
       iconBg: 'bg-violet-100',
       iconColor: 'text-violet-600'
@@ -146,7 +146,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Branch Management',
       description: 'จัดการสาขา เพิ่ม/แก้ไข/ลบสาขา',
       icon: Building2,
-      href: '/admin/branches',
+      href: 'admin/branches',
       color: 'from-teal-500 to-cyan-500',
       iconBg: 'bg-teal-100',
       iconColor: 'text-teal-600'
@@ -155,7 +155,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Promotion Management',
       description: 'จัดการโปรโมชัน คูปอง ส่วนลด Happy Hour',
       icon: Tag,
-      href: '/admin/promotions',
+      href: 'admin/promotions',
       color: 'from-orange-500 to-amber-500',
       iconBg: 'bg-orange-100',
       iconColor: 'text-orange-600'
@@ -164,7 +164,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Webhooks',
       description: 'จัดการ Webhook เชื่อมต่อกับระบบภายนอก',
       icon: Webhook,
-      href: '/admin/webhooks',
+      href: 'admin/webhooks',
       color: 'from-indigo-500 to-blue-500',
       iconBg: 'bg-indigo-100',
       iconColor: 'text-indigo-600'
@@ -173,7 +173,7 @@ export default function AdminDashboard({ params }: { params: { branchId: string 
       title: 'Audit Logs',
       description: 'ติดตามประวัติการดำเนินการ ออเดอร์ และการชำระเงิน',
       icon: FileText,
-      href: '/admin/audit-logs',
+      href: 'admin/audit-logs',
       color: 'from-gray-500 to-slate-600',
       iconBg: 'bg-gray-100',
       iconColor: 'text-gray-600'

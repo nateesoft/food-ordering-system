@@ -499,7 +499,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
         onCartClick={() => setShowCart(true)}
         onHistoryClick={() => setShowOrderHistory(true)}
         onQrClick={handleShowQr}
-        orderCount={orderHistory.length}
+        orderCount={orderHistory.filter(order => order.status !== 'completed').length}
       />
 
       <CategoryFilter
@@ -572,7 +572,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
 
       <OrderHistory
         isOpen={showOrderHistory}
-        orders={orderHistory}
+        orders={orderHistory.filter(order => order.status !== 'completed')}
         onClose={() => setShowOrderHistory(false)}
       />
 
