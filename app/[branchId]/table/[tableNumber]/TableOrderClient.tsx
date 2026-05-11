@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+
 import { Check, ArrowLeft, Loader2, QrCode, X, UserCheck } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Header } from '@/components/Header';
@@ -73,10 +73,10 @@ const convertApiMenuItem = (apiItem: ApiMenuItem): MenuItem => {
 interface TableOrderClientProps {
   branchId: string;
   tableNumber: string;
+  sessionId: string;
 }
 
-export default function TableOrderClient({ branchId, tableNumber }: TableOrderClientProps) {
-  const router = useRouter();
+export default function TableOrderClient({ branchId, tableNumber, sessionId }: TableOrderClientProps) {
   const { t } = useLanguage();
 
   // Sync branchId from URL into localStorage so fetchApi sends the correct x-branch-id header
@@ -85,6 +85,12 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
       localStorage.setItem('selectedBranchId', branchId);
     }
   }, [branchId]);
+
+  // Store sessionId in cookie for persistence across page refreshes
+  useEffect(() => {
+    const cookieKey = `sessionId_${branchId}_${tableNumber}`;
+    document.cookie = `${cookieKey}=${sessionId}; path=/; max-age=86400; SameSite=Lax`;
+  }, [sessionId, branchId, tableNumber]);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(t.categories.all);
@@ -127,6 +133,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
       try {
         setIsLoading(true);
         setError(null);
+
         const [apiItems, availability] = await Promise.all([
           api.getMenuItems({ isActive: true }),
           api.getMenuAvailability().catch(() => []),
@@ -205,7 +212,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
   useEffect(() => {
     const pollOrderStatus = async () => {
       try {
-        const apiOrders = await api.getTableOrdersAll(tableNumber);
+        const apiOrders = await api.getTableOrdersAll(tableNumber, sessionId);
         if (apiOrders.length === 0 && orderHistory.length === 0) return;
 
         const updatedOrders: Order[] = apiOrders.map((apiOrder) => {
@@ -394,6 +401,7 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
         items: apiItems,
         totalAmount,
         totalItems,
+        sessionId,
       });
 
       const newOrder: Order = {
@@ -462,12 +470,6 @@ export default function TableOrderClient({ branchId, tableNumber }: TableOrderCl
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/')}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all"
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </button>
               <div>
                 <h1 className="text-2xl font-bold">โต๊ะ {tableNumber}</h1>
                 <p className="text-orange-100 text-sm">สั่งอาหารและเครื่องดื่ม</p>

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { QrCode, Download, Printer, Home, Settings } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { QrCode, Download, Printer, Home, Settings, Loader2 } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
 import QRCodeLib from 'qrcode';
+import { api } from '@/lib/api';
 
 interface Table {
   id: number;
@@ -14,37 +15,46 @@ interface Table {
 
 export default function QRCodesAdminPage() {
   const router = useRouter();
-  const [tables] = useState<Table[]>([
-    { id: 1, number: 'A1', capacity: 2, status: 'available' },
-    { id: 2, number: 'A2', capacity: 2, status: 'available' },
-    { id: 3, number: 'A3', capacity: 4, status: 'available' },
-    { id: 4, number: 'A4', capacity: 4, status: 'available' },
-    { id: 5, number: 'B1', capacity: 4, status: 'available' },
-    { id: 6, number: 'B2', capacity: 4, status: 'available' },
-    { id: 7, number: 'B3', capacity: 6, status: 'available' },
-    { id: 8, number: 'C1', capacity: 2, status: 'available' },
-    { id: 9, number: 'C2', capacity: 2, status: 'available' },
-    { id: 10, number: 'C3', capacity: 4, status: 'available' },
-    { id: 11, number: 'C4', capacity: 8, status: 'available' },
-  ]);
+  const params = useParams();
+  const branchId = params.branchId as string;
+  const [sessionIds, setSessionIds] = useState<Record<string, string>>({});
+  const [tables, setTables] = useState<Table[]>([]);
+  const [isLoadingTables, setIsLoadingTables] = useState(true);
 
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [generatingTables, setGeneratingTables] = useState<Set<string>>(new Set());
   const canvasRefs = useRef<Record<string, HTMLCanvasElement | null>>({});
 
   useEffect(() => {
-    // Set base URL only on client side
     setBaseUrl(window.location.origin);
   }, []);
 
-  // สร้าง QR Code สำหรับโต๊ะเดียว
+  useEffect(() => {
+    const fetchTables = async () => {
+      try {
+        setIsLoadingTables(true);
+        const data = await api.getTables();
+        setTables(data);
+      } catch (err) {
+        console.error('Failed to load tables:', err);
+      } finally {
+        setIsLoadingTables(false);
+      }
+    };
+    fetchTables();
+  }, []);
+
+  const buildTableUrl = (tableNumber: string, sessionId: string) =>
+    `${baseUrl}/${branchId}/table/${tableNumber}?sessionId=${sessionId}`;
+
+  // สร้าง QR Code สำหรับโต๊ะเดียว (generate UUID ใหม่ทุกครั้ง)
   const generateSingleQRCode = async (tableNumber: string) => {
     setGeneratingTables(prev => new Set(prev).add(tableNumber));
 
     try {
-      const url = `${baseUrl}/table/${tableNumber}`;
+      const newSessionId = crypto.randomUUID();
+      const url = buildTableUrl(tableNumber, newSessionId);
       const qrDataUrl = await QRCodeLib.toDataURL(url, {
         width: 300,
         margin: 2,
@@ -54,10 +64,8 @@ export default function QRCodesAdminPage() {
         },
       });
 
-      setQrCodes(prev => ({
-        ...prev,
-        [tableNumber]: qrDataUrl
-      }));
+      setSessionIds(prev => ({ ...prev, [tableNumber]: newSessionId }));
+      setQrCodes(prev => ({ ...prev, [tableNumber]: qrDataUrl }));
     } catch (error) {
       console.error(`Error generating QR for table ${tableNumber}:`, error);
       alert(`เกิดข้อผิดพลาดในการสร้าง QR Code สำหรับโต๊ะ ${tableNumber}`);
@@ -78,7 +86,7 @@ export default function QRCodesAdminPage() {
   };
 
   const downloadQRCode = async (tableNumber: string) => {
-    const url = `${baseUrl}/table/${tableNumber}`;
+    const url = buildTableUrl(tableNumber, sessionIds[tableNumber]);
 
     try {
       const canvas = document.createElement('canvas');
@@ -133,7 +141,7 @@ export default function QRCodesAdminPage() {
   };
 
   const printQRCode = async (tableNumber: string) => {
-    const url = `${baseUrl}/table/${tableNumber}`;
+    const url = buildTableUrl(tableNumber, sessionIds[tableNumber]);
 
     try {
       const printWindow = window.open('', '_blank');
@@ -266,11 +274,11 @@ export default function QRCodesAdminPage() {
             </button>
 
             <button
-              onClick={() => router.push('/')}
+              onClick={() => router.push(`/${branchId}/admin`)}
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all"
             >
               <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="hidden sm:inline">หน้าหลัก</span>
+              <span className="hidden sm:inline">หน้าจัดการ</span>
               <span className="sm:hidden">หลัก</span>
             </button>
           </div>
@@ -287,8 +295,20 @@ export default function QRCodesAdminPage() {
           <p className="text-gray-600">คลิก "สร้าง QR Code" ในโต๊ะที่ต้องการ หรือสร้างทั้งหมดพร้อมกัน</p>
         </div>
 
+        {isLoadingTables ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 text-orange-500 animate-spin mr-3" />
+            <span className="text-gray-600 text-lg">กำลังโหลดข้อมูลโต๊ะ...</span>
+          </div>
+        ) : tables.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="text-5xl mb-4">🪑</div>
+            <p className="text-gray-600 text-lg">ไม่พบข้อมูลโต๊ะในระบบ</p>
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {tables.map((table) => (
+          {!isLoadingTables && tables.map((table) => (
             <div
               key={table.id}
               className="bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all"
@@ -322,7 +342,11 @@ export default function QRCodesAdminPage() {
                 <div className="mb-3 sm:mb-4 p-2 sm:p-3 bg-gray-100 rounded-lg">
                   <p className="text-xs text-gray-600 mb-1">URL:</p>
                   <p className="text-xs font-mono text-gray-800 break-all leading-relaxed">
-                    {baseUrl ? `${baseUrl}/table/${table.number}` : 'Loading...'}
+                    {baseUrl && sessionIds[table.number]
+                      ? buildTableUrl(table.number, sessionIds[table.number])
+                      : baseUrl
+                        ? `${baseUrl}/${branchId}/table/${table.number}?sessionId=...`
+                        : 'Loading...'}
                   </p>
                 </div>
 

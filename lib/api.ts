@@ -143,7 +143,7 @@ export interface CreateOrderDto {
   totalItems: number;
   serviceCharge?: number;
   vat?: number;
-  sessionId?: number;
+  sessionId?: string;
   items: {
     menuItemId: number;
     quantity: number;
@@ -433,8 +433,8 @@ export const api = {
 
   getAllOrders: () => fetchApi<OrderResponse[]>(`/orders`),
 
-  getTableOrdersAll: (tableNumber: string) =>
-    fetchApi<OrderResponse[]>(`/orders?tableNumber=${tableNumber}`),
+  getTableOrdersAll: (tableNumber: string, sessionId?: string) =>
+    fetchApi<OrderResponse[]>(`/orders?tableNumber=${tableNumber}${sessionId ? `&sessionId=${sessionId}` : ''}`),
 
   updateOrderStatus: (id: number, status: 'PREPARING' | 'COMPLETED' | 'DELIVERED' | 'CANCELLED') =>
     fetchApi<OrderResponse>(`/orders/${id}/status`, {

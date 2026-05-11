@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Plus, Edit, Trash2, Home, Settings, X, Save, Upload, Image as ImageIcon, Link, FolderOpen, Search, RefreshCw, CheckCircle } from 'lucide-react';
 import { MenuItem, AddOn, SetComponent } from '@/types';
 import { menuItems as initialMenuItems } from '@/data/menuItems';
@@ -12,6 +12,9 @@ import BranchSelector from '@/components/BranchSelector';
 
 export default function MenuManagementPage() {
   const router = useRouter();
+  const params = useParams();
+  const branchId = params.branchId as string;
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>(initialMenuItems);
   const [addOns, setAddOns] = useState<AddOn[]>(initialAddOns);
   const [categories, setCategories] = useState<string[]>([]);
@@ -315,11 +318,11 @@ export default function MenuManagementPage() {
               </button>
 
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push(`/${branchId}/admin`)}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all"
               >
                 <Home className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span>หน้าหลัก</span>
+                <span>หน้าจัดการ</span>
               </button>
             </div>
           </div>
