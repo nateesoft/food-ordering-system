@@ -46,14 +46,18 @@ export default function QRCodesAdminPage() {
   }, []);
 
   const buildTableUrl = (tableNumber: string, sessionId: string) =>
-    `${baseUrl}/${branchId}/table/${tableNumber}?sessionId=${sessionId}`;
+    `${baseUrl}/food-ordering/${branchId}/table/${tableNumber}?sessionId=${sessionId}`;
 
-  // สร้าง QR Code สำหรับโต๊ะเดียว (generate UUID ใหม่ทุกครั้ง)
+  // สร้าง QR Code สำหรับโต๊ะเดียว (generate UUID ใหม่ + register ใน Redis)
   const generateSingleQRCode = async (tableNumber: string) => {
     setGeneratingTables(prev => new Set(prev).add(tableNumber));
 
     try {
       const newSessionId = crypto.randomUUID();
+
+      // Register sessionId ใน Redis (TTL 3h) ก่อน generate QR
+      await api.registerSession(newSessionId, tableNumber);
+
       const url = buildTableUrl(tableNumber, newSessionId);
       const qrDataUrl = await QRCodeLib.toDataURL(url, {
         width: 300,
@@ -345,7 +349,7 @@ export default function QRCodesAdminPage() {
                     {baseUrl && sessionIds[table.number]
                       ? buildTableUrl(table.number, sessionIds[table.number])
                       : baseUrl
-                        ? `${baseUrl}/${branchId}/table/${table.number}?sessionId=...`
+                        ? `${baseUrl}/food-ordering/${branchId}/table/${table.number}?sessionId=...`
                         : 'Loading...'}
                   </p>
                 </div>

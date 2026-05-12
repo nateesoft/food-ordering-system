@@ -497,6 +497,17 @@ export const api = {
       body: JSON.stringify({ pin }),
     }),
 
+  registerSession: (sessionId: string, tableNumber: string) =>
+    fetchApi<{ message: string; sessionId: string; ttl: number }>('/tables/register-session', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, tableNumber }),
+    }),
+
+  validateSession: (sessionId: string) =>
+    fetchApi<{ valid: boolean; session: { tableNumber: string; branchId: number } | null; ttl: number }>(
+      `/tables/validate-session/${sessionId}`,
+    ),
+
   getTableStaff: (branchId: string, tableNumber: string) =>
     fetchApi<TableStaffResponse>(`/${branchId}/tables/number/${tableNumber}/staff`),
 
