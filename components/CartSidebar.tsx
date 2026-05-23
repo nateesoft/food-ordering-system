@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, Trash2, Check, ChevronRight, Edit2, X } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Check, Edit2, X } from 'lucide-react';
 import { CartItem } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -122,7 +122,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                 onClick={onClose}
                 className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
               >
-                <ChevronRight className="w-6 h-6" />
+                <X className="w-6 h-6" />
               </button>
             </div>
             <p className="text-orange-100 mt-1">

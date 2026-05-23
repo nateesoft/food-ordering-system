@@ -104,7 +104,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             {/* Header with View Toggle */}
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                เลือกหมวดหมู่เมนูที่ต้องการ
+                เลือกหมวดหมู่
               </h2>
 
               {/* View Mode Toggle */}

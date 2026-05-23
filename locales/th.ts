@@ -4,7 +4,7 @@ export const th: Translations = {
   header: {
     restaurantName: 'ร้านอาหารไทย',
     orderOnline: 'สั่งอาหารออนไลน์',
-    cart: 'ตะกร้า',
+    cart: 'เมนูอาหาร',
     history: 'ประวัติ',
   },
 
@@ -13,7 +13,7 @@ export const th: Translations = {
   },
 
   menuCard: {
-    addToCart: 'เพิ่มลงตะกร้า',
+    addToCart: 'เพิ่มลงเมนูอาหาร',
     specialInstructions: 'คำขอพิเศษ (ถ้าต้องการ)',
     selectCommonRequests: 'เลือกคำขอที่ใช้บ่อย (เลือกได้หลายรายการ):',
     selectedRequests: 'คำขอที่เลือก:',
@@ -22,13 +22,13 @@ export const th: Translations = {
     dineIn: '🍽️ ทานในร้าน',
     takeaway: '🥡 รับกลับบ้าน',
     cancel: 'ยกเลิก',
-    confirm: 'เพิ่มลงตะกร้า',
+    confirm: 'เพิ่มลงเมนูอาหาร',
   },
 
   cart: {
-    title: 'ตะกร้าสินค้า',
+    title: 'เมนูอาหาร',
     items: 'รายการ',
-    emptyCart: 'ตะกร้าว่างเปล่า',
+    emptyCart: 'เมนูอาหารว่างเปล่า',
     emptyCartDesc: 'เพิ่มสินค้าเพื่อเริ่มสั่งอาหาร',
     specialRequest: 'คำขอพิเศษ:',
     editRequest: 'แก้ไขคำขอพิเศษ',
