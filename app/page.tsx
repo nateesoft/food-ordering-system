@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChefHat, Users, MapPin, UserCheck, Clock } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBranch } from '@/contexts/BranchContext';
 import { Table } from '@/types';
-import { api } from '@/lib/api';
 
 interface StaffAssignment {
   staffId: number;
@@ -30,23 +29,6 @@ export default function Home() {
   const { t } = useLanguage();
   const { selectedBranch } = useBranch();
   const [staffAssignments, setStaffAssignments] = useState<Record<string, StaffAssignment[]>>({});
-
-  // Fetch staff assignments
-  const fetchStaffAssignments = useCallback(async () => {
-    try {
-      const data = await api.getAllStaffAssignments();
-      setStaffAssignments(data);
-    } catch (err) {
-      console.log('Failed to fetch staff assignments');
-    }
-  }, []);
-
-  // Initial fetch and polling every 15 seconds
-  useEffect(() => {
-    fetchStaffAssignments();
-    const interval = setInterval(fetchStaffAssignments, 15000);
-    return () => clearInterval(interval);
-  }, [fetchStaffAssignments]);
 
   const [tables] = useState<Table[]>([
     // ด้านหน้าร้าน

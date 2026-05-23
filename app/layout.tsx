@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import PWAProvider from "./PWAProvider";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "ระบบสั่งอาหารออนไลน์ - ร้านอาหารไทย",

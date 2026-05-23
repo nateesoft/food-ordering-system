@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package } from 'lucide-react';
+import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api, OrderResponse, ServiceRequestResponse } from '@/lib/api';
 import BranchSelector from '@/components/BranchSelector';
@@ -611,7 +611,7 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
                   onClick={() => setShowNotifications(false)}
                   className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all"
                 >
-                  <ChevronDown className="w-6 h-6" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
               <p className="text-orange-100 mt-2">

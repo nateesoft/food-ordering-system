@@ -472,31 +472,6 @@ export const api = {
       body: JSON.stringify({ status }),
     }),
 
-  // Staff Check-in
-  staffCheckIn: (data: StaffCheckInDto) =>
-    fetchApi<StaffCheckInResponse>('/staff/check-in', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  staffCheckOut: (data: StaffCheckOutDto) =>
-    fetchApi<StaffCheckInResponse>('/staff/check-out', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-
-  staffHeartbeat: (data: StaffCheckInDto) =>
-    fetchApi<{ message: string; lastSeenAt: string; staffName: string }>('/staff/heartbeat', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
-
-  verifyStaffPin: (pin: string) =>
-    fetchApi<{ valid: boolean; staff: { id: number; name: string; role: string } }>('/staff/verify-pin', {
-      method: 'POST',
-      body: JSON.stringify({ pin }),
-    }),
-
   registerSession: (sessionId: string, tableNumber: string) =>
     fetchApi<{ message: string; sessionId: string; ttl: number }>('/tables/register-session', {
       method: 'POST',
@@ -507,19 +482,6 @@ export const api = {
     fetchApi<{ valid: boolean; session: { tableNumber: string; branchId: number } | null; ttl: number }>(
       `/tables/validate-session/${sessionId}`,
     ),
-
-  getTableStaff: (branchId: string, tableNumber: string) =>
-    fetchApi<TableStaffResponse>(`/${branchId}/tables/number/${tableNumber}/staff`),
-
-  // Get all staff assignments grouped by table (for floor plan)
-  getAllStaffAssignments: () =>
-    fetchApi<Record<string, {
-      staffId: number;
-      staffName: string;
-      staffRole: string;
-      checkedInAt: string;
-      lastSeenAt: string;
-    }[]>>('/staff/assignments/public'),
 
   // User Management
   getUsers: () => fetchApi<any[]>('/auth/users'),

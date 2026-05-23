@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 
-import { Check, ArrowLeft, Loader2, QrCode, X, UserCheck } from 'lucide-react';
+import { Check, Loader2, QrCode, X } from 'lucide-react';
 import QRCode from 'qrcode';
 import { Header } from '@/components/Header';
 import { CategoryFilter } from '@/components/CategoryFilter';
@@ -12,8 +12,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { OrderHistory } from '@/components/OrderHistory';
 import { FloatingActionMenu } from '@/components/FloatingActionMenu';
 import { WelcomeModal } from '@/components/WelcomeModal';
-import StaffCheckInModal from '@/components/StaffCheckInModal';
-import StaffBadge from '@/components/StaffBadge';
+
 import { MenuItem, CartItem, Order, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -161,52 +160,6 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
 
     fetchMenuItems();
   }, []);
-
-  // Fetch current staff assignment for this table
-  useEffect(() => {
-    const fetchTableStaff = async () => {
-      try {
-        const response = await api.getTableStaff(branchId, tableNumber);
-        if (response.staff && response.staff.length > 0) {
-          setCurrentStaff(response.staff[0]);
-        }
-      } catch (err) {
-        // Table might not have staff assigned, that's ok
-        console.log('No staff assigned to this table');
-      }
-    };
-
-    fetchTableStaff();
-  }, [branchId, tableNumber]);
-
-  // Heartbeat to update lastSeenAt when staff is checked in
-  useEffect(() => {
-    if (!currentStaff) return;
-
-    const storedPin = sessionStorage.getItem(`staff_pin_${branchId}_${tableNumber}`);
-    if (!storedPin) return;
-
-    const heartbeatInterval = setInterval(async () => {
-      try {
-        await api.staffHeartbeat({ pin: storedPin, tableNumber, branchId });
-      } catch (err) {
-        console.error('Heartbeat failed:', err);
-      }
-    }, 60000); // Every 1 minute
-
-    return () => clearInterval(heartbeatInterval);
-  }, [currentStaff, tableNumber]);
-
-  const handleStaffCheckInSuccess = (staffInfo: StaffInfo, pin: string) => {
-    setCurrentStaff(staffInfo);
-    // Store PIN in session for heartbeat
-    sessionStorage.setItem(`staff_pin_${branchId}_${tableNumber}`, pin);
-  };
-
-  const handleStaffCheckOutSuccess = () => {
-    setCurrentStaff(null);
-    sessionStorage.removeItem(`staff_pin_${branchId}_${tableNumber}`);
-  };
 
   // Poll API for order status updates (syncs with staff updates from /orders)
   useEffect(() => {
@@ -476,17 +429,6 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {currentStaff ? (
-                <StaffBadge staff={currentStaff} onClick={() => setShowStaffModal(true)} />
-              ) : (
-                <button
-                  onClick={() => setShowStaffModal(true)}
-                  className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg transition-colors"
-                >
-                  <UserCheck className="w-5 h-5" />
-                  <span className="text-sm font-medium">Staff</span>
-                </button>
-              )}
               <div className="text-right">
                 <p className="text-sm text-orange-100">Table Number</p>
                 <p className="text-3xl font-bold">{tableNumber}</p>
@@ -631,16 +573,6 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         categories={categories}
       />
 
-      <StaffCheckInModal
-        isOpen={showStaffModal}
-        onClose={() => setShowStaffModal(false)}
-        branchId={branchId}
-        tableNumber={tableNumber}
-        onCheckInSuccess={handleStaffCheckInSuccess}
-        onCheckOutSuccess={handleStaffCheckOutSuccess}
-        currentStaff={currentStaff}
-      />
-
       {/* Order Flying Animation */}
       {showOrderAnimation && (
         <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
@@ -689,9 +621,11 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
                 className="absolute w-2 h-2 bg-orange-400 rounded-full"
                 style={{
                   animation: `sparkle 1.5s ease-out ${i * 0.05}s forwards`,
-                  left: `${Math.random() * 40 - 20}px`,
-                  bottom: `${Math.random() * 40 - 20}px`,
-                }}
+                  left: `${(i * 37 % 40) - 20}px`,
+                  bottom: `${(i * 23 % 40) - 20}px`,
+                  ['--sparkle-x' as string]: `${(i * 53 % 200) - 100}px`,
+                  ['--sparkle-y' as string]: `${(i * 31 % 300) + 100}px`,
+                } as React.CSSProperties}
               />
             ))}
           </div>
@@ -712,7 +646,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
       )}
 
       {/* CSS Animations */}
-      <style jsx>{`
+      <style>{`
         @keyframes flyToKitchen {
           0% {
             transform: translate(-50%, 0) scale(1) rotate(0deg);
@@ -734,10 +668,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
             opacity: 1;
           }
           100% {
-            transform: translate(
-              ${Math.random() * 200 - 100}px,
-              ${Math.random() * -300 - 100}px
-            ) scale(0);
+            transform: translate(var(--sparkle-x, 0px), var(--sparkle-y, -150px)) scale(0);
             opacity: 0;
           }
         }
