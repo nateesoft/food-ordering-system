@@ -112,7 +112,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="absolute right-0 top-0 h-full w-full sm:w-96 bg-white shadow-2xl transform transition-transform">
+      <div className="absolute right-0 top-0 h-full w-full sm:w-96 bg-white dark:bg-gray-800 shadow-2xl transform transition-transform">
         <div className="flex flex-col h-full">
           {/* Cart Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6">
@@ -133,7 +133,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
                 <ShoppingCart className="w-20 h-20 mb-4" />
                 <p className="text-lg">{t.cart.emptyCart}</p>
                 <p className="text-sm">{t.cart.emptyCartDesc}</p>
@@ -141,13 +141,13 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
             ) : (
               <div className="space-y-4">
                 {cart.map(item => (
-                  <div key={item.cartItemId} className="bg-gray-50 rounded-xl p-4 shadow-sm">
+                  <div key={item.cartItemId} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 shadow-sm">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-gray-800">{item.name}</h3>
+                          <h3 className="font-bold text-gray-800 dark:text-gray-100">{item.name}</h3>
                           {item.type && item.type !== 'single' && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium uppercase">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-medium uppercase">
                               {item.type}
                             </span>
                           )}
@@ -174,7 +174,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                         {/* Show selected add-ons */}
                         {item.selectedAddOns && item.selectedAddOns.length > 0 && (
-                          <div className="mt-1 text-xs text-gray-600">
+                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-300">
                             <span className="font-medium">Add-ons: </span>
                             {item.selectedAddOns.map(addOn => addOn.name).join(', ')}
                           </div>
@@ -190,7 +190,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                         {/* Show set components */}
                         {(item.type === 'set' || item.type === 'group') && item.setComponents && item.setComponents.length > 0 && (
-                          <div className="mt-1 text-xs text-gray-600">
+                          <div className="mt-1 text-xs text-gray-600 dark:text-gray-300">
                             <span className="font-medium">ประกอบด้วย: </span>
                             {item.setComponents.map(comp => `${comp.name} x${comp.quantity}`).join(', ')}
                           </div>
@@ -198,7 +198,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                         {/* Dining option display */}
                         <div className="mt-1 flex items-center gap-2">
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-medium">
                             {item.diningOption === 'dine-in' ? t.menuCard.dineIn : t.menuCard.takeaway}
                           </span>
                           <button
@@ -219,9 +219,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                     {/* Show special instructions */}
                     {item.specialInstructions && editingItemId !== item.cartItemId && (
-                      <div className="mb-3 p-2 bg-orange-50 rounded-lg border border-orange-200">
-                        <p className="text-xs text-orange-800 font-medium">{t.cart.specialRequest}</p>
-                        <p className="text-sm text-orange-900">{item.specialInstructions}</p>
+                      <div className="mb-3 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                        <p className="text-xs text-orange-800 dark:text-orange-300 font-medium">{t.cart.specialRequest}</p>
+                        <p className="text-sm text-orange-900 dark:text-orange-200">{item.specialInstructions}</p>
                       </div>
                     )}
 
@@ -238,8 +238,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                     {/* Edit special instructions form */}
                     {editingItemId === item.cartItemId && (
-                      <div className="mb-3 p-3 bg-white rounded-lg border border-orange-300">
-                        <p className="text-xs text-gray-600 mb-2">{t.cart.selectMultiple}</p>
+                      <div className="mb-3 p-3 bg-white dark:bg-gray-600 rounded-lg border border-orange-300 dark:border-orange-700">
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mb-2">{t.cart.selectMultiple}</p>
 
                         {/* ปุ่มคำแนะนำที่ใช้บ่อย */}
                         <div className="mb-2">
@@ -251,7 +251,7 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                                 className={`px-2 py-1 rounded text-xs font-medium transition-all ${
                                   selectedInstructions.includes(instruction)
                                     ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-gray-100 dark:bg-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-400'
                                 }`}
                               >
                                 {instruction}
@@ -262,8 +262,8 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
                         {/* Show selected items */}
                         {selectedInstructions.length > 0 && (
-                          <div className="mb-2 p-2 bg-orange-50 rounded border border-orange-200">
-                            <p className="text-xs text-orange-800 font-medium">{t.cart.selected} {selectedInstructions.join(', ')}</p>
+                          <div className="mb-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                            <p className="text-xs text-orange-800 dark:text-orange-300 font-medium">{t.cart.selected} {selectedInstructions.join(', ')}</p>
                           </div>
                         )}
 
@@ -271,13 +271,13 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                           value={customInstruction}
                           onChange={(e) => setCustomInstruction(e.target.value)}
                           placeholder={t.menuCard.customInstructions}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                           rows={2}
                         />
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={handleCancelEdit}
-                            className="flex-1 px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition-all font-medium"
+                            className="flex-1 px-3 py-1.5 bg-gray-200 dark:bg-gray-500 text-gray-700 dark:text-gray-100 rounded-lg text-sm hover:bg-gray-300 dark:hover:bg-gray-400 transition-all font-medium"
                           >
                             {t.cart.cancel}
                           </button>
@@ -292,22 +292,22 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
                     )}
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3 bg-white rounded-lg shadow-sm">
+                      <div className="flex items-center space-x-3 bg-white dark:bg-gray-600 rounded-lg shadow-sm">
                         <button
                           onClick={() => onDecreaseQuantity(item.cartItemId)}
-                          className="p-2 hover:bg-gray-100 rounded-l-lg transition-all"
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-500 rounded-l-lg transition-all"
                         >
                           <Minus className="w-4 h-4 text-orange-500" />
                         </button>
-                        <span className="font-bold text-gray-800 w-8 text-center">{item.quantity}</span>
+                        <span className="font-bold text-gray-800 dark:text-gray-100 w-8 text-center">{item.quantity}</span>
                         <button
                           onClick={() => onIncreaseQuantity(item.cartItemId)}
-                          className="p-2 hover:bg-gray-100 rounded-r-lg transition-all"
+                          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-500 rounded-r-lg transition-all"
                         >
                           <Plus className="w-4 h-4 text-orange-500" />
                         </button>
                       </div>
-                      <span className="font-bold text-gray-800">
+                      <span className="font-bold text-gray-800 dark:text-gray-100">
                         {t.common.baht}{item.price * item.quantity}
                       </span>
                     </div>
@@ -319,9 +319,9 @@ export const CartSidebar: React.FC<CartSidebarProps> = ({
 
           {/* Cart Footer */}
           {cart.length > 0 && (
-            <div className="border-t bg-white p-6 space-y-4">
+            <div className="border-t dark:border-gray-700 bg-white dark:bg-gray-800 p-6 space-y-4">
               <div className="flex justify-between items-center text-lg">
-                <span className="font-semibold text-gray-700">{t.cart.total}</span>
+                <span className="font-semibold text-gray-700 dark:text-gray-200">{t.cart.total}</span>
                 <span className="font-bold text-2xl text-orange-500">{t.common.baht}{totalAmount}</span>
               </div>
               <button

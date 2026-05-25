@@ -84,7 +84,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto transform transition-all">
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto transform transition-all">
 
           {/* Header */}
           <div className="relative bg-gradient-to-r from-orange-500 to-red-500 text-white p-8 rounded-t-3xl">
@@ -117,18 +117,18 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           <div className="p-8">
             {/* Header with View Toggle */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 เลือกหมวดหมู่
               </h2>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`p-2 rounded-md transition-all ${
                     viewMode === 'grid'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white dark:bg-gray-600 text-orange-600 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                   title="Grid View"
                 >
@@ -138,8 +138,8 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                   onClick={() => setViewMode('list')}
                   className={`p-2 rounded-md transition-all ${
                     viewMode === 'list'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white dark:bg-gray-600 text-orange-600 shadow-sm'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                   }`}
                   title="List View"
                 >
@@ -158,12 +158,12 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className={`${colors.bgColor} p-6 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 text-left border-2 border-transparent hover:border-gray-200`}
+                      className={`${colors.bgColor} dark:bg-none dark:bg-gray-700 p-6 rounded-2xl hover:shadow-xl transition-all transform hover:scale-105 text-left border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-500`}
                     >
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-md mb-4">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white dark:bg-gray-600 shadow-md mb-4">
                         <Icon className={`w-8 h-8 ${colors.iconColor}`} />
                       </div>
-                      <h3 className="text-xl font-bold text-gray-800 mb-2">
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">
                         {category}
                       </h3>
                     </button>
@@ -182,17 +182,17 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
-                      className={`w-full ${colors.bgColor} p-4 rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] border-2 border-transparent hover:border-gray-200 flex items-center gap-4`}
+                      className={`w-full ${colors.bgColor} dark:bg-none dark:bg-gray-700 p-4 rounded-xl hover:shadow-lg transition-all transform hover:scale-[1.02] border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-500 flex items-center gap-4`}
                     >
-                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white shadow-md flex-shrink-0">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white dark:bg-gray-600 shadow-md flex-shrink-0">
                         <Icon className={`w-7 h-7 ${colors.iconColor}`} />
                       </div>
                       <div className="flex-1 text-left">
-                        <h3 className="text-lg font-bold text-gray-800">
+                        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">
                           {category}
                         </h3>
                       </div>
-                      <div className="text-gray-400">
+                      <div className="text-gray-400 dark:text-gray-500">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
@@ -205,7 +205,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
             {/* No categories message */}
             {displayCategories.length === 0 && (
-              <div className="text-center py-8 text-gray-500 mb-6">
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 mb-6">
                 <p>กำลังโหลดหมวดหมู่...</p>
               </div>
             )}
@@ -219,7 +219,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             </button>
 
             {/* Footer Note */}
-            <div className="mt-6 text-center text-sm text-gray-500">
+            <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
               <p>💡 คุณสามารถเปลี่ยนหมวดหมู่ได้ตลอดเวลาหลังเข้าสู่หน้าเมนู</p>
             </div>
           </div>

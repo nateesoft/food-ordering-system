@@ -158,8 +158,13 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
       .then(branch => {
         setBranchDisplayName(`${branch.code} - ${branch.name}`);
         setBranchLogo(branch.logo ?? null);
+        const isDark = branch.themeMode === 'DARK';
+        document.documentElement.classList.toggle('dark', isDark);
       })
       .catch(() => {});
+    return () => {
+      document.documentElement.classList.remove('dark');
+    };
   }, [branchId]);
 
   // API data state
@@ -459,7 +464,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
   }, [menuItems]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
       {/* Table Banner */}
       <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -506,7 +511,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-16 h-16 text-orange-500 animate-spin mb-4" />
-            <p className="text-xl text-gray-600">กำลังโหลดเมนู...</p>
+            <p className="text-xl text-gray-600 dark:text-gray-300">กำลังโหลดเมนู...</p>
           </div>
         )}
 
@@ -514,7 +519,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         {error && !isLoading && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="text-6xl mb-4">😕</div>
-            <p className="text-xl text-red-600 mb-4">{error}</p>
+            <p className="text-xl text-red-600 dark:text-red-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600"
@@ -529,8 +534,8 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
           <>
             {filteredMenu.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">{t.search.noResults}</h3>
-                <p className="text-gray-500">{t.search.tryDifferentKeyword}</p>
+                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">{t.search.noResults}</h3>
+                <p className="text-gray-500 dark:text-gray-400">{t.search.tryDifferentKeyword}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -575,28 +580,28 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
       {showQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowQrModal(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-sm w-full p-6">
             <button
               onClick={() => setShowQrModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-indigo-100 rounded-full">
-                <QrCode className="w-6 h-6 text-indigo-600" />
+              <div className="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-full">
+                <QrCode className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">แชร์โต๊ะ {tableNumber}</h3>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">แชร์โต๊ะ {tableNumber}</h3>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               ให้เพื่อนสแกน QR Code นี้เพื่อเข้าร่วมสั่งอาหารที่โต๊ะเดียวกัน
             </p>
             <div className="flex justify-center mb-4">
               {qrDataUrl && (
-                <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-2 border-gray-200" />
+                <img src={qrDataUrl} alt="QR Code" className="w-64 h-64 rounded-xl border-2 border-gray-200 dark:border-gray-600" />
               )}
             </div>
-            <p className="text-xs text-center text-gray-400 mb-4 break-all">
+            <p className="text-xs text-center text-gray-400 dark:text-gray-500 mb-4 break-all">
               {typeof window !== 'undefined' && `${window.location.origin}/food-ordering/${branchId}/table/${tableNumber}?sessionId=${sessionId}`}
             </p>
             <button
@@ -642,14 +647,14 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
                 animationDelay: `${index * 0.15}s`,
               }}
             >
-              <div className="bg-white rounded-2xl shadow-2xl p-4 border-2 border-orange-500 min-w-[200px]">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-4 border-2 border-orange-500 min-w-[200px]">
                 <div className="flex items-center gap-3">
-                  <div className="bg-orange-100 rounded-full p-2">
+                  <div className="bg-orange-100 dark:bg-orange-900/40 rounded-full p-2">
                     <span className="text-2xl">🍽️</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-gray-800 text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-600">จำนวน: {item.quantity}</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{item.name}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">จำนวน: {item.quantity}</p>
                     {item.specialInstructions && (
                       <p className="text-xs text-orange-600 mt-1">📝 {item.specialInstructions}</p>
                     )}

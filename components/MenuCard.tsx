@@ -146,7 +146,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all overflow-hidden group">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl dark:shadow-gray-900 transition-all overflow-hidden group">
         <div className="relative overflow-hidden">
           <img
             src={getImageUrl(item.image)}
@@ -170,9 +170,9 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
           )}
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-bold text-gray-800 mb-1">{item.name}</h3>
-          <p className="text-sm text-gray-500 mb-1">{item.category}</p>
-          <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">{item.name}</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{item.category}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{item.description}</p>
           {item.rating && (
             <div className="mb-4">
               <StarRating rating={item.rating} reviewCount={item.reviewCount} />
@@ -197,17 +197,17 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
       {showInstructionsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={handleCancelAdd}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-scale-in">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col animate-scale-in">
             {/* Header - Fixed */}
-            <div className="flex-shrink-0 p-6 border-b">
+            <div className="flex-shrink-0 p-6 border-b dark:border-gray-700">
               <button
                 onClick={handleCancelAdd}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">{item.name}</h3>
-              <p className="text-sm text-gray-500">{t.menuCard.specialInstructions}</p>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">{item.name}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{t.menuCard.specialInstructions}</p>
             </div>
 
             {/* Scrollable Content */}
@@ -215,7 +215,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Common instruction buttons */}
             <div>
-              <p className="text-xs text-gray-500 mb-2">{t.menuCard.selectCommonRequests}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t.menuCard.selectCommonRequests}</p>
               <div className="flex flex-wrap gap-2">
                 {commonInstructions.map((instruction) => (
                   <button
@@ -224,7 +224,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                       selectedInstructions.includes(instruction)
                         ? 'bg-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {instruction}
@@ -235,9 +235,9 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Show selected items */}
             {selectedInstructions.length > 0 && (
-              <div className="p-2 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-xs text-orange-800 font-medium mb-1">{t.menuCard.selectedRequests}</p>
-                <p className="text-sm text-orange-900">{selectedInstructions.join(', ')}</p>
+              <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-orange-800 dark:text-orange-300 font-medium mb-1">{t.menuCard.selectedRequests}</p>
+                <p className="text-sm text-orange-900 dark:text-orange-200">{selectedInstructions.join(', ')}</p>
               </div>
             )}
 
@@ -246,19 +246,19 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               value={customInstruction}
               onChange={(e) => setCustomInstruction(e.target.value)}
               placeholder={t.menuCard.customInstructions}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               rows={2}
             />
 
             {/* Set Components Display (if type is set or group) */}
             {(item.type === 'set' || item.type === 'group') && item.setComponents && item.setComponents.length > 0 && (
-              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <p className="text-xs text-blue-800 font-medium mb-2">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-2">
                   {item.type === 'set' ? '🍱 รายการในเซ็ต:' : '👥 รายการในเซ็ตกรุ๊ป:'}
                 </p>
                 <ul className="space-y-1">
                   {item.setComponents.map((comp, idx) => (
-                    <li key={idx} className="text-sm text-blue-900 flex justify-between">
+                    <li key={idx} className="text-sm text-blue-900 dark:text-blue-200 flex justify-between">
                       <span>• {comp.name}</span>
                       <span className="font-medium">x{comp.quantity}</span>
                     </li>
@@ -272,11 +272,11 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               <div>
                 <button
                   onClick={() => setIsAddOnsExpanded(!isAddOnsExpanded)}
-                  className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
+                  className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all"
                 >
-                  <p className="text-sm font-medium text-gray-700">🍔 เพิ่มเติม (Add-ons)</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">🍔 เพิ่มเติม (Add-ons)</p>
                   <ChevronDown
-                    className={`w-5 h-5 text-gray-600 transition-transform ${isAddOnsExpanded ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${isAddOnsExpanded ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {isAddOnsExpanded && (
@@ -289,13 +289,13 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                           onClick={() => toggleAddOn(addOn)}
                           className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
                             isSelected
-                              ? 'border-orange-500 bg-orange-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
+                              ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20'
+                              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                              isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'
+                              isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300 dark:border-gray-500'
                             }`}>
                               {isSelected && (
                                 <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,9 +303,9 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                                 </svg>
                               )}
                             </div>
-                            <span className="text-sm font-medium text-gray-800">{addOn.name}</span>
+                            <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{addOn.name}</span>
                           </div>
-                          <span className={`text-sm font-bold ${isSelected ? 'text-orange-600' : 'text-gray-600'}`}>
+                          <span className={`text-sm font-bold ${isSelected ? 'text-orange-600' : 'text-gray-600 dark:text-gray-300'}`}>
                             +฿{addOn.price}
                           </span>
                         </button>
@@ -323,9 +323,9 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                   onClick={() => setIsAddOnGroupsExpanded(!isAddOnGroupsExpanded)}
                   className="w-full flex items-center justify-between mb-3 p-2 hover:bg-gray-50 rounded-lg transition-all"
                 >
-                  <p className="text-sm font-medium text-gray-700">🎁 เซ็ตพิเศษ (Add-on Groups)</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">🎁 เซ็ตพิเศษ (Add-on Groups)</p>
                   <ChevronDown
-                    className={`w-5 h-5 text-gray-600 transition-transform ${isAddOnGroupsExpanded ? 'rotate-180' : ''}`}
+                    className={`w-5 h-5 text-gray-600 dark:text-gray-300 transition-transform ${isAddOnGroupsExpanded ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {isAddOnGroupsExpanded && (
@@ -341,14 +341,14 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                           onClick={() => toggleAddOnGroup(group)}
                           className={`w-full p-4 rounded-xl border-2 transition-all ${
                             isSelected
-                              ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200 bg-white hover:border-gray-300'
+                              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                           }`}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                isSelected ? 'bg-green-500 border-green-500' : 'border-gray-300'
+                                isSelected ? 'bg-green-500 border-green-500' : 'border-gray-300 dark:border-gray-500'
                               }`}>
                                 {isSelected && (
                                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -357,22 +357,22 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                                 )}
                               </div>
                               <div className="text-left">
-                                <p className="text-base font-bold text-gray-800">{group.name}</p>
+                                <p className="text-base font-bold text-gray-800 dark:text-gray-100">{group.name}</p>
                                 {group.description && (
-                                  <p className="text-xs text-gray-600 mt-1">{group.description}</p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{group.description}</p>
                                 )}
                               </div>
                             </div>
-                            <span className={`text-lg font-bold flex-shrink-0 ${isSelected ? 'text-green-600' : 'text-gray-700'}`}>
+                            <span className={`text-lg font-bold flex-shrink-0 ${isSelected ? 'text-green-600' : 'text-gray-700 dark:text-gray-200'}`}>
                               ฿{group.price}
                             </span>
                           </div>
                           {/* Show items in group */}
                           <div className="mt-2 pl-8">
-                            <p className="text-xs text-gray-500 mb-1">ประกอบด้วย:</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">ประกอบด้วย:</p>
                             <div className="flex flex-wrap gap-1">
                               {groupAddOns.map((addon, idx) => (
-                                <span key={idx} className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-xs text-gray-700">
+                                <span key={idx} className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-600 rounded text-xs text-gray-700 dark:text-gray-200">
                                   • {addon.name}
                                 </span>
                               ))}
@@ -388,25 +388,25 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
 
             {/* Show selected nested menu, add-ons and groups */}
             {(selectedNestedOptions.length > 0 || selectedAddOns.length > 0 || selectedAddOnGroups.length > 0) && (
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
                 {selectedNestedOptions.length > 0 && (
                   <>
-                    <p className="text-xs text-purple-800 font-medium mb-1">🎯 ตัวเลือกเมนู:</p>
+                    <p className="text-xs text-purple-800 dark:text-purple-300 font-medium mb-1">🎯 ตัวเลือกเมนู:</p>
                     {selectedNestedOptions.map((sel, idx) => (
-                      <p key={idx} className="text-sm text-purple-900 mb-1">• {sel.option.name}</p>
+                      <p key={idx} className="text-sm text-purple-900 dark:text-purple-200 mb-1">• {sel.option.name}</p>
                     ))}
                   </>
                 )}
                 {selectedAddOns.length > 0 && (
                   <>
-                    <p className="text-xs text-orange-800 font-medium mb-1 mt-2">Add-ons ที่เลือก:</p>
-                    <p className="text-sm text-orange-900 mb-2">{selectedAddOns.map(a => a.name).join(', ')}</p>
+                    <p className="text-xs text-orange-800 dark:text-orange-300 font-medium mb-1 mt-2">Add-ons ที่เลือก:</p>
+                    <p className="text-sm text-orange-900 dark:text-orange-200 mb-2">{selectedAddOns.map(a => a.name).join(', ')}</p>
                   </>
                 )}
                 {selectedAddOnGroups.length > 0 && (
                   <>
-                    <p className="text-xs text-green-800 font-medium mb-1 mt-2">เซ็ตที่เลือก:</p>
-                    <p className="text-sm text-green-900">{selectedAddOnGroups.map(g => g.name).join(', ')}</p>
+                    <p className="text-xs text-green-800 dark:text-green-300 font-medium mb-1 mt-2">เซ็ตที่เลือก:</p>
+                    <p className="text-sm text-green-900 dark:text-green-200">{selectedAddOnGroups.map(g => g.name).join(', ')}</p>
                   </>
                 )}
               </div>
@@ -414,16 +414,16 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
             </div>
 
             {/* Footer - Fixed */}
-            <div className="flex-shrink-0 border-t bg-white p-6 space-y-4">
+            <div className="flex-shrink-0 border-t dark:border-gray-700 bg-white dark:bg-gray-800 p-6 space-y-4">
               {/* Total Price */}
-              <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <span className="text-sm font-medium text-orange-800">ราคารวม:</span>
+              <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <span className="text-sm font-medium text-orange-800 dark:text-orange-300">ราคารวม:</span>
                 <span className="text-xl font-bold text-orange-600">฿{totalPrice}</span>
               </div>
 
               {/* Dining preference selection */}
               <div>
-                <p className="text-sm font-medium text-gray-700 mb-3">{t.menuCard.diningPreference}</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">{t.menuCard.diningPreference}</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -431,7 +431,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                     className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
                       diningOption === 'dine-in'
                         ? 'bg-orange-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {t.menuCard.dineIn}
@@ -442,7 +442,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                     className={`px-4 py-3 rounded-xl font-medium text-sm transition-all ${
                       diningOption === 'takeaway'
                         ? 'bg-orange-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {t.menuCard.takeaway}
@@ -454,7 +454,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
               <div className="flex gap-3">
                 <button
                   onClick={handleCancelAdd}
-                  className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                  className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
                 >
                   {t.menuCard.cancel}
                 </button>

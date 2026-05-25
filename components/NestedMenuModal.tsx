@@ -285,7 +285,7 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white shadow-2xl transform transition-transform flex flex-col">
+      <div className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-800 shadow-2xl transform transition-transform flex flex-col">
 
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-6">
@@ -344,15 +344,15 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
                     onClick={() => handleSelectOption(option)}
                     className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
                       isSelected
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3 flex-1">
                         {/* Checkbox/Radio */}
                         <div className={`mt-1 w-6 h-6 rounded ${currentMaxSelections === 1 ? 'rounded-full' : ''} border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-300'
+                          isSelected ? 'bg-purple-500 border-purple-500' : 'border-gray-300 dark:border-gray-500'
                         }`}>
                           {isSelected && (
                             <Check className="w-4 h-4 text-white" strokeWidth={3} />
@@ -361,16 +361,16 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
 
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-gray-800">{option.name}</h3>
+                            <h3 className="font-bold text-gray-800 dark:text-gray-100">{option.name}</h3>
                             {option.type === 'group' && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-medium uppercase">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 font-medium uppercase">
                                 Group
                               </span>
                             )}
                           </div>
 
                           {option.description && (
-                            <p className="text-sm text-gray-600 mb-2">{option.description}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{option.description}</p>
                           )}
 
                           {option.image && (
@@ -384,7 +384,7 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
                       </div>
 
                       <div className="flex flex-col items-end gap-2 ml-3">
-                        <span className={`text-lg font-bold ${isSelected ? 'text-purple-600' : 'text-gray-700'}`}>
+                        <span className={`text-lg font-bold ${isSelected ? 'text-purple-600' : 'text-gray-700 dark:text-gray-200'}`}>
                           {option.price > 0 ? `+฿${option.price}` : 'ฟรี'}
                         </span>
 
@@ -418,24 +418,24 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="border-t bg-white p-6 space-y-4">
+        <div className="border-t dark:border-gray-700 bg-white dark:bg-gray-800 p-6 space-y-4">
           {/* Summary */}
           {rootSelections.length > 0 && (
-            <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-              <p className="text-xs text-purple-800 font-medium mb-2">ตัวเลือกที่เลือก:</p>
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 border border-purple-200 dark:border-purple-800">
+              <p className="text-xs text-purple-800 dark:text-purple-300 font-medium mb-2">ตัวเลือกที่เลือก:</p>
               {rootSelections.map((sel, idx) => (
-                <div key={idx} className="text-sm text-purple-900 mb-1">
+                <div key={idx} className="text-sm text-purple-900 dark:text-purple-200 mb-1">
                   • {sel.option.name}
                   {sel.childSelections && sel.childSelections.length > 0 && (
-                    <span className="text-xs text-purple-700 ml-2">
+                    <span className="text-xs text-purple-700 dark:text-purple-400 ml-2">
                       (+{sel.childSelections.length} ตัวเลือก)
                     </span>
                   )}
                 </div>
               ))}
-              <div className="flex justify-between items-center pt-2 mt-2 border-t border-purple-200">
-                <span className="text-sm font-medium text-purple-800">ราคาเพิ่มเติม:</span>
-                <span className="text-lg font-bold text-purple-600">+฿{totalPrice}</span>
+              <div className="flex justify-between items-center pt-2 mt-2 border-t border-purple-200 dark:border-purple-700">
+                <span className="text-sm font-medium text-purple-800 dark:text-purple-300">ราคาเพิ่มเติม:</span>
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400">+฿{totalPrice}</span>
               </div>
             </div>
           )}
@@ -444,7 +444,7 @@ export const NestedMenuModal: React.FC<NestedMenuModalProps> = ({
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-all"
+              className="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-all"
             >
               ยกเลิก
             </button>

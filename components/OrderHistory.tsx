@@ -79,11 +79,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
       case 'preparing':
-        return 'bg-orange-100 text-orange-800';
+        return 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300';
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300';
       case 'delivered':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300';
       default:
         return '';
     }
@@ -105,13 +105,13 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
   const getItemStatusColor = (status?: 'preparing' | 'completed' | 'delivered') => {
     switch (status) {
       case 'preparing':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700';
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-300';
+        return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700';
       case 'delivered':
-        return 'bg-blue-100 text-blue-800 border-blue-300';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700';
       default:
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        return 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700';
     }
   };
 
@@ -157,7 +157,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
       <div className="absolute inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
-      <div className="absolute right-0 top-0 h-full w-full sm:w-[500px] bg-white shadow-2xl transform transition-transform overflow-y-auto">
+      <div className="absolute right-0 top-0 h-full w-full sm:w-[500px] bg-white dark:bg-gray-800 shadow-2xl transform transition-transform overflow-y-auto">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-6 sticky top-0 z-10">
@@ -178,7 +178,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
           {/* Orders List */}
           <div className="flex-1 p-4">
             {orders.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+              <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
                 <Package className="w-20 h-20 mb-4" />
                 <p className="text-lg">{t.orderHistory.noOrders}</p>
                 <p className="text-sm">{t.orderHistory.startOrdering}</p>
@@ -188,15 +188,15 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                 {orders.map((order) => (
                   <div
                     key={order.orderId}
-                    className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm"
+                    className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl p-4 shadow-sm"
                   >
                     {/* Order Header */}
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h3 className="font-bold text-gray-800">
+                        <h3 className="font-bold text-gray-800 dark:text-gray-100">
                           #{order.orderId.slice(-8)}
                         </h3>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {formatDate(order.orderDate)}
                         </p>
                       </div>
@@ -216,7 +216,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                         <div key={item.cartItemId} className="flex justify-between items-start text-sm gap-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <p className="font-medium text-gray-700">
+                              <p className="font-medium text-gray-700 dark:text-gray-200">
                                 {item.name} x{item.quantity}
                               </p>
                               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${getItemStatusColor(item.itemStatus)}`}>
@@ -224,7 +224,7 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                                 <span>{getItemStatusText(item.itemStatus)}</span>
                               </div>
                               {emotion && (
-                                <div className="flex items-center gap-1 px-2 py-0.5 bg-white border-2 border-gray-200 rounded-full">
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-white dark:bg-gray-600 border-2 border-gray-200 dark:border-gray-500 rounded-full">
                                   <span className="text-sm">{emotion.emoji}</span>
                                   <span className={`text-xs font-bold ${emotion.color}`}>
                                     {waitingMinutes} นาที
@@ -237,11 +237,11 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                                 • {item.specialInstructions}
                               </p>
                             )}
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                               {item.diningOption === 'dine-in' ? '🍽️ ทานในร้าน' : '🥡 รับกลับบ้าน'}
                             </p>
                           </div>
-                          <p className="text-gray-600 font-medium whitespace-nowrap">
+                          <p className="text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">
                             {t.common.baht}{item.price * item.quantity}
                           </p>
                         </div>
@@ -250,8 +250,8 @@ export const OrderHistory: React.FC<OrderHistoryProps> = ({ isOpen, orders: init
                     </div>
 
                     {/* Order Total */}
-                    <div className="border-t pt-3 flex justify-between items-center">
-                      <div className="text-sm text-gray-600">
+                    <div className="border-t dark:border-gray-600 pt-3 flex justify-between items-center">
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
                         {t.orderHistory.total} {order.totalItems} {t.orderHistory.items}
                       </div>
                       <div className="text-lg font-bold text-orange-500">

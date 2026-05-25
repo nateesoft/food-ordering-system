@@ -35,15 +35,15 @@ export default function StarRating({ rating, reviewCount }: StarRatingProps) {
         {[...Array(emptyStars)].map((_, i) => (
           <Star
             key={`empty-${i}`}
-            className="w-4 h-4 text-gray-300"
+            className="w-4 h-4 text-gray-300 dark:text-gray-600"
           />
         ))}
       </div>
 
-      <div className="flex items-center gap-1 text-sm text-gray-600">
+      <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
         <span className="font-semibold">{rating.toFixed(1)}</span>
         {reviewCount && (
-          <span className="text-gray-400">({reviewCount})</span>
+          <span className="text-gray-400 dark:text-gray-500">({reviewCount})</span>
         )}
       </div>
     </div>

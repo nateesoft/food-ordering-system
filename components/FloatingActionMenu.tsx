@@ -93,25 +93,25 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
   return (
     <>
       {/* Footer Menu */}
-      <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 shadow-2xl z-40">
+      <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t-2 border-gray-200 dark:border-gray-700 shadow-2xl z-40 transition-colors">
         <div className="max-w-7xl mx-auto px-2 py-3">
           <div className="flex gap-2 items-end justify-center overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory sm:flex-wrap sm:overflow-x-visible">
             {/* Table / Floor Plan Button */}
             <button
               onClick={onOpenFloorPlan}
-              className="flex flex-col items-center justify-center p-3 bg-orange-50 hover:bg-orange-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
+              className="flex flex-col items-center justify-center p-3 bg-orange-50 dark:bg-orange-900/30 hover:bg-orange-100 dark:hover:bg-orange-900/50 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
-              <MapPin className="w-6 h-6 text-orange-600 mb-1" />
-              <span className="text-xs font-semibold text-orange-700 whitespace-nowrap">{t.floatingMenu.table} {currentTableNumber}</span>
+              <MapPin className="w-6 h-6 text-orange-600 dark:text-orange-400 mb-1" />
+              <span className="text-xs font-semibold text-orange-700 dark:text-orange-300 whitespace-nowrap">{t.floatingMenu.table} {currentTableNumber}</span>
             </button>
 
             {/* Call Staff Button */}
             <button
               onClick={() => setShowStaffModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
+              className="flex flex-col items-center justify-center p-3 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
-              <Bell className="w-6 h-6 text-blue-600 mb-1" />
-              <span className="text-xs font-semibold text-blue-700 whitespace-nowrap">{t.floatingMenu.staff}</span>
+              <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400 mb-1" />
+              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">{t.floatingMenu.staff}</span>
             </button>
 
             {/* Home / Welcome Button - Center, larger like iPhone home button */}
@@ -127,19 +127,19 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             {/* Request Utensils Button */}
             <button
               onClick={() => setShowUtensilsModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
+              className="flex flex-col items-center justify-center p-3 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
-              <Utensils className="w-6 h-6 text-green-600 mb-1" />
-              <span className="text-xs font-semibold text-green-700 whitespace-nowrap">{t.floatingMenu.utensils}</span>
+              <Utensils className="w-6 h-6 text-green-600 dark:text-green-400 mb-1" />
+              <span className="text-xs font-semibold text-green-700 dark:text-green-300 whitespace-nowrap">{t.floatingMenu.utensils}</span>
             </button>
 
             {/* Payment Button */}
             <button
               onClick={() => setShowPaymentModal(true)}
-              className="flex flex-col items-center justify-center p-3 bg-purple-50 hover:bg-purple-100 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
+              className="flex flex-col items-center justify-center p-3 bg-purple-50 dark:bg-purple-900/30 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-xl transition-all shadow-sm hover:shadow-md min-w-[72px] snap-start"
             >
-              <CreditCard className="w-6 h-6 text-purple-600 mb-1" />
-              <span className="text-xs font-semibold text-purple-700 whitespace-nowrap">{t.floatingMenu.payment}</span>
+              <CreditCard className="w-6 h-6 text-purple-600 dark:text-purple-400 mb-1" />
+              <span className="text-xs font-semibold text-purple-700 dark:text-purple-300 whitespace-nowrap">{t.floatingMenu.payment}</span>
             </button>
           </div>
         </div>
@@ -149,35 +149,35 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {showStaffModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowStaffModal(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
             <button
               onClick={() => setShowStaffModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Bell className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded-full">
+                <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.callStaff}</h3>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t.floatingMenu.callStaff}</h3>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">{t.floatingMenu.staffReason}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{t.floatingMenu.staffReason}</p>
 
             <textarea
               value={staffMessage}
               onChange={(e) => setStaffMessage(e.target.value)}
               placeholder={t.floatingMenu.staffPlaceholder}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
               rows={4}
             />
 
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowStaffModal(false)}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
               >
                 {t.common.cancel}
               </button>
@@ -196,22 +196,22 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {showUtensilsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowUtensilsModal(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
             <button
               onClick={() => setShowUtensilsModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-green-100 rounded-full">
-                <Utensils className="w-6 h-6 text-green-600" />
+              <div className="p-3 bg-green-100 dark:bg-green-900/40 rounded-full">
+                <Utensils className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.requestUtensils}</h3>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t.floatingMenu.requestUtensils}</h3>
             </div>
 
-            <p className="text-sm text-gray-600 mb-4">{t.floatingMenu.selectUtensils}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{t.floatingMenu.selectUtensils}</p>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               {utensilOptions.map((item) => (
@@ -221,7 +221,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     selectedUtensils.includes(item)
                       ? 'bg-green-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
                   {item}
@@ -230,9 +230,9 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             </div>
 
             {selectedUtensils.length > 0 && (
-              <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-xs text-green-800 font-medium mb-1">{t.floatingMenu.selectedItems}</p>
-                <p className="text-sm text-green-900">{selectedUtensils.join(', ')}</p>
+              <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-xs text-green-800 dark:text-green-300 font-medium mb-1">{t.floatingMenu.selectedItems}</p>
+                <p className="text-sm text-green-900 dark:text-green-200">{selectedUtensils.join(', ')}</p>
               </div>
             )}
 
@@ -242,7 +242,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
                   setSelectedUtensils([]);
                   setShowUtensilsModal(false);
                 }}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
               >
                 {t.common.cancel}
               </button>
@@ -266,27 +266,27 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
       {showPaymentModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowPaymentModal(false)}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
             <button
               onClick={() => setShowPaymentModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
             >
               <X className="w-6 h-6" />
             </button>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-purple-100 rounded-full">
-                <CreditCard className="w-6 h-6 text-purple-600" />
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/40 rounded-full">
+                <CreditCard className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">{t.floatingMenu.requestPayment}</h3>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100">{t.floatingMenu.requestPayment}</h3>
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               {t.floatingMenu.paymentConfirm}
             </p>
 
-            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-purple-900">
+            <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-purple-900 dark:text-purple-300">
                 {t.floatingMenu.paymentNote}
               </p>
             </div>
@@ -294,7 +294,7 @@ export const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({
             <div className="flex gap-3">
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all font-semibold"
+                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-semibold"
               >
                 {t.common.cancel}
               </button>

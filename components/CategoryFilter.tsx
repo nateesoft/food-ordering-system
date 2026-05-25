@@ -30,7 +30,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   };
 
   return (
-    <div className="bg-white shadow-sm border-b sticky top-[88px] z-30">
+    <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-[88px] z-30 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex space-x-2 overflow-x-auto pb-2">
           {categories.map(category => {
@@ -42,7 +42,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
                 className={`px-6 py-2 rounded-full whitespace-nowrap font-medium transition-all ${
                   selectedCategory === translatedCategory || selectedCategory === category
                     ? 'bg-orange-500 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                 }`}
               >
                 {translatedCategory}
