@@ -122,12 +122,22 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
   const [showWelcome, setShowWelcome] = useState(true);
   const [showQrModal, setShowQrModal] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
+
+  useEffect(() => {
+    document.body.style.overflow = showQrModal ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [showQrModal]);
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [currentStaff, setCurrentStaff] = useState<StaffInfo | null>(null);
 
   const handleShowQr = async () => {
     try {
-      const url = `${window.location.origin}/${branchId}/table/${tableNumber}`;
+      const cookieKey = `sessionId_${branchId}_${tableNumber}`;
+      const cookieSessionId = document.cookie
+        .split('; ')
+        .find(row => row.startsWith(`${cookieKey}=`))
+        ?.split('=')[1] ?? sessionId;
+      const url = `${window.location.origin}/food-ordering/${branchId}/table/${tableNumber}?sessionId=${cookieSessionId}`;
       const dataUrl = await QRCode.toDataURL(url, {
         width: 300, margin: 2,
         color: { dark: '#000000', light: '#ffffff' },
@@ -141,10 +151,14 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
 
   // Branch info
   const [branchDisplayName, setBranchDisplayName] = useState<string>('');
+  const [branchLogo, setBranchLogo] = useState<string | null>(null);
 
   useEffect(() => {
     api.getBranchById(branchId)
-      .then(branch => setBranchDisplayName(`${branch.code} - ${branch.name}`))
+      .then(branch => {
+        setBranchDisplayName(`${branch.code} - ${branch.name}`);
+        setBranchLogo(branch.logo ?? null);
+      })
       .catch(() => {});
   }, [branchId]);
 
@@ -473,6 +487,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         onQrClick={handleShowQr}
         orderCount={orderHistory.filter(order => order.status !== 'completed').length}
         restaurantName={branchDisplayName || undefined}
+        branchLogo={branchLogo}
       />
 
       <CategoryFilter
@@ -582,7 +597,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
               )}
             </div>
             <p className="text-xs text-center text-gray-400 mb-4 break-all">
-              {typeof window !== 'undefined' && `${window.location.origin}/table/${tableNumber}`}
+              {typeof window !== 'undefined' && `${window.location.origin}/food-ordering/${branchId}/table/${tableNumber}?sessionId=${sessionId}`}
             </p>
             <button
               onClick={() => setShowQrModal(false)}
@@ -601,6 +616,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         tableNumber={tableNumber}
         categories={categories}
         restaurantName={branchDisplayName || undefined}
+        branchLogo={branchLogo}
       />
 
       {/* Order Flying Animation */}

@@ -3,6 +3,7 @@
 import React from 'react';
 import { ShoppingCart, UtensilsCrossed, ClipboardList, Languages, QrCode } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getImageUrl } from '@/lib/imageUrl';
 
 interface HeaderProps {
   totalItems: number;
@@ -11,6 +12,7 @@ interface HeaderProps {
   onQrClick?: () => void;
   orderCount?: number;
   restaurantName?: string;
+  branchLogo?: string | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   onQrClick,
   orderCount = 0,
   restaurantName,
+  branchLogo,
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
@@ -33,7 +36,11 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Desktop Layout - Single Row */}
         <div className="hidden sm:flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <UtensilsCrossed className="w-8 h-8 text-orange-500" />
+            {branchLogo ? (
+              <img src={getImageUrl(branchLogo)} alt="logo" className="w-10 h-10 rounded-full object-cover" />
+            ) : (
+              <UtensilsCrossed className="w-8 h-8 text-orange-500" />
+            )}
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-sm text-gray-500">{t.header.orderOnline}</p>
@@ -95,7 +102,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="sm:hidden space-y-3">
           {/* Row 1: Logo and Restaurant Name */}
           <div className="flex items-center space-x-3">
-            <UtensilsCrossed className="w-8 h-8 text-orange-500 flex-shrink-0" />
+            {branchLogo ? (
+              <img src={getImageUrl(branchLogo)} alt="logo" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            ) : (
+              <UtensilsCrossed className="w-8 h-8 text-orange-500 flex-shrink-0" />
+            )}
             <div className="flex-1 min-w-0">
               <h1 className="text-xl font-bold text-gray-800 truncate">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-xs text-gray-500 truncate">{t.header.orderOnline}</p>

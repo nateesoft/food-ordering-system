@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ChefHat, Soup, Salad, UtensilsCrossed, Coffee, Cake, LayoutGrid, List, Pizza, Utensils } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getImageUrl } from '@/lib/imageUrl';
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface WelcomeModalProps {
   tableNumber?: string;
   categories?: string[]; // Dynamic categories from API
   restaurantName?: string;
+  branchLogo?: string | null;
 }
 
 // Icon mapping for categories
@@ -47,9 +49,15 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   tableNumber = 'B1',
   categories = [],
   restaurantName,
+  branchLogo,
 }) => {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? 'hidden' : 'unset';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -89,7 +97,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
             <div className="text-center">
               <div className="inline-block mb-4">
-                <ChefHat className="w-16 h-16 mx-auto" />
+                {branchLogo ? (
+                  <img src={getImageUrl(branchLogo)} alt="logo" className="w-20 h-20 mx-auto rounded-full object-cover border-4 border-white border-opacity-50" />
+                ) : (
+                  <ChefHat className="w-16 h-16 mx-auto" />
+                )}
               </div>
               <h1 className="text-4xl font-bold mb-2">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-xl text-orange-100 mb-2">{t.header.orderOnline}</p>
