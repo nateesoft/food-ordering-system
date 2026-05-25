@@ -1,6 +1,5 @@
-import { MenuItem } from '@/types';
-
-export const menuItems: MenuItem[] = [
+// Legacy static mock data — not imported by any active code; superseded by API
+export const menuItems = [
   {
     id: 1,
     code: '',

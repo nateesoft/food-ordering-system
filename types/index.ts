@@ -13,6 +13,7 @@ export interface AddOnGroup {
   description?: string;
   price: number; // ราคาของกลุ่ม (อาจถูกกว่าซื้อทีละตัว)
   addOnIds: number[]; // รายการ Add-on ID ที่อยู่ในกลุ่มนี้
+  addOns?: AddOn[]; // Full AddOn objects (populated from API)
   category: string; // e.g., 'beverage-set', 'dessert-set', 'combo'
   image?: string;
 }
@@ -71,8 +72,8 @@ export interface MenuItem {
   // New fields for menu management
   type: 'single' | 'set' | 'group'; // Type of menu item
   setComponents?: SetComponent[]; // For set meals, list of items included
-  availableAddOns?: number[]; // IDs of add-ons available for this item
-  availableAddOnGroups?: number[]; // IDs of add-on groups available for this item
+  availableAddOns?: AddOn[]; // Add-ons available for this item (from API)
+  availableAddOnGroups?: AddOnGroup[]; // Add-on groups available for this item (from API)
   nestedMenuConfig?: NestedMenuConfig; // Configuration for nested menu
   isActive?: boolean; // Whether this item is currently available
   isOutOfStock?: boolean; // Whether this item is out of stock due to ingredients

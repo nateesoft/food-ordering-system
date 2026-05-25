@@ -6,8 +6,6 @@ import { MenuItem, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } f
 import { getImageUrl } from '@/lib/imageUrl';
 import StarRating from './StarRating';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { addOns as availableAddOns } from '@/data/addOns';
-import { addOnGroups as availableAddOnGroups } from '@/data/addOnGroups';
 import { nestedMenuOptions, calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { NestedMenuModal } from './NestedMenuModal';
 
@@ -92,15 +90,11 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     });
   };
 
-  // Get available add-ons for this item
-  const itemAddOns = item.availableAddOns
-    ? availableAddOns.filter(addOn => item.availableAddOns?.includes(addOn.id))
-    : [];
+  // Get available add-ons for this item (full objects from API)
+  const itemAddOns = item.availableAddOns || [];
 
-  // Get available add-on groups for this item
-  const itemAddOnGroups = item.availableAddOnGroups
-    ? availableAddOnGroups.filter(group => item.availableAddOnGroups?.includes(group.id))
-    : [];
+  // Get available add-on groups for this item (full objects from API)
+  const itemAddOnGroups = item.availableAddOnGroups || [];
 
   // Get nested menu options for this item
   // Prefer rootOptionObjects from API, fall back to filtering static data by IDs
@@ -339,7 +333,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
                     {itemAddOnGroups.map((group) => {
                       const isSelected = selectedAddOnGroups.some(g => g.id === group.id);
                       // Get add-on names in this group
-                      const groupAddOns = availableAddOns.filter(addon => group.addOnIds.includes(addon.id));
+                      const groupAddOns = group.addOns || [];
 
                       return (
                         <button
