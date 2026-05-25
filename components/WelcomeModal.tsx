@@ -10,6 +10,7 @@ interface WelcomeModalProps {
   onSelectCategory: (category: string) => void;
   tableNumber?: string;
   categories?: string[]; // Dynamic categories from API
+  restaurantName?: string;
 }
 
 // Icon mapping for categories
@@ -45,6 +46,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   onSelectCategory,
   tableNumber = 'B1',
   categories = [],
+  restaurantName,
 }) => {
   const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -89,7 +91,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
               <div className="inline-block mb-4">
                 <ChefHat className="w-16 h-16 mx-auto" />
               </div>
-              <h1 className="text-4xl font-bold mb-2">{t.header.restaurantName}</h1>
+              <h1 className="text-4xl font-bold mb-2">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-xl text-orange-100 mb-2">{t.header.orderOnline}</p>
               <div className="inline-block bg-white bg-opacity-20 px-4 py-2 rounded-full">
                 <span className="text-sm font-semibold">

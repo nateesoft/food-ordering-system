@@ -644,6 +644,8 @@ export const api = {
 
   getBranch: (id: number) => fetchApi<any>(`/branches/${id}`),
 
+  getBranchById: (id: string) => fetchApi<{ id: string; code: string; name: string; [key: string]: any }>(`/branches/${encodeURIComponent(id)}`),
+
   createBranch: (data: { name: string; code: string; address?: string; phone?: string }) =>
     fetchApi<any>('/branches', {
       method: 'POST',

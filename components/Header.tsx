@@ -10,6 +10,7 @@ interface HeaderProps {
   onHistoryClick: () => void;
   onQrClick?: () => void;
   orderCount?: number;
+  restaurantName?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   onCartClick,
   onHistoryClick,
   onQrClick,
-  orderCount = 0
+  orderCount = 0,
+  restaurantName,
 }) => {
   const { language, setLanguage, t } = useLanguage();
 
@@ -33,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-3">
             <UtensilsCrossed className="w-8 h-8 text-orange-500" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{t.header.restaurantName}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-sm text-gray-500">{t.header.orderOnline}</p>
             </div>
           </div>
@@ -95,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center space-x-3">
             <UtensilsCrossed className="w-8 h-8 text-orange-500 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-gray-800 truncate">{t.header.restaurantName}</h1>
+              <h1 className="text-xl font-bold text-gray-800 truncate">{restaurantName || t.header.restaurantName}</h1>
               <p className="text-xs text-gray-500 truncate">{t.header.orderOnline}</p>
             </div>
           </div>

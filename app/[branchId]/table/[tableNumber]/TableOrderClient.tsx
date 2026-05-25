@@ -139,6 +139,15 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
     }
   };
 
+  // Branch info
+  const [branchDisplayName, setBranchDisplayName] = useState<string>('');
+
+  useEffect(() => {
+    api.getBranchById(branchId)
+      .then(branch => setBranchDisplayName(`${branch.code} - ${branch.name}`))
+      .catch(() => {});
+  }, [branchId]);
+
   // API data state
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -463,6 +472,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         onHistoryClick={() => setShowOrderHistory(true)}
         onQrClick={handleShowQr}
         orderCount={orderHistory.filter(order => order.status !== 'completed').length}
+        restaurantName={branchDisplayName || undefined}
       />
 
       <CategoryFilter
@@ -590,6 +600,7 @@ export default function TableOrderClient({ branchId, tableNumber, sessionId }: T
         onSelectCategory={setSelectedCategory}
         tableNumber={tableNumber}
         categories={categories}
+        restaurantName={branchDisplayName || undefined}
       />
 
       {/* Order Flying Animation */}
