@@ -2,8 +2,8 @@ const CACHE_NAME = 'pos-cache-v1';
 const API_CACHE_NAME = 'pos-api-cache-v1';
 
 // Static assets to cache on install
+// หน้าหลัก /food-ordering/ ไม่ cache เพราะเป็น authenticated page ที่ต้องเช็ค Redis ทุกครั้ง
 const STATIC_ASSETS = [
-  '/food-ordering/',
   '/food-ordering/pos/',
   '/food-ordering/kds/',
   '/food-ordering/kiosk/',
@@ -42,6 +42,19 @@ self.addEventListener('fetch', (event) => {
 
   // Skip non-GET requests (let them pass through for offline queue handling)
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Navigation requests (HTML pages) ต้องไป network เสมอ เพื่อให้ server ตรวจ session ได้
+  // ไม่ใช้ cache เพราะ page.tsx ต้องเช็ค Redis ทุกครั้ง
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return caches.match(request).then((cached) => {
+          return cached ?? new Response('Offline', { status: 503 });
+        });
+      })
+    );
     return;
   }
 
