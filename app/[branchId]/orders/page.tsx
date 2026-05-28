@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package, X } from 'lucide-react';
+import { ChefHat, LogOut, Clock, CheckCircle, Truck, User, ChevronDown, ChevronUp, Bell, BellRing, Utensils, CreditCard, Users, QrCode, Settings, Package, X, Building2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { api, OrderResponse, ServiceRequestResponse } from '@/lib/api';
-import BranchSelector from '@/components/BranchSelector';
 
 interface StaffUser {
   pin: string;
@@ -66,9 +65,17 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'active' | 'history'>('active');
+  const [branchName, setBranchName] = useState<string>('');
   const isUpdatingRef = React.useRef(false);
 
   useEffect(() => {
+    // Anchor the branch to the URL param so all API calls use the correct x-branch-id header
+    localStorage.setItem('selectedBranchId', params.branchId);
+
+    api.getBranchById(params.branchId)
+      .then(b => setBranchName(b.name))
+      .catch(() => {});
+
     const authData = localStorage.getItem('staff_auth');
     if (authData) {
       const { user, expiry } = JSON.parse(authData);
@@ -109,7 +116,7 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
       const menuNameMap = new Map(menuItems.map(item => [item.id, item.name]));
 
       // Transform API orders to match local Order interface
-      const transformedOrders: Order[] = apiOrders.map((apiOrder: OrderResponse) => {
+      const allOrders: Order[] = apiOrders.map((apiOrder: OrderResponse) => {
         const items = Array.isArray(apiOrder.items) ? apiOrder.items : [];
         return {
           dbId: apiOrder.id,
@@ -134,7 +141,12 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
         };
       });
 
-      setOrders(transformedOrders);
+      // Safety filter: keep only orders belonging to this branch
+      const branchOrders = allOrders.filter(
+        o => o.branchId == null || String(o.branchId) === String(params.branchId)
+      );
+
+      setOrders(branchOrders);
     } catch (error) {
       console.error('Failed to load orders from API:', error);
     }
@@ -143,7 +155,7 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
   const loadServiceRequests = async () => {
     try {
       const apiRequests = await api.getPendingServiceRequests();
-      const transformed: ServiceRequest[] = apiRequests.map((req: ServiceRequestResponse) => ({
+      const allRequests: ServiceRequest[] = apiRequests.map((req: ServiceRequestResponse) => ({
         id: String(req.id),
         type: req.type.toLowerCase() as 'staff' | 'utensils' | 'payment',
         timestamp: new Date(req.createdAt),
@@ -153,6 +165,12 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
         branchId: req.branchId || undefined,
         tableNumber: req.tableNumber || undefined,
       }));
+
+      // Safety filter: keep only requests belonging to this branch
+      const transformed = allRequests.filter(
+        req => req.branchId == null || String(req.branchId) === String(params.branchId)
+      );
+
       setServiceRequests(transformed);
 
       const pendingCount = transformed.filter(req => req.status === 'pending').length;
@@ -533,7 +551,10 @@ export default function OrdersPage({ params }: { params: { branchId: string } })
           </div>
 
           <div className="flex items-center gap-3">
-            <BranchSelector />
+            <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700">
+              <Building2 className="w-4 h-4 text-gray-500" />
+              <span>{branchName || `สาขา #${params.branchId}`}</span>
+            </div>
 
             {/* Menu Management Button - Only for Admin */}
             {currentUser?.role === 'admin' && (
