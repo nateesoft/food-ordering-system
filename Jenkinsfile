@@ -16,19 +16,15 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('food-ordering-system') {
-                    bat 'npm ci'
-                    bat 'npm run build'
-                }
+                bat 'npm ci'
+                bat 'npm run build'
             }
         }
 
         stage('Prepare Standalone') {
             steps {
-                dir('food-ordering-system') {
-                    bat 'xcopy /E /I /Y public .next\\standalone\\public\\'
-                    bat 'xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static\\'
-                }
+                bat 'xcopy /E /I /Y public .next\\standalone\\public\\'
+                bat 'xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static\\'
             }
         }
 
@@ -43,14 +39,14 @@ pipeline {
             steps {
                 bat "if not exist %DEPLOY_DIR% mkdir %DEPLOY_DIR%"
                 bat '''
-                    powershell -Command "Copy-Item -Path food-ordering-system\\.next\\standalone\\* -Destination %DEPLOY_DIR% -Recurse -Force"
+                    powershell -Command "Copy-Item -Path .next\\standalone\\* -Destination %DEPLOY_DIR% -Recurse -Force"
                 '''
             }
         }
 
         stage('Deploy Config') {
             steps {
-                bat "copy /Y food-ordering-system\\ecosystem.config.js %DEPLOY_DIR%\\ecosystem.config.js"
+                bat "copy /Y ecosystem.config.js %DEPLOY_DIR%\\ecosystem.config.js"
             }
         }
 
