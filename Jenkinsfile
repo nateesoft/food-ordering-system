@@ -23,8 +23,8 @@ pipeline {
 
         stage('Prepare Standalone') {
             steps {
-                bat 'xcopy /E /I /Y public .next\\standalone\\public\\'
-                bat 'xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static\\'
+                bat 'if exist public (xcopy /E /I /Y public .next\\standalone\\public\\) else (echo No public folder, skipping)'
+                bat 'if exist .next\\static (xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static\\) else (echo No .next\\static folder, skipping)'
             }
         }
 
