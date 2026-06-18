@@ -52,7 +52,7 @@ pipeline {
 
         stage('Start PM2') {
             steps {
-                bat "cd %DEPLOY_DIR% && pm2 start ecosystem.config.js --env production"
+                bat "cd /d %DEPLOY_DIR% && pm2 start ecosystem.config.js --env production"
                 bat 'pm2 save'
             }
         }
