@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_DIR = 'D:\\apps\\food-ordering\\food-ordering-system'
+        DEPLOY_DIR = 'D:\\ICS-Projects\\apps\\food-ordering\\food-ordering-system'
         PM2_HOME   = 'C:\\ProgramData\\pm2'
     }
 
@@ -53,6 +53,13 @@ pipeline {
         stage('Start PM2') {
             steps {
                 bat "cd %DEPLOY_DIR% && pm2 start ecosystem.config.js --env production"
+                bat 'pm2 save'
+            }
+        }
+
+        stage('Register Startup') {
+            steps {
+                bat 'pm2-startup install 2>nul & exit 0'
                 bat 'pm2 save'
             }
         }
