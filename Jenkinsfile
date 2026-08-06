@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_DIR = 'D:\\ICS-Projects\\apps\\food-ordering\\food-ordering-system'
-        PM2_HOME   = 'C:\\Users\\Administrator\\.pm2'
+        DEPLOY_ROOT = 'D:\\ICS-Projects\\apps\\food-ordering'
+        DEPLOY_DIR  = 'D:\\ICS-Projects\\apps\\food-ordering\\food-ordering-system'
+        PM2_HOME    = 'C:\\Users\\Administrator\\.pm2'
     }
 
     stages {
@@ -46,13 +47,13 @@ pipeline {
 
         stage('Deploy Config') {
             steps {
-                bat "copy /Y ecosystem.config.js %DEPLOY_DIR%\\ecosystem.config.js"
+                bat "copy /Y ecosystem.config.js %DEPLOY_ROOT%\\ecosystem.config.js"
             }
         }
 
         stage('Start PM2') {
             steps {
-                bat "cd /d %DEPLOY_DIR% && pm2 start ecosystem.config.js --env production"
+                bat "cd /d %DEPLOY_ROOT% && pm2 start ecosystem.config.js --only food-ordering-system --env production"
                 bat 'pm2 save'
             }
         }
