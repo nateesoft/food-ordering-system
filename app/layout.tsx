@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { BranchProvider } from "@/contexts/BranchContext";
 import PWAProvider from "./PWAProvider";
+import ServiceStatusIndicator from "@/components/ServiceStatusIndicator";
 
 import "./globals.css";
 
@@ -37,6 +38,7 @@ export default function RootLayout({
           <BranchProvider>
             <PWAProvider />
             {children}
+            <ServiceStatusIndicator />
           </BranchProvider>
         </LanguageProvider>
       </body>

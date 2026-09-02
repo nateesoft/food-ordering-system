@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
   return apiUrl;
 };
 
-const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = getApiBaseUrl();
 
 export interface ApiNestedMenuOption {
   id: number;
