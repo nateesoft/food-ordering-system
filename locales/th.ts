@@ -14,6 +14,7 @@ export const th: Translations = {
 
   menuCard: {
     addToCart: 'เพิ่มลงเมนูอาหาร',
+    viewImage: 'ดูรูปภาพเต็มจอ',
     specialInstructions: 'คำขอพิเศษ (ถ้าต้องการ)',
     selectCommonRequests: 'เลือกคำขอที่ใช้บ่อย (เลือกได้หลายรายการ):',
     selectedRequests: 'คำขอที่เลือก:',

@@ -14,6 +14,7 @@ export const en: Translations = {
 
   menuCard: {
     addToCart: 'Add to Cart',
+    viewImage: 'View full image',
     specialInstructions: 'Special Instructions (Optional)',
     selectCommonRequests: 'Select common requests (Multiple selection):',
     selectedRequests: 'Selected:',

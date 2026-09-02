@@ -17,6 +17,7 @@ export interface Translations {
   // Menu Card
   menuCard: {
     addToCart: string;
+    viewImage: string;
     specialInstructions: string;
     selectCommonRequests: string;
     selectedRequests: string;

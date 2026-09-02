@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronDown } from 'lucide-react';
+import { Plus, X, ChevronDown, ZoomIn } from 'lucide-react';
 import { MenuItem, AddOn, AddOnGroup, SelectedNestedOption, NestedMenuOption } from '@/types';
 import { getImageUrl } from '@/lib/imageUrl';
 import StarRating from './StarRating';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nestedMenuOptions, calculateNestedMenuPrice } from '@/data/nestedMenuOptions';
 import { NestedMenuModal } from './NestedMenuModal';
+import { ImageLightbox } from './ImageLightbox';
 
 interface MenuCardProps {
   item: MenuItem;
@@ -24,6 +25,7 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
   const [selectedAddOnGroups, setSelectedAddOnGroups] = useState<AddOnGroup[]>([]);
   const [selectedNestedOptions, setSelectedNestedOptions] = useState<SelectedNestedOption[]>([]);
   const [showNestedMenuModal, setShowNestedMenuModal] = useState(false);
+  const [showImageLightbox, setShowImageLightbox] = useState(false);
   const [isAddOnsExpanded, setIsAddOnsExpanded] = useState(true);
   const [isAddOnGroupsExpanded, setIsAddOnGroupsExpanded] = useState(true);
 
@@ -148,11 +150,22 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
     <>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl dark:shadow-gray-900 transition-all overflow-hidden group">
         <div className="relative overflow-hidden">
-          <img
-            src={getImageUrl(item.image)}
-            alt={item.name}
-            className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-          />
+          <button
+            type="button"
+            onClick={() => item.image && setShowImageLightbox(true)}
+            aria-label={t.menuCard.viewImage}
+            className="block w-full cursor-zoom-in focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+          >
+            <img
+              src={getImageUrl(item.image)}
+              alt={item.name}
+              className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+            />
+            {/* ป้ายบอกว่าคลิกเพื่อดูรูปเต็มจอ */}
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors">
+              <ZoomIn className="w-8 h-8 text-white opacity-0 group-hover:opacity-90 drop-shadow-lg transition-opacity" />
+            </span>
+          </button>
           <div className="absolute top-2 right-2 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold">
             ฿{item.price}
           </div>
@@ -479,6 +492,15 @@ export const MenuCard: React.FC<MenuCardProps> = ({ item, onAddToCart }) => {
         minSelections={item.nestedMenuConfig?.minSelections}
         maxSelections={item.nestedMenuConfig?.maxSelections}
         requireSelection={item.nestedMenuConfig?.requireSelection}
+      />
+
+      {/* รูปภาพเมนูแบบเต็มจอ */}
+      <ImageLightbox
+        isOpen={showImageLightbox}
+        src={getImageUrl(item.image)}
+        alt={item.name}
+        caption={item.name}
+        onClose={() => setShowImageLightbox(false)}
       />
     </>
   );
