@@ -15,6 +15,17 @@ pipeline {
             }
         }
 
+        stage('Provision Env') {
+            steps {
+                // Prod .env is git-ignored; pull it from a Jenkins "Secret file" credential.
+                // Create it under Manage Jenkins > Credentials with ID: food-ordering-system-env
+                // Must run BEFORE Build: NEXT_PUBLIC_* vars are inlined into the bundle by `next build`.
+                withCredentials([file(credentialsId: 'food-ordering-system-env', variable: 'ENV_FILE')]) {
+                    bat 'copy /Y "%ENV_FILE%" .env'
+                }
+            }
+        }
+
         stage('Build') {
             steps {
                 bat 'npm ci'
@@ -48,6 +59,8 @@ pipeline {
         stage('Deploy Config') {
             steps {
                 bat "copy /Y ecosystem.config.js %DEPLOY_DIR%\\ecosystem.config.js"
+                // Standalone server.js reads .env from its cwd at runtime.
+                bat "copy /Y .env %DEPLOY_DIR%\\.env"
             }
         }
 
