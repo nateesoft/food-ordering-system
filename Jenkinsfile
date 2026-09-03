@@ -15,14 +15,20 @@ pipeline {
             }
         }
 
-        stage('Provision Env') {
+        stage('Load Env') {
             steps {
-                // Prod .env is git-ignored; pull it from a Jenkins "Secret file" credential.
-                // Create it under Manage Jenkins > Credentials with ID: food-ordering-system-env
-                // Must run BEFORE Build: NEXT_PUBLIC_* vars are inlined into the bundle by `next build`.
-                withCredentials([file(credentialsId: 'food-ordering-system-env', variable: 'ENV_FILE')]) {
-                    bat 'copy /Y "%ENV_FILE%" .env'
-                }
+                // The production .env is placed manually on the server and lives at
+                // %DEPLOY_DIR%\.env . The pipeline never creates or overwrites it.
+                // It must be loaded into the workspace BEFORE Build because `next build`
+                // inlines NEXT_PUBLIC_* vars into the bundle.
+                bat '''
+                    if not exist "%DEPLOY_DIR%\\.env" (
+                        echo ERROR: "%DEPLOY_DIR%\\.env" not found.
+                        echo Create the folder and place the production .env file there manually, then re-run.
+                        exit /b 1
+                    )
+                    copy /Y "%DEPLOY_DIR%\\.env" .env
+                '''
             }
         }
 
@@ -59,8 +65,8 @@ pipeline {
         stage('Deploy Config') {
             steps {
                 bat "copy /Y ecosystem.config.js %DEPLOY_DIR%\\ecosystem.config.js"
-                // Standalone server.js reads .env from its cwd at runtime.
-                bat "copy /Y .env %DEPLOY_DIR%\\.env"
+                // Note: %DEPLOY_DIR%\.env is managed manually and is left untouched here.
+                // The standalone server.js reads it from its cwd at runtime.
             }
         }
 
