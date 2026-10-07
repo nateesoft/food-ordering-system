@@ -56,8 +56,22 @@ pipeline {
         stage('Deploy') {
             steps {
                 bat "if not exist %DEPLOY_DIR% mkdir %DEPLOY_DIR%"
+                // robocopy instead of Copy-Item so stale chunks/packages from older builds are purged.
+                // Root: top-level files only (server.js, package.json), never .env* — that file is
+                // managed manually on the server. Subfolders are mirrored with /PURGE.
+                // robocopy exit codes 0-7 = success, >=8 = failure; check after each call.
                 bat '''
-                    powershell -Command "Copy-Item -Path .next\\standalone\\* -Destination %DEPLOY_DIR% -Recurse -Force"
+                    robocopy .next\\standalone "%DEPLOY_DIR%" /XF .env* /NFL /NDL /NJH /NP
+                    if %ERRORLEVEL% GEQ 8 exit /b 1
+                    robocopy .next\\standalone\\.next "%DEPLOY_DIR%\\.next" /E /PURGE /NFL /NDL /NJH /NP
+                    if %ERRORLEVEL% GEQ 8 exit /b 1
+                    robocopy .next\\standalone\\node_modules "%DEPLOY_DIR%\\node_modules" /E /PURGE /NFL /NDL /NJH /NP
+                    if %ERRORLEVEL% GEQ 8 exit /b 1
+                    if exist .next\\standalone\\public (
+                        robocopy .next\\standalone\\public "%DEPLOY_DIR%\\public" /E /PURGE /NFL /NDL /NJH /NP
+                    )
+                    if %ERRORLEVEL% GEQ 8 exit /b 1
+                    exit /b 0
                 '''
             }
         }
@@ -93,6 +107,17 @@ pipeline {
         }
         failure {
             echo 'Deployment food-ordering-system failed — check the logs above.'
+            // If the app is no longer registered in PM2 (it was deleted in 'Stop PM2'), try to
+            // bring whatever is in DEPLOY_DIR back up. If it is still registered (failure happened
+            // before 'Stop PM2'), leave it alone — `pm2 start` would restart it needlessly.
+            bat '''
+                call pm2 describe food-ordering-system >nul 2>&1
+                if errorlevel 1 if exist "%DEPLOY_DIR%\\ecosystem.config.js" if exist "%DEPLOY_DIR%\\server.js" (
+                    if not exist "%DEPLOY_DIR%\\logs" mkdir "%DEPLOY_DIR%\\logs"
+                    cd /d "%DEPLOY_DIR%" && call pm2 start ecosystem.config.js --only food-ordering-system --env production
+                )
+                exit /b 0
+            '''
         }
     }
 }
